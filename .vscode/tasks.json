@@ -1,0 +1,62 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "restore",
+      "type": "shell",
+      "command": "dotnet",
+      "args": [
+        "restore"
+      ],
+      "group": "build",
+      "problemMatcher": [
+        "$msCompile"
+      ]
+    },
+    {
+      "label": "build",
+      "type": "shell",
+      "command": "dotnet",
+      "args": [
+        "build"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "dependsOn": [
+        "restore"
+      ],
+      "problemMatcher": [
+        "$msCompile"
+      ]
+    },
+    {
+      "label": "run api",
+      "type": "shell",
+      "command": "dotnet",
+      "args": [
+        "run",
+        "--project",
+        "api/src/InterviewSimulator.Api/InterviewSimulator.Api.csproj"
+      ],
+      "isBackground": true,
+      "problemMatcher": [
+        "$msCompile"
+      ]
+    },
+    {
+      "label": "test",
+      "type": "shell",
+      "command": "dotnet",
+      "args": [
+        "test"
+      ],
+      "group": "test",
+      "problemMatcher": [
+        "$msCompile"
+      ],
+      "detail": "Will run once test project(s) are added."
+    }
+  ]
+}

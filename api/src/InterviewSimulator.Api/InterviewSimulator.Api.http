@@ -1,0 +1,6 @@
+@InterviewSimulator.Api_HostAddress = http://localhost:5078
+
+GET {{InterviewSimulator.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
