@@ -9,32 +9,37 @@ Roadmap phases are tracked separately in `docs/roadmap.md` and in the GitHub Pro
 
 Set up the initial repository, frontend, API project, Azure App Service deployment, infrastructure as code baseline, and basic CI/CD workflow.
 
-Done when:
+Acceptance Criteria:
 
-- Vite React frontend skeleton exists
-- ASP.NET Core API skeleton exists
-- Bicep templates exist in `infra/` for core Azure resources
-- App Service deployment works
-- GitHub Actions CI workflow runs build/test checks
-- GitHub Actions CD workflow can deploy infrastructure and app
-- `/api/health` endpoint works
-- Basic local development flow is documented
-- Azure OpenAI access/model deployment is validated
-- Azure Speech token flow is validated
+- [ ] Vite React frontend skeleton exists
+- [ ] ASP.NET Core API skeleton exists
+- [ ] Bicep templates exist in `infra/` for core Azure resources
+- [ ] App Service deployment works
+- [ ] GitHub Actions CI workflow runs build/test checks
+- [ ] GitHub Actions CD workflow can deploy infrastructure and app
+- [ ] `/api/health` endpoint works
+- [ ] Basic local development flow is documented
+- [ ] Azure OpenAI access/model deployment is validated
+- [ ] Azure Speech token flow is validated
 
 ---
 
 ## 02 - Auth and invite-only access
 
-Implement GitHub OAuth authentication in ASP.NET Core and restrict app/API usage to invited users.
+Implement authentication and invite-only access across backend and frontend UX.
 
-Done when:
+Acceptance Criteria:
 
-- GitHub login works
-- `/api/me` returns current user info
-- Invite-only policy is configured in backend authorization
-- Protected routes require authenticated invited users
-- API checks user authorization defensively
+- [ ] API authentication core is implemented with GitHub OAuth and cookie session handling
+- [ ] GitHub numeric user id is captured and normalized as `github|{githubUserId}`
+- [ ] Config-based admin/invited allowlist exists
+- [ ] Invite-only policy is configured in backend authorization
+- [ ] Admin users are treated as invited users
+- [ ] `/api/me` returns current user info including `isAuthenticated`, `isInvited`, and `isAdmin`
+- [ ] Protected routes require authenticated invited users
+- [ ] Non-invited authenticated users receive a clear unauthorized response/page
+- [ ] API checks user authorization defensively
+- [ ] Frontend login and logout UX is implemented and integrated with backend auth flow
 
 ---
 
@@ -42,13 +47,13 @@ Done when:
 
 Set up Cosmos DB and implement persistence for sessions, turns, and optional user profile data.
 
-Done when:
+Acceptance Criteria:
 
-- Cosmos DB free tier account/container exists
-- Partition key strategy is documented
-- Repository abstraction is implemented
-- Test read/write works from ASP.NET Core API
-- Session and turn document models are defined
+- [ ] Cosmos DB free tier account/container exists
+- [ ] Partition key strategy is documented
+- [ ] Repository abstraction is implemented
+- [ ] Test read/write works from ASP.NET Core API
+- [ ] Session and turn document models are defined
 
 ---
 
@@ -56,14 +61,14 @@ Done when:
 
 Build the core text-based interview experience.
 
-Done when:
+Acceptance Criteria:
 
-- User can configure interview settings
-- User can start a session
-- First question is generated
-- User can submit text answers
-- Next question is shown
-- Session state is persisted
+- [ ] User can configure interview settings
+- [ ] User can start a session
+- [ ] First question is generated
+- [ ] User can submit text answers
+- [ ] Next question is shown
+- [ ] Session state is persisted
 
 ---
 
@@ -71,14 +76,14 @@ Done when:
 
 Implement structured AI evaluation using role/interview-type-specific rubrics.
 
-Done when:
+Acceptance Criteria:
 
-- Evaluation JSON schema is defined
-- Technical, behavioral, and system design rubrics exist
-- Answer evaluation returns structured feedback
-- Adaptive next question is generated
-- AI response validation/error handling exists
-- Prompt versions are tracked
+- [ ] Evaluation JSON schema is defined
+- [ ] Technical, behavioral, and system design rubrics exist
+- [ ] Answer evaluation returns structured feedback
+- [ ] Adaptive next question is generated
+- [ ] AI response validation/error handling exists
+- [ ] Prompt versions are tracked
 
 ---
 
@@ -86,12 +91,12 @@ Done when:
 
 Allow users to review past sessions and generate final summaries.
 
-Done when:
+Acceptance Criteria:
 
-- History page exists
-- Session detail page exists
-- Completed sessions have summaries
-- Questions, answers, scores, and feedback can be reviewed
+- [ ] History page exists
+- [ ] Session detail page exists
+- [ ] Completed sessions have summaries
+- [ ] Questions, answers, scores, and feedback can be reviewed
 
 ---
 
@@ -99,13 +104,13 @@ Done when:
 
 Provide progress analytics based on stored interview sessions.
 
-Done when:
+Acceptance Criteria:
 
-- Dashboard summary endpoint exists
-- Average score over time is shown
-- Scores by topic/interview type are shown
-- Weakest rubric dimensions are shown
-- Recent sessions are shown
+- [ ] Dashboard summary endpoint exists
+- [ ] Average score over time is shown
+- [ ] Scores by topic/interview type are shown
+- [ ] Weakest rubric dimensions are shown
+- [ ] Recent sessions are shown
 
 ---
 
@@ -113,15 +118,15 @@ Done when:
 
 Add optional voice input/output using Azure AI Speech.
 
-Done when:
+Acceptance Criteria:
 
-- `/api/speech/token` endpoint exists
-- Questions can be spoken aloud
-- User can answer using push-to-talk
-- Transcript appears in editable text area
-- User can submit edited transcript
-- Microphone permission errors are handled
-- Recording duration is limited
+- [ ] `/api/speech/token` endpoint exists
+- [ ] Questions can be spoken aloud
+- [ ] User can answer using push-to-talk
+- [ ] Transcript appears in editable text area
+- [ ] User can submit edited transcript
+- [ ] Microphone permission errors are handled
+- [ ] Recording duration is limited
 
 ---
 
@@ -129,14 +134,14 @@ Done when:
 
 Improve reliability, logging, UX polish, and cost safety.
 
-Done when:
+Acceptance Criteria:
 
-- Application Insights is configured
-- AI operation metadata is logged safely
-- Basic per-user usage limits exist
-- Loading and error states are handled
-- App has acceptable UI polish
-- Azure budget/cost monitoring notes are documented
+- [ ] Application Insights is configured
+- [ ] AI operation metadata is logged safely
+- [ ] Basic per-user usage limits exist
+- [ ] Loading and error states are handled
+- [ ] App has acceptable UI polish
+- [ ] Azure budget/cost monitoring notes are documented
 
 ---
 
@@ -144,10 +149,10 @@ Done when:
 
 Prepare the project for portfolio/demo usage.
 
-Done when:
+Acceptance Criteria:
 
-- README is complete
-- Architecture document is complete
-- Setup instructions are documented
-- Demo scenario is documented
-- Screenshots/GIF/video are added
+- [ ] README is complete
+- [ ] Architecture document is complete
+- [ ] Setup instructions are documented
+- [ ] Demo scenario is documented
+- [ ] Screenshots/GIF/video are added

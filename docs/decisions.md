@@ -17,6 +17,7 @@ Each decision captures context, selected option, consequences, and alternatives 
 | ADR 0005 | Session-Centric API Resource Model | Accepted |
 | ADR 0006 | Deterministic Cosmos IDs and Partitioning Strategy | Accepted |
 | ADR 0007 | IaC and CI/CD Baseline from Phase 1 | Accepted |
+| ADR 0008 | Config-Based Invite Allowlist for MVP | Accepted |
 
 ---
 
@@ -300,3 +301,57 @@ Adopt infrastructure as code and CI/CD from phase 1:
 
 - Introduce IaC and CI/CD after MVP
 - Partial automation with manual infrastructure setup
+
+---
+
+## ADR 0008: Config-Based Invite Allowlist for MVP
+
+## Status
+
+Accepted
+
+## Context
+
+The application is invite-only, but a dedicated admin UI for invite management is out of scope for the initial version.
+
+The MVP needs a simple, low-ceremony way to control access without introducing invitation management infrastructure.
+
+## Decision
+
+Use a configuration-based allowlist of GitHub numeric user IDs for MVP access control.
+
+Use separate configuration values for admin users and invited users:
+
+```text
+ACCESS_ADMIN_GITHUB_IDS
+ACCESS_INVITED_GITHUB_IDS
+```
+
+Treat admin users as invited users for access control.
+
+Use the GitHub numeric user ID as the stable external identifier and normalize internal identity as:
+
+```text
+github|{githubUserId}
+```
+
+## Consequences
+
+### Benefits
+
+- Very simple to implement and operate for MVP
+- No admin management UI required
+- Access changes can be made through configuration
+- Clear distinction between admin and invited users without extra infrastructure
+
+### Trade-offs
+
+- Updating invite lists requires configuration changes
+- No self-service invite management in phase 1
+- Allowlist maintenance is manual until a later admin tool exists
+
+## Alternatives Considered
+
+- Cosmos-backed invite registry
+- GitHub org or team membership checks
+- Admin UI for invite management

@@ -235,7 +235,7 @@ Initial provider:
 GitHub
 ```
 
-The app should use GitHub's immutable numeric user id as the stable external identifier, not the GitHub username.
+The app uses GitHub's immutable numeric user ID as the stable external identifier, not the GitHub username.
 
 Internal app user id format:
 
@@ -252,7 +252,16 @@ Possible later provider:
 Microsoft Entra ID
 ```
 
-Invite-only access is implemented using backend authorization policy and an allowlist or mapped claim.
+Invite-only access is implemented using a configuration-based allowlist of GitHub numeric user IDs.
+
+Configuration values:
+
+```text
+ACCESS_ADMIN_GITHUB_IDS
+ACCESS_INVITED_GITHUB_IDS
+```
+
+Admin users are treated as invited users for access control.
 
 ```text
 invited
@@ -271,6 +280,19 @@ Examples of protected routes:
 The backend also checks the authenticated user and role defensively.
 
 Frontend route guards are a UX optimization only. Backend authorization policies on `/api/*` are the enforcement boundary.
+
+The `/api/me` endpoint should return a normalized auth view such as:
+
+```json
+{
+  "isAuthenticated": true,
+  "isInvited": true,
+  "isAdmin": false,
+  "userId": "github|123456789",
+  "identityProvider": "github",
+  "displayName": "octocat"
+}
+```
 
 ---
 
