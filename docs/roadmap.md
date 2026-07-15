@@ -14,11 +14,14 @@ Goal: Validate the main architecture and establish the Azure-based project skele
 ### Scope
 
 - Repository structure
-- React frontend skeleton
-- Azure Functions API skeleton
-- Azure Static Web Apps deployment
-- Azure Static Web Apps authentication
-- Invite-only access using custom role `invited`
+- Vite React frontend skeleton
+- ASP.NET Core API skeleton
+- Infrastructure as code baseline in `infra/` using Bicep
+- GitHub Actions CI pipeline for build/test checks
+- GitHub Actions CD pipeline for Azure deployment
+- Azure App Service deployment
+- GitHub OAuth authentication in ASP.NET Core
+- Invite-only access using backend authorization policy
 - `/api/health` endpoint
 - `/api/me` endpoint
 - Cosmos DB free tier setup
@@ -35,12 +38,14 @@ Goal: Validate the main architecture and establish the Azure-based project skele
 
 ### Exit Criteria
 
-- App is deployed to Azure Static Web Apps
+- App is deployed to Azure App Service
+- Core Azure resources can be provisioned from Bicep templates
+- CI/CD pipeline can deploy infrastructure and application from GitHub Actions
 - Invited user can log in
 - `/api/me` returns authenticated user info
-- Function can read/write a test document in Cosmos DB
-- Function can call Azure OpenAI successfully
-- Function can issue an Azure Speech token
+- API can read/write a test document in Cosmos DB
+- API can call Azure OpenAI successfully
+- API can issue an Azure Speech token
 - Initial architecture is documented
 
 ---
@@ -143,7 +148,7 @@ These items are not required for the initial version.
 - AI-generated long-term learning plan
 - Question bank management
 - Custom admin panel
-- Entra ID group-based access
+- Entra ID-based access as an additional provider
 - Full real-time voice conversation
 - SignalR streaming
 - Camera/video recording

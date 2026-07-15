@@ -16,14 +16,15 @@ The project is built as a portfolio and learning project focused on practical AI
 - Progress dashboard
 - Voice input with Azure Speech-to-Text
 - Voice output with Azure Text-to-Speech
-- Invite-only access using Azure Static Web Apps authentication
+- Invite-only access using ASP.NET Core cookie auth with GitHub OAuth
+- Session-centric API design (`/api/sessions/*`)
 
 ## Tech Stack
 
-- React + TypeScript
-- Azure Static Web Apps
-- Azure Functions
+- Vite + React + TypeScript
+- Azure App Service
+- ASP.NET Core Web API
 - Azure Cosmos DB
 - Azure OpenAI
 - Azure AI Speech
-- GitHub/Entra ID authentication
+- GitHub OAuth authentication with secure cookie sessions (Entra ID optional later)

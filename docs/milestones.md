@@ -7,30 +7,34 @@ Roadmap phases are tracked separately in `docs/roadmap.md` and in the GitHub Pro
 
 ## 01 - Foundation and Azure skeleton
 
-Set up the initial repository, frontend, API project, Azure Static Web Apps deployment, and basic development workflow.
+Set up the initial repository, frontend, API project, Azure App Service deployment, infrastructure as code baseline, and basic CI/CD workflow.
 
 Done when:
 
-- React frontend skeleton exists
-- Azure Functions API skeleton exists
-- Static Web Apps deployment works
+- Vite React frontend skeleton exists
+- ASP.NET Core API skeleton exists
+- Bicep templates exist in `infra/` for core Azure resources
+- App Service deployment works
+- GitHub Actions CI workflow runs build/test checks
+- GitHub Actions CD workflow can deploy infrastructure and app
 - `/api/health` endpoint works
 - Basic local development flow is documented
 - Azure OpenAI access/model deployment is validated
+- Azure Speech token flow is validated
 
 ---
 
 ## 02 - Auth and invite-only access
 
-Implement Azure Static Web Apps authentication and restrict app/API usage to invited users.
+Implement GitHub OAuth authentication in ASP.NET Core and restrict app/API usage to invited users.
 
 Done when:
 
-- GitHub or Entra ID login works
+- GitHub login works
 - `/api/me` returns current user info
-- Custom role `invited` is configured
-- Protected routes require `invited`
-- Functions check user role defensively
+- Invite-only policy is configured in backend authorization
+- Protected routes require authenticated invited users
+- API checks user authorization defensively
 
 ---
 
@@ -43,7 +47,7 @@ Done when:
 - Cosmos DB free tier account/container exists
 - Partition key strategy is documented
 - Repository abstraction is implemented
-- Test read/write works from Azure Functions
+- Test read/write works from ASP.NET Core API
 - Session and turn document models are defined
 
 ---
