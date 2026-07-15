@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/api/" />
+  <Folder Name="/api/src/">
+    <Project Path="api/src/InterviewSimulator.Api/InterviewSimulator.Api.csproj" />
+  </Folder>
+  <Folder Name="/api/tests/">
+    <Project Path="api/tests/InterviewSimulator.Api.IntegrationTests/InterviewSimulator.Api.IntegrationTests.csproj" />
+    <Project Path="api/tests/InterviewSimulator.Api.UnitTests/InterviewSimulator.Api.UnitTests.csproj" />
+  </Folder>
+</Solution>
