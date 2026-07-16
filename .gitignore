@@ -480,7 +480,3 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
-
-# Generated frontend build copied for ASP.NET Core static hosting
-api/src/InterviewSimulator.Api/wwwroot/*
-!api/src/InterviewSimulator.Api/wwwroot/.gitkeep
