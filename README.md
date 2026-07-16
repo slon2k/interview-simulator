@@ -28,3 +28,13 @@ The project is built as a portfolio and learning project focused on practical AI
 - Azure OpenAI
 - Azure AI Speech
 - GitHub OAuth authentication with secure cookie sessions (Entra ID optional later)
+
+## Publish Frontend + API Together
+
+The API publish process builds the Vite frontend and places its output into publish `wwwroot` automatically.
+
+```powershell
+dotnet publish api/src/InterviewSimulator.Api/InterviewSimulator.Api.csproj -c Release
+```
+
+After publish, the generated output folder contains both backend binaries and frontend static files for production hosting.
