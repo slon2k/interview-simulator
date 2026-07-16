@@ -8,6 +8,15 @@ trim_trailing_whitespace = true
 indent_style = space
 indent_size = 4
 
+[web/**]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.{yml,yaml,json}]
+indent_size = 2
+
 [*.cs]
 # Organize usings
 sort_system_directives_first = true
@@ -26,14 +35,39 @@ csharp_style_var_when_type_is_apparent = false:suggestion
 csharp_style_var_elsewhere = false:suggestion
 
 # C# formatting
+csharp_using_directive_placement = outside_namespace:suggestion
 csharp_new_line_before_open_brace = all
+csharp_new_line_between_query_expression_clauses = true
+csharp_indent_case_contents = true
+csharp_indent_switch_labels = true
 csharp_preserve_single_line_statements = false
 csharp_preserve_single_line_blocks = true
+csharp_prefer_braces = true:suggestion
 
-[tests/**/*.cs]
-dotnet_diagnostic.CA1707.severity = none
+# Naming rules (lightweight)
+dotnet_naming_rule.interfaces_should_be_prefixed_with_i.severity = suggestion
+dotnet_naming_rule.interfaces_should_be_prefixed_with_i.symbols = interfaces
+dotnet_naming_rule.interfaces_should_be_prefixed_with_i.style = interface_prefix_style
 
-[*.cs]
+dotnet_naming_symbols.interfaces.applicable_kinds = interface
+dotnet_naming_symbols.interfaces.applicable_accessibilities = *
+dotnet_naming_symbols.interfaces.required_modifiers =
+
+dotnet_naming_style.interface_prefix_style.required_prefix = I
+dotnet_naming_style.interface_prefix_style.capitalization = pascal_case
+
+dotnet_naming_rule.private_fields_should_be_camel_case_with_underscore.severity = suggestion
+dotnet_naming_rule.private_fields_should_be_camel_case_with_underscore.symbols = private_fields
+dotnet_naming_rule.private_fields_should_be_camel_case_with_underscore.style = private_field_style
+
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+dotnet_naming_symbols.private_fields.required_modifiers =
+
+dotnet_naming_style.private_field_style.required_prefix = _
+dotnet_naming_style.private_field_style.capitalization = camel_case
+
+# Analyzer severities (moderate)
 dotnet_diagnostic.CA1848.severity = none
 dotnet_diagnostic.IDE0007.severity = none
 dotnet_diagnostic.IDE0008.severity = none
@@ -41,3 +75,16 @@ dotnet_diagnostic.CA1716.severity = none
 dotnet_diagnostic.CA1711.severity = none
 dotnet_diagnostic.CA1873.severity = none
 dotnet_diagnostic.CA1859.severity = none
+dotnet_diagnostic.IDE0055.severity = suggestion
+
+[*.csproj]
+indent_size = 2
+
+[*.props]
+indent_size = 2
+
+[*.targets]
+indent_size = 2
+
+[tests/**/*.cs]
+dotnet_diagnostic.CA1707.severity = none

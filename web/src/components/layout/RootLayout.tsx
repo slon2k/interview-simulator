@@ -1,32 +1,22 @@
-import {
-  AppShell,
-  Button,
-  Container,
-  Group,
-  Title
-} from "@mantine/core";
-import {
-  Link as RouterLink,
-  Outlet,
-  useLocation
-} from "react-router-dom";
+import { AppShell, Button, Container, Group, Title } from '@mantine/core'
+import { Link as RouterLink, Outlet, useLocation } from 'react-router-dom'
 
 const navItems = [
-  { label: "Home", to: "/" },
-  { label: "Dashboard", to: "/dashboard" },
-  { label: "Interview", to: "/interview/new" },
-  { label: "History", to: "/history" }
-];
+  { label: 'Home', to: '/' },
+  { label: 'Dashboard', to: '/dashboard' },
+  { label: 'Interview', to: '/interview/new' },
+  { label: 'History', to: '/history' },
+]
 
 export function RootLayout() {
-  const location = useLocation();
+  const location = useLocation()
 
   function isActive(to: string) {
-    if (to === "/") {
-      return location.pathname === "/";
+    if (to === '/') {
+      return location.pathname === '/'
     }
 
-    return location.pathname.startsWith(to);
+    return location.pathname.startsWith(to)
   }
 
   return (
@@ -44,8 +34,8 @@ export function RootLayout() {
                   key={item.to}
                   component={RouterLink}
                   to={item.to}
-                  variant={isActive(item.to) ? "light" : "subtle"}
-                  color={isActive(item.to) ? "blue" : "gray"}
+                  variant={isActive(item.to) ? 'light' : 'subtle'}
+                  color={isActive(item.to) ? 'blue' : 'gray'}
                 >
                   {item.label}
                 </Button>
@@ -65,5 +55,5 @@ export function RootLayout() {
         </Container>
       </AppShell.Main>
     </AppShell>
-  );
+  )
 }

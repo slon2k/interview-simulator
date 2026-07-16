@@ -8,7 +8,9 @@
     "typecheck": "tsc -b",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "check": "npm run typecheck && npm run lint && npm run build",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm run build",
     "clean": "rimraf dist node_modules/.vite node_modules/.tmp",
     "preview": "vite preview"
   },
@@ -35,6 +37,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",
     "globals": "^17.7.0",
+    "prettier": "^3.6.2",
     "rimraf": "^6.0.1",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.62.0",

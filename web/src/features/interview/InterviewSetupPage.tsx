@@ -1,4 +1,4 @@
-import { Stack, Text, Title } from "@mantine/core";
+import { Stack, Text, Title } from '@mantine/core'
 
 export function InterviewSetupPage() {
   return (
@@ -6,5 +6,5 @@ export function InterviewSetupPage() {
       <Title>New Interview</Title>
       <Text c="dimmed">Interview setup form will appear here.</Text>
     </Stack>
-  );
+  )
 }

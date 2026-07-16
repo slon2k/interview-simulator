@@ -6,21 +6,21 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      "/api": {
-        target: "http://localhost:5078",
+      '/api': {
+        target: 'http://localhost:5078',
         changeOrigin: true,
-        secure: false
+        secure: false,
       },
-      "/login": {
-        target: "http://localhost:5078",
+      '/login': {
+        target: 'http://localhost:5078',
         changeOrigin: true,
-        secure: false
+        secure: false,
       },
-      "/logout": {
-        target: "http://localhost:5078",
+      '/logout': {
+        target: 'http://localhost:5078',
         changeOrigin: true,
-        secure: false
-      }
-    }
-  }
-});
+        secure: false,
+      },
+    },
+  },
+})
