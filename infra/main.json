@@ -1,0 +1,670 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.45.15.27210",
+      "templateHash": "15817950038909836839"
+    }
+  },
+  "parameters": {
+    "baseName": {
+      "type": "string",
+      "maxLength": 40,
+      "metadata": {
+        "description": "Base workload name, e.g. \"interview\"."
+      }
+    },
+    "environment": {
+      "type": "string",
+      "allowedValues": [
+        "dev",
+        "test",
+        "prod"
+      ],
+      "metadata": {
+        "description": "Environment moniker: \"dev\", \"test\", or \"prod\"."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Azure region for all resources."
+      }
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": "B1",
+      "allowedValues": [
+        "F1",
+        "B1",
+        "B2",
+        "B3",
+        "S1",
+        "S2",
+        "S3",
+        "P0v3",
+        "P1v3",
+        "P2v3",
+        "P3v3"
+      ],
+      "metadata": {
+        "description": "App Service plan SKU name."
+      }
+    },
+    "skuCapacity": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 1,
+      "metadata": {
+        "description": "Number of workers for the App Service plan."
+      }
+    },
+    "linuxFxVersion": {
+      "type": "string",
+      "defaultValue": "DOTNETCORE|10.0",
+      "metadata": {
+        "description": "Linux runtime stack in <RUNTIME>|<VERSION> format."
+      }
+    },
+    "extraTags": {
+      "type": "object",
+      "defaultValue": {},
+      "metadata": {
+        "description": "Extra tags merged into the resource defaults."
+      }
+    }
+  },
+  "variables": {
+    "appNameSuffix": "[take(uniqueString(subscription().id, resourceGroup().id, parameters('baseName'), parameters('environment')), 6)]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "appServicePlan",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "baseName": {
+            "value": "[parameters('baseName')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "skuName": {
+            "value": "[parameters('skuName')]"
+          },
+          "skuCapacity": {
+            "value": "[parameters('skuCapacity')]"
+          },
+          "extraTags": {
+            "value": "[parameters('extraTags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.45.15.27210",
+              "templateHash": "505406594696969583"
+            }
+          },
+          "parameters": {
+            "baseName": {
+              "type": "string",
+              "maxLength": 40,
+              "metadata": {
+                "description": "Base workload name, e.g. \"interview\"."
+              }
+            },
+            "environment": {
+              "type": "string",
+              "metadata": {
+                "description": "Environment moniker, e.g. \"dev\", \"test\", \"prod\"."
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region for all resources."
+              }
+            },
+            "skuName": {
+              "type": "string",
+              "defaultValue": "B1",
+              "allowedValues": [
+                "F1",
+                "B1",
+                "B2",
+                "B3",
+                "S1",
+                "S2",
+                "S3",
+                "P0v3",
+                "P1v3",
+                "P2v3",
+                "P3v3"
+              ],
+              "metadata": {
+                "description": "App Service plan SKU name. The tier is derived automatically."
+              }
+            },
+            "skuCapacity": {
+              "type": "int",
+              "defaultValue": 1,
+              "minValue": 1,
+              "metadata": {
+                "description": "Number of workers for the plan."
+              }
+            },
+            "extraTags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Extra tags merged into the defaults."
+              }
+            }
+          },
+          "variables": {
+            "normalizedEnvironment": "[toLower(parameters('environment'))]",
+            "appServicePlanName": "[format('{0}-{1}-plan', parameters('baseName'), variables('normalizedEnvironment'))]",
+            "skuTierMap": {
+              "F1": "Free",
+              "B1": "Basic",
+              "B2": "Basic",
+              "B3": "Basic",
+              "S1": "Standard",
+              "S2": "Standard",
+              "S3": "Standard",
+              "P0v3": "PremiumV3",
+              "P1v3": "PremiumV3",
+              "P2v3": "PremiumV3",
+              "P3v3": "PremiumV3"
+            },
+            "skuTier": "[variables('skuTierMap')[parameters('skuName')]]",
+            "baseTags": {
+              "environment": "[variables('normalizedEnvironment')]",
+              "workload": "webapi",
+              "managedBy": "iac"
+            },
+            "finalTags": "[union(variables('baseTags'), parameters('extraTags'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Web/serverfarms",
+              "apiVersion": "2023-12-01",
+              "name": "[variables('appServicePlanName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "[parameters('skuName')]",
+                "tier": "[variables('skuTier')]",
+                "capacity": "[parameters('skuCapacity')]"
+              },
+              "kind": "linux",
+              "tags": "[variables('finalTags')]",
+              "properties": {
+                "reserved": true
+              }
+            }
+          ],
+          "outputs": {
+            "appServicePlanName": {
+              "type": "string",
+              "value": "[variables('appServicePlanName')]"
+            },
+            "appServicePlanId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+            },
+            "skuName": {
+              "type": "string",
+              "value": "[parameters('skuName')]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "appService",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "baseName": {
+            "value": "[parameters('baseName')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "appNameSuffix": {
+            "value": "[variables('appNameSuffix')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "appServicePlanId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'appServicePlan'), '2025-04-01').outputs.appServicePlanId.value]"
+          },
+          "linuxFxVersion": {
+            "value": "[parameters('linuxFxVersion')]"
+          },
+          "alwaysOn": {
+            "value": "[not(equals(parameters('skuName'), 'F1'))]"
+          },
+          "applicationInsightsConnectionString": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'applicationInsights'), '2025-04-01').outputs.connectionString.value]"
+          },
+          "extraTags": {
+            "value": "[parameters('extraTags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.45.15.27210",
+              "templateHash": "727368435482695675"
+            }
+          },
+          "parameters": {
+            "baseName": {
+              "type": "string",
+              "maxLength": 40,
+              "metadata": {
+                "description": "Base workload name, e.g. \"interview\"."
+              }
+            },
+            "environment": {
+              "type": "string",
+              "metadata": {
+                "description": "Environment moniker, e.g. \"dev\", \"test\", \"prod\"."
+              }
+            },
+            "appNameSuffix": {
+              "type": "string",
+              "metadata": {
+                "description": "Deterministic suffix used to keep App Service names globally unique."
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region for all resources."
+              }
+            },
+            "appServicePlanId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the App Service plan to host this app."
+              }
+            },
+            "linuxFxVersion": {
+              "type": "string",
+              "defaultValue": "DOTNETCORE|10.0",
+              "metadata": {
+                "description": "Linux runtime stack in <RUNTIME>|<VERSION> format."
+              }
+            },
+            "alwaysOn": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable AlwaysOn for the web app. Disable for Free (F1) tier plans."
+              }
+            },
+            "clientAffinityEnabled": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Enable client affinity (ARR). Normally false for APIs."
+              }
+            },
+            "runFromPackage": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Deploy app as a run-from-package (zip deploy). Set false if using other deployment methods."
+              }
+            },
+            "appSettings": {
+              "type": "array",
+              "defaultValue": [],
+              "metadata": {
+                "description": "Additional app settings as an array of {name, value} objects."
+              }
+            },
+            "connectionStrings": {
+              "type": "array",
+              "defaultValue": [],
+              "metadata": {
+                "description": "Connection strings (each object requires name, type, value)."
+              }
+            },
+            "applicationInsightsConnectionString": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Application Insights connection string for telemetry. Leave empty to disable."
+              }
+            },
+            "extraTags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Extra tags merged into the defaults."
+              }
+            }
+          },
+          "variables": {
+            "copy": [
+              {
+                "name": "normalizedConnectionStrings",
+                "count": "[length(parameters('connectionStrings'))]",
+                "input": {
+                  "name": "[string(parameters('connectionStrings')[copyIndex('normalizedConnectionStrings')].name)]",
+                  "type": "[parameters('connectionStrings')[copyIndex('normalizedConnectionStrings')].type]",
+                  "connectionString": "[string(coalesce(parameters('connectionStrings')[copyIndex('normalizedConnectionStrings')].value, parameters('connectionStrings')[copyIndex('normalizedConnectionStrings')].connectionString))]"
+                }
+              }
+            ],
+            "normalizedEnvironment": "[toLower(parameters('environment'))]",
+            "webAppName": "[format('{0}-{1}-{2}', parameters('baseName'), variables('normalizedEnvironment'), toLower(parameters('appNameSuffix')))]",
+            "baseTags": {
+              "environment": "[variables('normalizedEnvironment')]",
+              "workload": "webapi",
+              "managedBy": "iac"
+            },
+            "finalTags": "[union(variables('baseTags'), parameters('extraTags'))]",
+            "aspNetCoreEnvMap": {
+              "dev": "Development",
+              "test": "Staging",
+              "prod": "Production"
+            },
+            "aspNetCoreEnvironment": "[coalesce(tryGet(variables('aspNetCoreEnvMap'), variables('normalizedEnvironment')), variables('normalizedEnvironment'))]",
+            "defaultAppSettings": "[concat(createArray(createObject('name', 'ASPNETCORE_ENVIRONMENT', 'value', variables('aspNetCoreEnvironment')), createObject('name', 'ASPNETCORE_FORWARDEDHEADERS_ENABLED', 'value', 'true'), createObject('name', 'SCM_DO_BUILD_DURING_DEPLOYMENT', 'value', 'false')), if(parameters('runFromPackage'), createArray(createObject('name', 'WEBSITE_RUN_FROM_PACKAGE', 'value', '1')), createArray()), if(not(empty(parameters('applicationInsightsConnectionString'))), createArray(createObject('name', 'APPLICATIONINSIGHTS_CONNECTION_STRING', 'value', parameters('applicationInsightsConnectionString'))), createArray()))]",
+            "effectiveAppSettings": "[concat(variables('defaultAppSettings'), parameters('appSettings'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Web/sites",
+              "apiVersion": "2023-12-01",
+              "name": "[variables('webAppName')]",
+              "location": "[parameters('location')]",
+              "kind": "app,linux",
+              "tags": "[variables('finalTags')]",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "properties": {
+                "serverFarmId": "[parameters('appServicePlanId')]",
+                "httpsOnly": true,
+                "clientAffinityEnabled": "[parameters('clientAffinityEnabled')]",
+                "siteConfig": {
+                  "linuxFxVersion": "[parameters('linuxFxVersion')]",
+                  "alwaysOn": "[parameters('alwaysOn')]",
+                  "ftpsState": "Disabled",
+                  "http20Enabled": true,
+                  "appSettings": "[variables('effectiveAppSettings')]",
+                  "connectionStrings": "[variables('normalizedConnectionStrings')]",
+                  "healthCheckPath": "/api/health",
+                  "minTlsVersion": "1.2",
+                  "scmMinTlsVersion": "1.2"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Web/sites/config",
+              "apiVersion": "2023-12-01",
+              "name": "[format('{0}/{1}', variables('webAppName'), 'logs')]",
+              "properties": {
+                "applicationLogs": {
+                  "fileSystem": {
+                    "level": "Warning"
+                  }
+                },
+                "httpLogs": {
+                  "fileSystem": {
+                    "retentionInDays": 7,
+                    "retentionInMb": 35,
+                    "enabled": true
+                  }
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('webAppName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "webAppName": {
+              "type": "string",
+              "value": "[variables('webAppName')]"
+            },
+            "webAppId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Web/sites', variables('webAppName'))]"
+            },
+            "webAppDefaultHostName": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/sites', variables('webAppName')), '2023-12-01').defaultHostName]"
+            },
+            "webAppPrincipalId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/sites', variables('webAppName')), '2023-12-01', 'full').identity.principalId]"
+            },
+            "webAppTenantId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/sites', variables('webAppName')), '2023-12-01', 'full').identity.tenantId]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'applicationInsights')]",
+        "[resourceId('Microsoft.Resources/deployments', 'appServicePlan')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "applicationInsights",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "baseName": {
+            "value": "[parameters('baseName')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "extraTags": {
+            "value": "[parameters('extraTags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.45.15.27210",
+              "templateHash": "8405558671383090246"
+            }
+          },
+          "parameters": {
+            "baseName": {
+              "type": "string",
+              "maxLength": 40,
+              "metadata": {
+                "description": "Base workload name, e.g. \"interview\"."
+              }
+            },
+            "environment": {
+              "type": "string",
+              "metadata": {
+                "description": "Environment moniker, e.g. \"dev\", \"test\", \"prod\"."
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Azure region."
+              }
+            },
+            "retentionInDays": {
+              "type": "int",
+              "defaultValue": 30,
+              "minValue": 30,
+              "maxValue": 730,
+              "metadata": {
+                "description": "Retention period in days for Log Analytics. Default 30, max 730."
+              }
+            },
+            "extraTags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Extra tags merged into the defaults."
+              }
+            }
+          },
+          "variables": {
+            "normalizedEnvironment": "[toLower(parameters('environment'))]",
+            "workspaceName": "[format('{0}-{1}-logs', parameters('baseName'), variables('normalizedEnvironment'))]",
+            "appInsightsName": "[format('{0}-{1}-ai', parameters('baseName'), variables('normalizedEnvironment'))]",
+            "baseTags": {
+              "environment": "[variables('normalizedEnvironment')]",
+              "workload": "observability",
+              "managedBy": "iac"
+            },
+            "finalTags": "[union(variables('baseTags'), parameters('extraTags'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.OperationalInsights/workspaces",
+              "apiVersion": "2023-09-01",
+              "name": "[variables('workspaceName')]",
+              "location": "[parameters('location')]",
+              "tags": "[variables('finalTags')]",
+              "properties": {
+                "sku": {
+                  "name": "PerGB2018"
+                },
+                "retentionInDays": "[parameters('retentionInDays')]",
+                "publicNetworkAccessForIngestion": "Enabled",
+                "publicNetworkAccessForQuery": "Enabled"
+              }
+            },
+            {
+              "type": "Microsoft.Insights/components",
+              "apiVersion": "2020-02-02",
+              "name": "[variables('appInsightsName')]",
+              "location": "[parameters('location')]",
+              "tags": "[variables('finalTags')]",
+              "kind": "web",
+              "properties": {
+                "Application_Type": "web",
+                "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('workspaceName'))]",
+                "RetentionInDays": "[parameters('retentionInDays')]",
+                "IngestionMode": "LogAnalytics",
+                "publicNetworkAccessForIngestion": "Enabled",
+                "publicNetworkAccessForQuery": "Enabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', variables('workspaceName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "appInsightsName": {
+              "type": "string",
+              "value": "[variables('appInsightsName')]"
+            },
+            "appInsightsId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Insights/components', variables('appInsightsName'))]"
+            },
+            "connectionString": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightsName')), '2020-02-02').ConnectionString]"
+            },
+            "instrumentationKey": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightsName')), '2020-02-02').InstrumentationKey]"
+            },
+            "workspaceName": {
+              "type": "string",
+              "value": "[variables('workspaceName')]"
+            },
+            "workspaceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('workspaceName'))]"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "appServicePlanName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'appServicePlan'), '2025-04-01').outputs.appServicePlanName.value]"
+    },
+    "appServicePlanId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'appServicePlan'), '2025-04-01').outputs.appServicePlanId.value]"
+    },
+    "webAppName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'appService'), '2025-04-01').outputs.webAppName.value]"
+    },
+    "webAppId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'appService'), '2025-04-01').outputs.webAppId.value]"
+    },
+    "webAppDefaultHostName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'appService'), '2025-04-01').outputs.webAppDefaultHostName.value]"
+    },
+    "webAppUrl": {
+      "type": "string",
+      "value": "[format('https://{0}', reference(resourceId('Microsoft.Resources/deployments', 'appService'), '2025-04-01').outputs.webAppDefaultHostName.value)]"
+    },
+    "webAppPrincipalId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'appService'), '2025-04-01').outputs.webAppPrincipalId.value]"
+    },
+    "appInsightsName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'applicationInsights'), '2025-04-01').outputs.appInsightsName.value]"
+    },
+    "appInsightsId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'applicationInsights'), '2025-04-01').outputs.appInsightsId.value]"
+    }
+  }
+}
