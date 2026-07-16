@@ -1,5 +1,5 @@
-import { Button, Stack, Text, Title } from "@mantine/core";
-import { Link } from "react-router-dom";
+import { Button, Stack, Text, Title } from '@mantine/core'
+import { Link } from 'react-router-dom'
 
 export function NotFoundPage() {
   return (
@@ -10,5 +10,5 @@ export function NotFoundPage() {
         Go home
       </Button>
     </Stack>
-  );
+  )
 }

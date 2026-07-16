@@ -1,11 +1,11 @@
-import { MantineProvider } from "@mantine/core";
-import { Notifications } from "@mantine/notifications";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { queryClient } from "./queryClient";
+import { MantineProvider } from '@mantine/core'
+import { Notifications } from '@mantine/notifications'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { queryClient } from './queryClient'
 
 type AppProvidersProps = {
-  children: React.ReactNode;
-};
+  children: React.ReactNode
+}
 
 export function AppProviders({ children }: AppProvidersProps) {
   return (
@@ -15,5 +15,5 @@ export function AppProviders({ children }: AppProvidersProps) {
         {children}
       </MantineProvider>
     </QueryClientProvider>
-  );
+  )
 }
