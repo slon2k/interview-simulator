@@ -79,6 +79,25 @@ app.UseHttpsRedirection();
 
 app.MapHealthChecks("/api/health").WithName("HealthCheck");
 
+if (!isDevelopment)
+{
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
+
+    // Catch unresolved API routes before SPA fallback.
+    app.MapFallback("/api/{**catchAll}", (HttpContext context) =>
+    {
+        return Results.NotFound(new
+        {
+            error = "API endpoint not found",
+            path = context.Request.Path.Value
+        });
+    });
+
+    // React SPA fallback.
+    app.MapFallbackToFile("index.html");
+}
+
 app.Run();
 
 public partial class Program;

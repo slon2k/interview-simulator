@@ -1,7 +1,40 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web"><PropertyGroup>  <UserSecretsId>c2f66d55-d7bc-4e50-a87c-d488ba7dda86</UserSecretsId>
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <UserSecretsId>c2f66d55-d7bc-4e50-a87c-d488ba7dda86</UserSecretsId>
+
+    <WebProjectDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../../../web'))</WebProjectDir>
+    <WebDistDir>$(WebProjectDir)/dist</WebDistDir>
   </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.OpenApi" />
   </ItemGroup>
+
+  <Target
+    Name="BuildFrontendForPublish"
+    AfterTargets="ComputeFilesToPublish"
+    Condition="'$(SkipFrontendBuild)' != 'true' and Exists('$(WebProjectDir)/package.json')">
+
+    <Message Importance="high" Text="Building frontend assets in $(WebProjectDir)" />
+
+    <Exec WorkingDirectory="$(WebProjectDir)" Command="npm ci" />
+    <Exec WorkingDirectory="$(WebProjectDir)" Command="npm run build" />
+
+    <ItemGroup>
+      <DistFiles Include="$(WebDistDir)/**/*" />
+
+      <ResolvedFileToPublish
+        Include="@(DistFiles->'%(FullPath)')"
+        Exclude="@(ResolvedFileToPublish)">
+
+        <RelativePath>wwwroot/%(RecursiveDir)%(Filename)%(Extension)</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
+
 </Project>
