@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.45.15.27210",
-      "templateHash": "15817950038909836839"
+      "templateHash": "11152088829245435787"
     }
   },
   "parameters": {
@@ -280,7 +280,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.45.15.27210",
-              "templateHash": "727368435482695675"
+              "templateHash": "2248161209878068271"
             }
           },
           "parameters": {
@@ -392,13 +392,7 @@
               "managedBy": "iac"
             },
             "finalTags": "[union(variables('baseTags'), parameters('extraTags'))]",
-            "aspNetCoreEnvMap": {
-              "dev": "Development",
-              "test": "Staging",
-              "prod": "Production"
-            },
-            "aspNetCoreEnvironment": "[coalesce(tryGet(variables('aspNetCoreEnvMap'), variables('normalizedEnvironment')), variables('normalizedEnvironment'))]",
-            "defaultAppSettings": "[concat(createArray(createObject('name', 'ASPNETCORE_ENVIRONMENT', 'value', variables('aspNetCoreEnvironment')), createObject('name', 'ASPNETCORE_FORWARDEDHEADERS_ENABLED', 'value', 'true'), createObject('name', 'SCM_DO_BUILD_DURING_DEPLOYMENT', 'value', 'false')), if(parameters('runFromPackage'), createArray(createObject('name', 'WEBSITE_RUN_FROM_PACKAGE', 'value', '1')), createArray()), if(not(empty(parameters('applicationInsightsConnectionString'))), createArray(createObject('name', 'APPLICATIONINSIGHTS_CONNECTION_STRING', 'value', parameters('applicationInsightsConnectionString'))), createArray()))]",
+            "defaultAppSettings": "[concat(createArray(createObject('name', 'ASPNETCORE_ENVIRONMENT', 'value', 'Production'), createObject('name', 'APP_ENVIRONMENT', 'value', variables('normalizedEnvironment')), createObject('name', 'ASPNETCORE_FORWARDEDHEADERS_ENABLED', 'value', 'true'), createObject('name', 'SCM_DO_BUILD_DURING_DEPLOYMENT', 'value', 'false')), if(parameters('runFromPackage'), createArray(createObject('name', 'WEBSITE_RUN_FROM_PACKAGE', 'value', '1')), createArray()), if(not(empty(parameters('applicationInsightsConnectionString'))), createArray(createObject('name', 'APPLICATIONINSIGHTS_CONNECTION_STRING', 'value', parameters('applicationInsightsConnectionString'))), createArray()))]",
             "effectiveAppSettings": "[concat(variables('defaultAppSettings'), parameters('appSettings'))]"
           },
           "resources": [
