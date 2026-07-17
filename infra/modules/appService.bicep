@@ -49,18 +49,15 @@ var baseTags = {
 
 var finalTags = union(baseTags, extraTags)
 
-var aspNetCoreEnvMap = {
-  dev: 'Development'
-  test: 'Staging'
-  prod: 'Production'
-}
-var aspNetCoreEnvironment = aspNetCoreEnvMap[?normalizedEnvironment] ?? normalizedEnvironment
-
 var defaultAppSettings = concat(
   [
     {
       name: 'ASPNETCORE_ENVIRONMENT'
-      value: aspNetCoreEnvironment
+      value: 'Production'
+    }
+    {
+      name: 'APP_ENVIRONMENT'
+      value: normalizedEnvironment
     }
     {
       name: 'ASPNETCORE_FORWARDEDHEADERS_ENABLED'

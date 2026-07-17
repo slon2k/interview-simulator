@@ -88,3 +88,5 @@ az bicep build --file infra/main.bicep
 - Keep reusable resources in `modules/` instead of growing `main.bicep` indefinitely.
 - Keep secrets out of parameter files committed to the repository.
 - If a new environment is introduced, add a new `*.bicepparam` file and document it here.
+- App Service runtime mode is set with `ASPNETCORE_ENVIRONMENT=Production` for hosted deployments.
+- Application-specific environment routing uses `APP_ENVIRONMENT` (for example `dev`, `test`, `prod`).
