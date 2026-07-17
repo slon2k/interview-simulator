@@ -1,0 +1,125 @@
+name: Deploy Dev Infrastructure
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - main
+    paths:
+      - "infra/**"
+      - ".github/workflows/deploy-infra-dev.yml"
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-infra-dev
+  cancel-in-progress: false
+
+env:
+  TEMPLATE_FILE: infra/main.bicep
+  PARAMETERS_FILE: infra/dev.bicepparam
+
+jobs:
+  deploy-infra-dev:
+    name: Deploy dev infrastructure
+    runs-on: ubuntu-latest
+
+    environment: dev
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Validate required configuration
+        shell: bash
+        run: |
+          if [ -z "${{ vars.AZURE_CLIENT_ID }}" ]; then
+            echo "Missing GitHub variable: AZURE_CLIENT_ID"
+            exit 1
+          fi
+
+          if [ -z "${{ vars.AZURE_TENANT_ID }}" ]; then
+            echo "Missing GitHub variable: AZURE_TENANT_ID"
+            exit 1
+          fi
+
+          if [ -z "${{ vars.AZURE_SUBSCRIPTION_ID }}" ]; then
+            echo "Missing GitHub variable: AZURE_SUBSCRIPTION_ID"
+            exit 1
+          fi
+
+          if [ -z "${{ vars.AZURE_RESOURCE_GROUP }}" ]; then
+            echo "Missing GitHub variable: AZURE_RESOURCE_GROUP"
+            exit 1
+          fi
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Show Azure context
+        shell: bash
+        run: |
+          az account show \
+            --query "{subscriptionId:id, tenantId:tenantId, user:user.name}" \
+            --output table
+
+      - name: Build Bicep template
+        shell: bash
+        run: |
+          az bicep build --file "${{ env.TEMPLATE_FILE }}"
+
+      - name: Preview infrastructure changes
+        shell: bash
+        run: |
+          az deployment group what-if \
+            --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+            --template-file "${{ env.TEMPLATE_FILE }}" \
+            --parameters "${{ env.PARAMETERS_FILE }}"
+
+      - name: Deploy infrastructure
+        id: deploy
+        shell: bash
+        run: |
+          DEPLOYMENT_NAME="dev-infra-${{ github.run_number }}-${{ github.run_attempt }}"
+
+          az deployment group create \
+            --name "$DEPLOYMENT_NAME" \
+            --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+            --template-file "${{ env.TEMPLATE_FILE }}" \
+            --parameters "${{ env.PARAMETERS_FILE }}" \
+            --output json > deployment-output.json
+
+          echo "deployment_name=$DEPLOYMENT_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Show deployment outputs
+        shell: bash
+        run: |
+          echo "Deployment name: ${{ steps.deploy.outputs.deployment_name }}"
+          cat deployment-output.json | jq '.properties.outputs'
+
+      - name: Verify App Service exists
+        shell: bash
+        run: |
+          WEB_APP_NAME=$(cat deployment-output.json | jq -r '.properties.outputs.webAppName.value')
+          WEB_APP_URL=$(cat deployment-output.json | jq -r '.properties.outputs.webAppUrl.value // empty')
+
+          echo "Web App name: $WEB_APP_NAME"
+          echo "Web App URL: $WEB_APP_URL"
+
+          if [ -z "$WEB_APP_NAME" ] || [ "$WEB_APP_NAME" = "null" ]; then
+            echo "Deployment output webAppName is missing."
+            exit 1
+          fi
+
+          az webapp show \
+            --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+            --name "$WEB_APP_NAME" \
+            --query "{name:name, state:state, defaultHostName:defaultHostName, httpsOnly:httpsOnly}" \
+            --output table
