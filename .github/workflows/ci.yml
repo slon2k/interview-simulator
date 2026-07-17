@@ -145,3 +145,49 @@ jobs:
     steps:
       - name: Skip app validation
         run: echo "No API or web changes detected. Skipping app build."
+
+  ci-result:
+    name: CI result
+    needs:
+      - changes
+      - backend
+      - frontend
+      - no-relevant-changes
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Evaluate CI result
+        shell: bash
+        run: |
+          changes_result="${{ needs.changes.result }}"
+          backend_result="${{ needs.backend.result }}"
+          frontend_result="${{ needs.frontend.result }}"
+          no_changes_result="${{ needs.no-relevant-changes.result }}"
+
+          echo "changes result:      $changes_result"
+          echo "backend result:      $backend_result"
+          echo "frontend result:     $frontend_result"
+          echo "no changes result:   $no_changes_result"
+
+          if [ "$changes_result" != "success" ]; then
+            echo "Change detection failed."
+            exit 1
+          fi
+
+          for result in "$backend_result" "$frontend_result" "$no_changes_result"; do
+            case "$result" in
+              success|skipped)
+                ;;
+              failure|cancelled|timed_out)
+                echo "A required CI job failed or was cancelled."
+                exit 1
+                ;;
+              *)
+                echo "Unexpected CI job result: $result"
+                exit 1
+                ;;
+            esac
+          done
+
+          echo "CI passed."
