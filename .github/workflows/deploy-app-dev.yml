@@ -1,0 +1,177 @@
+name: Deploy App Dev
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - main
+    paths:
+      - "api/**"
+      - "web/**"
+      - "global.json"
+      - "Directory.Build.props"
+      - "Directory.Build.targets"
+      - "Directory.Packages.props"
+      - "NuGet.Config"
+      - ".github/workflows/deploy-app-dev.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-app-dev
+  cancel-in-progress: false
+
+env:
+  API_PROJECT: api/src/InterviewSimulator.Api/InterviewSimulator.Api.csproj
+  PUBLISH_DIR: ${{ github.workspace }}/publish
+  NODE_VERSION: ${{ vars.NODE_VERSION || '24.x' }}
+
+jobs:
+  deploy:
+    name: Build, publish, and deploy app to dev
+    runs-on: ubuntu-latest
+
+    environment: dev
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate required configuration
+        shell: bash
+        run: |
+          if [ -z "${{ vars.AZURE_WEBAPP_NAME }}" ]; then
+            echo "Missing GitHub variable: AZURE_WEBAPP_NAME"
+            exit 1
+          fi
+
+          if [ -z "${{ vars.AZURE_WEBAPP_URL }}" ]; then
+            echo "Missing GitHub variable: AZURE_WEBAPP_URL"
+            exit 1
+          fi
+
+          if [ -z "${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}" ]; then
+            echo "Missing GitHub secret: AZURE_WEBAPP_PUBLISH_PROFILE"
+            exit 1
+          fi
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Restore API project
+        run: dotnet restore ${{ env.API_PROJECT }}
+
+      - name: Publish API and frontend
+        shell: bash
+        run: |
+          rm -rf "${{ env.PUBLISH_DIR }}"
+
+          dotnet publish "${{ env.API_PROJECT }}" \
+            --configuration Release \
+            --no-restore \
+            --output "${{ env.PUBLISH_DIR }}"
+
+      - name: Verify publish output
+        shell: bash
+        run: |
+          echo "Publish directory:"
+          ls -la "${{ env.PUBLISH_DIR }}"
+
+          echo "wwwroot:"
+          ls -la "${{ env.PUBLISH_DIR }}/wwwroot"
+
+          echo "wwwroot/assets:"
+          ls -la "${{ env.PUBLISH_DIR }}/wwwroot/assets"
+
+          if [ ! -f "${{ env.PUBLISH_DIR }}/wwwroot/index.html" ]; then
+            echo "Missing frontend entrypoint: wwwroot/index.html"
+            exit 1
+          fi
+
+          if [ ! -d "${{ env.PUBLISH_DIR }}/wwwroot/assets" ]; then
+            echo "Missing frontend assets directory: wwwroot/assets"
+            exit 1
+          fi
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ${{ env.PUBLISH_DIR }}
+
+      - name: Wait for App Service startup
+        shell: bash
+        run: |
+          echo "Waiting briefly for App Service to restart..."
+          sleep 20
+
+      - name: Verify deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BASE_URL="${{ vars.AZURE_WEBAPP_URL }}"
+
+          echo "Verifying deployment at: $BASE_URL"
+
+          function wait_for_success() {
+            local url="$1"
+            local expected_text="$2"
+            local max_attempts=12
+            local delay_seconds=10
+
+            for attempt in $(seq 1 "$max_attempts"); do
+              echo "Attempt $attempt/$max_attempts: GET $url"
+
+              response_file="$(mktemp)"
+              status_code=$(curl -L -sS -o "$response_file" -w "%{http_code}" "$url" || true)
+
+              echo "HTTP status: $status_code"
+              cat "$response_file"
+              echo ""
+
+              if [ "$status_code" = "200" ]; then
+                if [ -z "$expected_text" ] || grep -q "$expected_text" "$response_file"; then
+                  rm "$response_file"
+                  return 0
+                fi
+              fi
+
+              rm "$response_file"
+              echo "Not ready yet. Waiting ${delay_seconds}s..."
+              sleep "$delay_seconds"
+            done
+
+            echo "Verification failed for $url"
+            exit 1
+          }
+
+          wait_for_success "$BASE_URL/api/health" "Healthy"
+          wait_for_success "$BASE_URL/" ""
+          wait_for_success "$BASE_URL/dashboard" ""
+
+          echo "Verifying unknown API route returns 404..."
+          api_unknown_status=$(curl -L -sS -o /tmp/api_unknown_response.txt -w "%{http_code}" "$BASE_URL/api/unknown" || true)
+
+          echo "HTTP status: $api_unknown_status"
+          cat /tmp/api_unknown_response.txt
+          echo ""
+
+          if [ "$api_unknown_status" != "404" ]; then
+            echo "Expected /api/unknown to return 404, but got $api_unknown_status"
+            exit 1
+          fi
+
+          echo "Deployment verification succeeded."
