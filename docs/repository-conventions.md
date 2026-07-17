@@ -66,7 +66,10 @@ Source-of-truth split:
 ## Infrastructure Conventions
 
 - `infra/` contains infrastructure definitions and related deployment artifacts.
-- Organize `infra/` by environment or module when content grows.
+- `infra/main.bicep` is the entrypoint template for resource group deployment.
+- `infra/*.bicepparam` stores environment-specific parameter files.
+- `infra/modules/` contains reusable infrastructure modules.
+- `infra/README.md` is the source of truth for deployment usage and operator guidance.
 - Keep application code out of `infra/`.
 
 ## Configuration and Secrets
