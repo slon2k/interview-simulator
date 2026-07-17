@@ -82,6 +82,10 @@ Compile the Bicep template:
 az bicep build --file infra/main.bicep
 ```
 
+## Deployment Setup
+
+Detailed Azure and GitHub setup for deployment workflows is documented in [docs/deployment.md](../docs/deployment.md).
+
 ## Notes
 
 - `main.json` is generated output. Do not hand-edit it.
