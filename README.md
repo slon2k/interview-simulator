@@ -29,6 +29,17 @@ The project is built as a portfolio and learning project focused on practical AI
 - Azure AI Speech
 - GitHub OAuth authentication with secure cookie sessions (Entra ID optional later)
 
+## Infrastructure
+
+Infrastructure as code lives under [infra/](c:/Projects/Training/2026/interview-simulator/infra) and is implemented with Bicep.
+
+See [infra/README.md](c:/Projects/Training/2026/interview-simulator/infra/README.md) for:
+
+- current resource footprint
+- parameter file usage
+- deployment and what-if commands
+- naming conventions and uniqueness strategy
+
 ## Publish Frontend + API Together
 
 The API publish process builds the Vite frontend and places its output into publish `wwwroot` automatically.
