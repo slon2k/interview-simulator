@@ -1,0 +1,147 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - "**"
+
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  API_PROJECT: api/src/InterviewSimulator.Api/InterviewSimulator.Api.csproj
+  WEB_PROJECT_DIR: web
+  NODE_VERSION: 24.x
+
+jobs:
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            backend:
+              - 'api/**'
+              - 'global.json'
+              - 'Directory.Build.props'
+              - 'Directory.Build.targets'
+              - 'NuGet.config'
+              - '.github/workflows/ci.yml'
+
+            frontend:
+              - 'web/**'
+              - '.github/workflows/ci.yml'
+
+  backend:
+    name: Backend build and tests
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore API project
+        run: dotnet restore ${{ env.API_PROJECT }}
+
+      - name: Build API project
+        run: dotnet build ${{ env.API_PROJECT }} --configuration Release --no-restore
+
+      - name: Detect backend test projects
+        id: backend_tests
+        shell: bash
+        run: |
+          if [ -d "api/tests" ] && find api/tests -name "*.csproj" -print -quit | grep -q .; then
+            echo "has_tests=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_tests=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run backend tests
+        if: steps.backend_tests.outputs.has_tests == 'true'
+        shell: bash
+        run: |
+          find api/tests -name "*.csproj" -print0 | while IFS= read -r -d '' project; do
+            dotnet test "$project" --configuration Release --nologo
+          done
+
+  frontend:
+    name: Frontend build and tests
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: ${{ env.WEB_PROJECT_DIR }}
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: ${{ env.WEB_PROJECT_DIR }}
+        run: npm run build
+
+      - name: Detect frontend test script
+        id: frontend_tests
+        shell: bash
+        run: |
+          if node -e "const p=require('./web/package.json'); process.exit(p.scripts && (p.scripts['test:ci'] || p.scripts.test) ? 0 : 1)"; then
+            echo "has_tests=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_tests=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run frontend tests
+        if: steps.frontend_tests.outputs.has_tests == 'true'
+        working-directory: ${{ env.WEB_PROJECT_DIR }}
+        shell: bash
+        run: |
+          if npm run | grep -q "test:ci"; then
+            npm run test:ci
+          else
+            npm run test -- --run
+          fi
+
+  no-relevant-changes:
+    name: No app changes
+    needs: changes
+    if: needs.changes.outputs.backend != 'true' && needs.changes.outputs.frontend != 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Skip app validation
+        run: echo "No API or web changes detected. Skipping app build."
