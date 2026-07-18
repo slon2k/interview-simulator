@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.45.15.27210",
-      "templateHash": "4302157789804509609"
+      "templateHash": "3243961343207247679"
     }
   },
   "parameters": {
@@ -314,6 +314,10 @@
               {
                 "name": "AzureSpeech__TokenEndpoint",
                 "value": "[reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechTokenEndpoint.value]"
+              },
+              {
+                "name": "AzureSpeech__Key",
+                "value": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=azure-speech-key)', parameters('keyVaultName'))]"
               }
             ]
           },

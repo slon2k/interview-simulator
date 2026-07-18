@@ -1,4 +1,12 @@
+using InterviewSimulator.Api;
+using Microsoft.Extensions.Options;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddOptions<AzureSpeechOptions>()
+    .Bind(builder.Configuration.GetSection(AzureSpeechOptions.SectionName))
+    .ValidateOnStart();
+builder.Services.AddSingleton<IValidateOptions<AzureSpeechOptions>, AzureSpeechOptionsValidator>();
 
 builder.Services.AddOpenApi();
 builder.Services.AddHealthChecks();

@@ -83,6 +83,10 @@ module api 'modules/appService.bicep' = {
         name: 'AzureSpeech__TokenEndpoint'
         value: speech.outputs.speechTokenEndpoint
       }
+      {
+        name: 'AzureSpeech__Key'
+        value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=azure-speech-key)'
+      }
     ]
     extraTags: extraTags
   }
