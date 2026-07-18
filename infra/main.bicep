@@ -30,6 +30,17 @@ param enablePurgeProtection bool = false
 // Simpler, unique, and more readable Key Vault name: baseName-env-kv-xxxxxx
 param keyVaultName string = toLower('${take(baseName, 8)}-${environment}-kv-${take(uniqueString(resourceGroup().id), 6)}')
 
+// speech account name must be globally unique, so we use a deterministic suffix to avoid collisions
+@description('Speech account name, should be globally unique.')
+param speechAccountName string = toLower('${take(baseName, 16)}-${environment}-spch-${take(uniqueString(resourceGroup().id), 6)}')
+
+@description('Azure Speech SKU for dev/test/prod.')
+@allowed([
+  'F0'
+  'S0'
+])
+param speechSkuName string = 'F0'
+
 var appNameSuffix = take(uniqueString(subscription().id, resourceGroup().id, baseName, environment), 6)
 
 
@@ -59,6 +70,20 @@ module api 'modules/appService.bicep' = {
     alwaysOn: skuName != 'F1'
 
     applicationInsightsConnectionString: appInsights.outputs.connectionString
+    appSettings: [
+      {
+        name: 'AzureSpeech__Region'
+        value: speech.outputs.speechRegion
+      }
+      {
+        name: 'AzureSpeech__Endpoint'
+        value: speech.outputs.speechEndpoint
+      }
+      {
+        name: 'AzureSpeech__TokenEndpoint'
+        value: speech.outputs.speechTokenEndpoint
+      }
+    ]
     extraTags: extraTags
   }
 }
@@ -84,6 +109,17 @@ module keyVault 'modules/keyVault.bicep' = {
   }
 }
 
+module speech 'modules/speechService.bicep' = {
+  name: 'speechService'
+  params: {
+    speechAccountName: speechAccountName
+    environment: environment
+    location: location
+    skuName: speechSkuName
+    extraTags: extraTags
+  }
+}
+
 // ── Variables for Outputs ─────────────────────────────────────────────────────
 
 output appServicePlanName string = plan.outputs.appServicePlanName
@@ -97,3 +133,8 @@ output appInsightsName string = appInsights.outputs.appInsightsName
 output appInsightsId string = appInsights.outputs.appInsightsId
 output keyVaultName string = keyVault.outputs.keyVaultName
 output keyVaultUri string = keyVault.outputs.keyVaultUri
+output speechAccountName string = speech.outputs.speechAccountName
+output speechAccountId string = speech.outputs.speechAccountId
+output speechRegion string = speech.outputs.speechRegion
+output speechEndpoint string = speech.outputs.speechEndpoint
+output speechTokenEndpoint string = speech.outputs.speechTokenEndpoint

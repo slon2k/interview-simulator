@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.45.15.27210",
-      "templateHash": "1881631673787989605"
+      "templateHash": "4302157789804509609"
     }
   },
   "parameters": {
@@ -88,6 +88,24 @@
       "defaultValue": "[toLower(format('{0}-{1}-kv-{2}', take(parameters('baseName'), 8), parameters('environment'), take(uniqueString(resourceGroup().id), 6)))]",
       "metadata": {
         "description": "Name of the Key Vault."
+      }
+    },
+    "speechAccountName": {
+      "type": "string",
+      "defaultValue": "[toLower(format('{0}-{1}-spch-{2}', take(parameters('baseName'), 16), parameters('environment'), take(uniqueString(resourceGroup().id), 6)))]",
+      "metadata": {
+        "description": "Speech account name, should be globally unique."
+      }
+    },
+    "speechSkuName": {
+      "type": "string",
+      "defaultValue": "F0",
+      "allowedValues": [
+        "F0",
+        "S0"
+      ],
+      "metadata": {
+        "description": "Azure Speech SKU for dev/test/prod."
       }
     }
   },
@@ -282,6 +300,22 @@
           },
           "applicationInsightsConnectionString": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'applicationInsights'), '2025-04-01').outputs.connectionString.value]"
+          },
+          "appSettings": {
+            "value": [
+              {
+                "name": "AzureSpeech__Region",
+                "value": "[reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechRegion.value]"
+              },
+              {
+                "name": "AzureSpeech__Endpoint",
+                "value": "[reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechEndpoint.value]"
+              },
+              {
+                "name": "AzureSpeech__TokenEndpoint",
+                "value": "[reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechTokenEndpoint.value]"
+              }
+            ]
           },
           "extraTags": {
             "value": "[parameters('extraTags')]"
@@ -486,7 +520,8 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'applicationInsights')]",
-        "[resourceId('Microsoft.Resources/deployments', 'appServicePlan')]"
+        "[resourceId('Microsoft.Resources/deployments', 'appServicePlan')]",
+        "[resourceId('Microsoft.Resources/deployments', 'speechService')]"
       ]
     },
     {
@@ -786,6 +821,150 @@
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'appService')]"
       ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "speechService",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "speechAccountName": {
+            "value": "[parameters('speechAccountName')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "skuName": {
+            "value": "[parameters('speechSkuName')]"
+          },
+          "extraTags": {
+            "value": "[parameters('extraTags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.45.15.27210",
+              "templateHash": "11297700951262994580"
+            }
+          },
+          "parameters": {
+            "speechAccountName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the Services account for Azure Speech Services. Must be globally unique."
+              }
+            },
+            "environment": {
+              "type": "string",
+              "metadata": {
+                "description": "Environment moniker, e.g. \"dev\", \"test\", \"prod\"."
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region for the Speech resource."
+              }
+            },
+            "skuName": {
+              "type": "string",
+              "defaultValue": "F0",
+              "allowedValues": [
+                "F0",
+                "S0"
+              ],
+              "metadata": {
+                "description": "Azure Speech SKU. Use F0 for dev if available; otherwise use S0."
+              }
+            },
+            "publicNetworkAccess": {
+              "type": "string",
+              "defaultValue": "Enabled",
+              "allowedValues": [
+                "Enabled",
+                "Disabled"
+              ],
+              "metadata": {
+                "description": "Whether public network access is enabled. Keep Enabled for dev."
+              }
+            },
+            "disableLocalAuth": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Disable local/key authentication. Must be false if using Speech keys."
+              }
+            },
+            "extraTags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Extra tags merged into the defaults."
+              }
+            }
+          },
+          "variables": {
+            "normalizedEnvironment": "[toLower(parameters('environment'))]",
+            "baseTags": {
+              "environment": "[variables('normalizedEnvironment')]",
+              "workload": "speech",
+              "managedBy": "iac"
+            },
+            "finalTags": "[union(variables('baseTags'), parameters('extraTags'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.CognitiveServices/accounts",
+              "apiVersion": "2023-05-01",
+              "name": "[parameters('speechAccountName')]",
+              "location": "[parameters('location')]",
+              "kind": "SpeechServices",
+              "sku": {
+                "name": "[parameters('skuName')]"
+              },
+              "tags": "[variables('finalTags')]",
+              "properties": {
+                "customSubDomainName": "[parameters('speechAccountName')]",
+                "publicNetworkAccess": "[parameters('publicNetworkAccess')]",
+                "disableLocalAuth": "[parameters('disableLocalAuth')]"
+              }
+            }
+          ],
+          "outputs": {
+            "speechAccountName": {
+              "type": "string",
+              "value": "[parameters('speechAccountName')]"
+            },
+            "speechAccountId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('speechAccountName'))]"
+            },
+            "speechRegion": {
+              "type": "string",
+              "value": "[parameters('location')]"
+            },
+            "speechEndpoint": {
+              "type": "string",
+              "value": "[format('https://{0}.cognitiveservices.azure.com/', parameters('speechAccountName'))]"
+            },
+            "speechTokenEndpoint": {
+              "type": "string",
+              "value": "[format('https://{0}.api.cognitive.microsoft.com/sts/v1.0/issueToken', parameters('location'))]"
+            }
+          }
+        }
+      }
     }
   ],
   "outputs": {
@@ -832,6 +1011,26 @@
     "keyVaultUri": {
       "type": "string",
       "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyVault'), '2025-04-01').outputs.keyVaultUri.value]"
+    },
+    "speechAccountName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechAccountName.value]"
+    },
+    "speechAccountId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechAccountId.value]"
+    },
+    "speechRegion": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechRegion.value]"
+    },
+    "speechEndpoint": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechEndpoint.value]"
+    },
+    "speechTokenEndpoint": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechTokenEndpoint.value]"
     }
   }
 }
