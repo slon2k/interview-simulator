@@ -40,6 +40,14 @@ See [infra/README.md](c:/Projects/Training/2026/interview-simulator/infra/README
 - deployment and what-if commands
 - naming conventions and uniqueness strategy
 
+## Development Docs
+
+See [docs/development.md](c:/Projects/Training/2026/interview-simulator/docs/development.md) for:
+
+- local Azure Speech configuration
+- `dotnet user-secrets` setup
+- runtime configuration expectations for local vs Azure
+
 ## Publish Frontend + API Together
 
 The API publish process builds the Vite frontend and places its output into publish `wwwroot` automatically.
