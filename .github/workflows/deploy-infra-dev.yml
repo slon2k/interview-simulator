@@ -109,12 +109,21 @@ jobs:
         run: |
           WEB_APP_NAME=$(cat deployment-output.json | jq -r '.properties.outputs.webAppName.value')
           WEB_APP_URL=$(cat deployment-output.json | jq -r '.properties.outputs.webAppUrl.value // empty')
+          KEY_VAULT_NAME=$(cat deployment-output.json | jq -r '.properties.outputs.keyVaultName.value // empty')
+          KEY_VAULT_URI=$(cat deployment-output.json | jq -r '.properties.outputs.keyVaultUri.value // empty')
 
           echo "Web App name: $WEB_APP_NAME"
           echo "Web App URL: $WEB_APP_URL"
+          echo "Key Vault name: $KEY_VAULT_NAME"
+          echo "Key Vault URI: $KEY_VAULT_URI"
 
           if [ -z "$WEB_APP_NAME" ] || [ "$WEB_APP_NAME" = "null" ]; then
             echo "Deployment output webAppName is missing."
+            exit 1
+          fi
+
+          if [ -z "$KEY_VAULT_NAME" ] || [ "$KEY_VAULT_NAME" = "null" ]; then
+            echo "Deployment output keyVaultName is missing."
             exit 1
           fi
 
@@ -122,4 +131,9 @@ jobs:
             --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
             --name "$WEB_APP_NAME" \
             --query "{name:name, state:state, defaultHostName:defaultHostName, httpsOnly:httpsOnly}" \
+            --output table
+
+          az keyvault show \
+            --name "$KEY_VAULT_NAME" \
+            --query "{name:name, vaultUri:properties.vaultUri, enableRbacAuthorization:properties.enableRbacAuthorization}" \
             --output table

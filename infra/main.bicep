@@ -23,6 +23,13 @@ param linuxFxVersion string = 'DOTNETCORE|10.0'
 @description('Extra tags merged into the resource defaults.')
 param extraTags object = {}
 
+@description('Enable Key Vault purge protection. Irreversible once set. Set true for prod to prevent permanent secret loss.')
+param enablePurgeProtection bool = false
+
+@description('Name of the Key Vault.')
+// Simpler, unique, and more readable Key Vault name: baseName-env-kv-xxxxxx
+param keyVaultName string = toLower('${take(baseName, 8)}-${environment}-kv-${take(uniqueString(resourceGroup().id), 6)}')
+
 var appNameSuffix = take(uniqueString(subscription().id, resourceGroup().id, baseName, environment), 6)
 
 
@@ -67,6 +74,16 @@ module appInsights 'modules/applicationInsights.bicep' = {
   }
 }
 
+module keyVault 'modules/keyVault.bicep' = {
+  name: 'keyVault'
+  params: {
+    keyVaultName: keyVaultName
+    location: location
+    enablePurgeProtection: enablePurgeProtection
+    secretsUserPrincipalIds: [api.outputs.webAppPrincipalId]
+  }
+}
+
 // ── Variables for Outputs ─────────────────────────────────────────────────────
 
 output appServicePlanName string = plan.outputs.appServicePlanName
@@ -78,3 +95,5 @@ output webAppUrl string = 'https://${api.outputs.webAppDefaultHostName}'
 output webAppPrincipalId string = api.outputs.webAppPrincipalId
 output appInsightsName string = appInsights.outputs.appInsightsName
 output appInsightsId string = appInsights.outputs.appInsightsId
+output keyVaultName string = keyVault.outputs.keyVaultName
+output keyVaultUri string = keyVault.outputs.keyVaultUri

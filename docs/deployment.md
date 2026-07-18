@@ -2,8 +2,8 @@
 
 This guide covers setup and execution for:
 
-- [ .github/workflows/deploy-infra-dev.yml](../.github/workflows/deploy-infra-dev.yml)
-- [ .github/workflows/deploy-app-dev.yml](../.github/workflows/deploy-app-dev.yml)
+- [.github/workflows/deploy-infra-dev.yml](../.github/workflows/deploy-infra-dev.yml)
+- [.github/workflows/deploy-app-dev.yml](../.github/workflows/deploy-app-dev.yml)
 
 ## Prerequisites
 
@@ -13,12 +13,24 @@ This guide covers setup and execution for:
 
 ## Azure Setup
 
-1. Create (or reuse) a Microsoft Entra app registration for GitHub Actions.
-2. Add a federated credential to the app registration.
-   - Issuer: `https://token.actions.githubusercontent.com`
-   - Audience: `api://AzureADTokenExchange`
-   - Subject: `repo:<owner>/<repo>:environment:dev`
-3. Grant Contributor role to the service principal on the target resource group.
+Create or reuse a Microsoft Entra app registration for GitHub Actions.
+
+Add a federated credential to the app registration with these values:
+
+- `Issuer`: `https://token.actions.githubusercontent.com`
+- `Audience`: `api://AzureADTokenExchange`
+- `Subject`: `repo:<owner>/<repo>:environment:dev`
+
+Grant the required roles to the service principal on the target resource group.
+
+- `Contributor`
+- `User Access Administrator`
+
+Why both roles are required:
+
+- `Contributor` allows the workflow to create and update normal resources.
+- `User Access Administrator` allows the workflow to create RBAC assignments.
+- This is required because the Key Vault module creates `Microsoft.Authorization/roleAssignments` for secret access.
 
 CLI sample for steps 1-2 (create app, service principal, and federated credential):
 
@@ -78,11 +90,17 @@ if (-not $spObjectId) {
   throw "Unable to resolve service principal object id for client id $azureClientId"
 }
 
-# Grant Contributor on the deployment resource group.
+# Grant required roles on the deployment resource group.
 az role assignment create `
   --assignee-object-id $spObjectId `
   --assignee-principal-type ServicePrincipal `
   --role Contributor `
+  --scope "/subscriptions/$azureSubscriptionId/resourceGroups/$azureResourceGroup"
+
+az role assignment create `
+  --assignee-object-id $spObjectId `
+  --assignee-principal-type ServicePrincipal `
+  --role "User Access Administrator" `
   --scope "/subscriptions/$azureSubscriptionId/resourceGroups/$azureResourceGroup"
 
 # Verify assignment.
@@ -136,8 +154,10 @@ This separates host behavior from app-level environment logic.
 
 - Login failures during `azure/login`:
   - Verify OIDC federated credential subject exactly matches `repo:<owner>/<repo>:environment:dev`.
+- `az deployment group create` fails on `Microsoft.Authorization/roleAssignments`:
+  - Verify the deployment principal has both `Contributor` and `User Access Administrator` on the target resource group.
 - Authorization failures during `az deployment group create`:
-  - Verify Contributor role assignment on the target resource group.
+  - Verify the required role assignments exist on the target resource group.
 - Missing workflow configuration errors:
   - Ensure all required GitHub variables and secrets are present in environment `dev`.
 - App deployment succeeds but site behavior is wrong:

@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.45.15.27210",
-      "templateHash": "11152088829245435787"
+      "templateHash": "1881631673787989605"
     }
   },
   "parameters": {
@@ -74,6 +74,20 @@
       "defaultValue": {},
       "metadata": {
         "description": "Extra tags merged into the resource defaults."
+      }
+    },
+    "enablePurgeProtection": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable Key Vault purge protection. Irreversible once set. Set true for prod to prevent permanent secret loss."
+      }
+    },
+    "keyVaultName": {
+      "type": "string",
+      "defaultValue": "[toLower(format('{0}-{1}-kv-{2}', take(parameters('baseName'), 8), parameters('environment'), take(uniqueString(resourceGroup().id), 6)))]",
+      "metadata": {
+        "description": "Name of the Key Vault."
       }
     }
   },
@@ -621,6 +635,157 @@
           }
         }
       }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "keyVault",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "keyVaultName": {
+            "value": "[parameters('keyVaultName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "enablePurgeProtection": {
+            "value": "[parameters('enablePurgeProtection')]"
+          },
+          "secretsUserPrincipalIds": {
+            "value": [
+              "[reference(resourceId('Microsoft.Resources/deployments', 'appService'), '2025-04-01').outputs.webAppPrincipalId.value]"
+            ]
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.45.15.27210",
+              "templateHash": "2048086094408406704"
+            }
+          },
+          "parameters": {
+            "keyVaultName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the Key Vault"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Location for Key Vault"
+              }
+            },
+            "secrets": {
+              "type": "secureObject",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Key-value pairs of secrets to create in the Key Vault. Example: { \"sql-admin-password\": \"yourpass\", \"api-key\": \"yourkey\" }"
+              }
+            },
+            "enablePurgeProtection": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Enable purge protection. Irreversible once set — recommended for prod to prevent accidental permanent deletion."
+              }
+            },
+            "secretsUserPrincipalIds": {
+              "type": "array",
+              "defaultValue": [],
+              "metadata": {
+                "description": "Principal IDs (object IDs) to grant the Key Vault Secrets User role. Typically includes the App Service managed identity."
+              }
+            }
+          },
+          "variables": {
+            "keyVaultSecretsUserRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.KeyVault/vaults",
+              "apiVersion": "2023-02-01",
+              "name": "[parameters('keyVaultName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "sku": {
+                  "family": "A",
+                  "name": "standard"
+                },
+                "tenantId": "[subscription().tenantId]",
+                "enableRbacAuthorization": true,
+                "enableSoftDelete": true,
+                "enablePurgeProtection": "[if(parameters('enablePurgeProtection'), true(), null())]"
+              }
+            },
+            {
+              "copy": {
+                "name": "keyVaultSecrets",
+                "count": "[length(objectKeys(parameters('secrets')))]"
+              },
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-02-01",
+              "name": "[format('{0}/{1}', parameters('keyVaultName'), objectKeys(parameters('secrets'))[copyIndex()])]",
+              "properties": {
+                "value": "[parameters('secrets')[objectKeys(parameters('secrets'))[copyIndex()]]]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+              ]
+            },
+            {
+              "copy": {
+                "name": "secretsUserRoleAssignment",
+                "count": "[length(parameters('secretsUserPrincipalIds'))]"
+              },
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+              "name": "[guid(resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName')), parameters('secretsUserPrincipalIds')[copyIndex()], variables('keyVaultSecretsUserRoleId'))]",
+              "properties": {
+                "roleDefinitionId": "[variables('keyVaultSecretsUserRoleId')]",
+                "principalId": "[parameters('secretsUserPrincipalIds')[copyIndex()]]",
+                "principalType": "ServicePrincipal"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "keyVaultName": {
+              "type": "string",
+              "value": "[parameters('keyVaultName')]"
+            },
+            "keyVaultUri": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2023-02-01').vaultUri]"
+            },
+            "secretUris": {
+              "type": "array",
+              "copy": {
+                "count": "[length(objectKeys(parameters('secrets')))]",
+                "input": {
+                  "name": "[objectKeys(parameters('secrets'))[copyIndex()]]",
+                  "uri": "[reference(resourceId('Microsoft.KeyVault/vaults/secrets', parameters('keyVaultName'), objectKeys(parameters('secrets'))[copyIndex()]), '2023-02-01').secretUri]"
+                }
+              }
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'appService')]"
+      ]
     }
   ],
   "outputs": {
@@ -659,6 +824,14 @@
     "appInsightsId": {
       "type": "string",
       "value": "[reference(resourceId('Microsoft.Resources/deployments', 'applicationInsights'), '2025-04-01').outputs.appInsightsId.value]"
+    },
+    "keyVaultName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyVault'), '2025-04-01').outputs.keyVaultName.value]"
+    },
+    "keyVaultUri": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyVault'), '2025-04-01').outputs.keyVaultUri.value]"
     }
   }
 }
