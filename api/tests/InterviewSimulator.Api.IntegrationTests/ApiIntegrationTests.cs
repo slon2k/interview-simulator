@@ -63,6 +63,17 @@ public sealed class ApiIntegrationTests
         Assert.DoesNotContain(exception.Failures, failure => failure.Contains("test-key", StringComparison.Ordinal));
     }
 
+    [Fact]
+    public void Startup_WithMissingOpenAIConfig_ThrowsValidationError()
+    {
+        using var factory = new MissingOpenAIConfigWebApplicationFactory();
+
+        var exception = Assert.Throws<OptionsValidationException>(() => factory.CreateClient());
+
+        Assert.Contains("AzureOpenAI:Endpoint must be an absolute URI.", exception.Failures);
+        Assert.Contains("AzureOpenAI:DeploymentName is required.", exception.Failures);
+    }
+
     private class TestWebApplicationFactory : WebApplicationFactory<Program>
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -74,7 +85,9 @@ public sealed class ApiIntegrationTests
                     [$"{AzureSpeechOptions.SectionName}:Region"] = "centralus",
                     [$"{AzureSpeechOptions.SectionName}:Endpoint"] = "https://example.cognitiveservices.azure.com/",
                     [$"{AzureSpeechOptions.SectionName}:TokenEndpoint"] = "https://centralus.api.cognitive.microsoft.com/sts/v1.0/issueToken",
-                    [$"{AzureSpeechOptions.SectionName}:Key"] = "test-key"
+                    [$"{AzureSpeechOptions.SectionName}:Key"] = "test-key",
+                    [$"{AzureOpenAIOptions.SectionName}:Endpoint"] = "https://example.openai.azure.com/",
+                    [$"{AzureOpenAIOptions.SectionName}:DeploymentName"] = "gpt-4o-mini"
                 });
             });
         }
@@ -100,7 +113,28 @@ public sealed class ApiIntegrationTests
                     [$"{AzureSpeechOptions.SectionName}:Region"] = "",
                     [$"{AzureSpeechOptions.SectionName}:Endpoint"] = "",
                     [$"{AzureSpeechOptions.SectionName}:TokenEndpoint"] = "",
-                    [$"{AzureSpeechOptions.SectionName}:Key"] = ""
+                    [$"{AzureSpeechOptions.SectionName}:Key"] = "",
+                    [$"{AzureOpenAIOptions.SectionName}:Endpoint"] = "https://example.openai.azure.com/",
+                    [$"{AzureOpenAIOptions.SectionName}:DeploymentName"] = "gpt-4o-mini"
+                });
+            });
+        }
+    }
+
+    private sealed class MissingOpenAIConfigWebApplicationFactory : WebApplicationFactory<Program>
+    {
+        protected override void ConfigureWebHost(IWebHostBuilder builder)
+        {
+            builder.ConfigureAppConfiguration((_, config) =>
+            {
+                config.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    [$"{AzureSpeechOptions.SectionName}:Region"] = "centralus",
+                    [$"{AzureSpeechOptions.SectionName}:Endpoint"] = "https://example.cognitiveservices.azure.com/",
+                    [$"{AzureSpeechOptions.SectionName}:TokenEndpoint"] = "https://centralus.api.cognitive.microsoft.com/sts/v1.0/issueToken",
+                    [$"{AzureSpeechOptions.SectionName}:Key"] = "test-key",
+                    [$"{AzureOpenAIOptions.SectionName}:Endpoint"] = "",
+                    [$"{AzureOpenAIOptions.SectionName}:DeploymentName"] = ""
                 });
             });
         }
