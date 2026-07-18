@@ -4,6 +4,7 @@ This guide covers setup and execution for:
 
 - [.github/workflows/deploy-infra-dev.yml](../.github/workflows/deploy-infra-dev.yml)
 - [.github/workflows/deploy-app-dev.yml](../.github/workflows/deploy-app-dev.yml)
+- [.github/workflows/manage-dev-secrets.yml](../.github/workflows/manage-dev-secrets.yml)
 
 ## Prerequisites
 
@@ -131,6 +132,37 @@ Variables required by app deployment workflow:
 Secrets required by app deployment workflow:
 
 - `AZURE_WEBAPP_PUBLISH_PROFILE` (publish profile XML from App Service)
+
+## Secret Management Workflow
+
+Use `.github/workflows/manage-dev-secrets.yml` to store (and optionally rotate) Speech keys in Key Vault.
+
+This workflow is manual (`workflow_dispatch`) and uses the `dev` environment.
+
+Required permissions for the deployment principal:
+
+- Resource group scope: `Contributor`
+- Resource group scope: `User Access Administrator`
+- Key Vault data plane: `Key Vault Secrets Officer` (or `Key Vault Administrator`)
+
+Why the extra Key Vault role is needed:
+
+- `az keyvault secret set` is a data-plane operation.
+- Control-plane roles like `Contributor` do not grant secret set/read rights when Key Vault RBAC authorization is enabled.
+
+Manual run inputs:
+
+- `speech_account_name`
+- `key_vault_name`
+- `secret_name` (default: `azure-speech-key`)
+- `key_slot` (`key1` or `key2`)
+- `rotate_key` (`true` to regenerate selected key slot before storing)
+
+Suggested usage:
+
+1. First run: `rotate_key=false`, verify secret storage path works.
+2. Rotation run: `rotate_key=true` for the slot not currently in active use.
+3. Update app/config to consume the rotated slot secret, then rotate the other slot in a follow-up run.
 
 ## Deployment Order
 
