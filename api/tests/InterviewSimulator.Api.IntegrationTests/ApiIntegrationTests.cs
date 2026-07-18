@@ -1,7 +1,10 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace InterviewSimulator.Api.IntegrationTests;
 
@@ -10,7 +13,7 @@ public sealed class ApiIntegrationTests
     [Fact]
     public async Task HealthEndpoint_WithValidRoute_ReturnsOk()
     {
-        await using var factory = new WebApplicationFactory<Program>();
+        await using var factory = new TestWebApplicationFactory();
         using var client = factory.CreateClient();
 
         var response = await client.GetAsync("/api/health");
@@ -21,7 +24,7 @@ public sealed class ApiIntegrationTests
     [Fact]
     public async Task UnknownEndpoint_WithMissingRoute_ReturnsProblemDetailsWithTraceId()
     {
-        await using var factory = new WebApplicationFactory<Program>();
+        await using var factory = new TestWebApplicationFactory();
         using var client = factory.CreateClient();
 
         var response = await client.GetAsync("/api/does-not-exist");
@@ -46,12 +49,60 @@ public sealed class ApiIntegrationTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
-    private sealed class DevelopmentWebApplicationFactory : WebApplicationFactory<Program>
+    [Fact]
+    public void Startup_WithMissingSpeechConfig_ThrowsSanitizedValidationError()
     {
-        protected override IHost CreateHost(IHostBuilder builder)
+        using var factory = new MissingSpeechConfigWebApplicationFactory();
+
+        var exception = Assert.Throws<OptionsValidationException>(() => factory.CreateClient());
+
+        Assert.Contains("AzureSpeech:Region is required.", exception.Failures);
+        Assert.Contains("AzureSpeech:Endpoint must be an absolute URI.", exception.Failures);
+        Assert.Contains("AzureSpeech:TokenEndpoint must be an absolute URI.", exception.Failures);
+        Assert.Contains("AzureSpeech:Key is required.", exception.Failures);
+        Assert.DoesNotContain(exception.Failures, failure => failure.Contains("test-key", StringComparison.Ordinal));
+    }
+
+    private class TestWebApplicationFactory : WebApplicationFactory<Program>
+    {
+        protected override void ConfigureWebHost(IWebHostBuilder builder)
+        {
+            builder.ConfigureAppConfiguration((_, config) =>
+            {
+                config.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    [$"{AzureSpeechOptions.SectionName}:Region"] = "centralus",
+                    [$"{AzureSpeechOptions.SectionName}:Endpoint"] = "https://example.cognitiveservices.azure.com/",
+                    [$"{AzureSpeechOptions.SectionName}:TokenEndpoint"] = "https://centralus.api.cognitive.microsoft.com/sts/v1.0/issueToken",
+                    [$"{AzureSpeechOptions.SectionName}:Key"] = "test-key"
+                });
+            });
+        }
+    }
+
+    private sealed class DevelopmentWebApplicationFactory : TestWebApplicationFactory
+    {
+        protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseEnvironment(Environments.Development);
-            return base.CreateHost(builder);
+            base.ConfigureWebHost(builder);
+        }
+    }
+
+    private sealed class MissingSpeechConfigWebApplicationFactory : WebApplicationFactory<Program>
+    {
+        protected override void ConfigureWebHost(IWebHostBuilder builder)
+        {
+            builder.ConfigureAppConfiguration((_, config) =>
+            {
+                config.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    [$"{AzureSpeechOptions.SectionName}:Region"] = "",
+                    [$"{AzureSpeechOptions.SectionName}:Endpoint"] = "",
+                    [$"{AzureSpeechOptions.SectionName}:TokenEndpoint"] = "",
+                    [$"{AzureSpeechOptions.SectionName}:Key"] = ""
+                });
+            });
         }
     }
 
