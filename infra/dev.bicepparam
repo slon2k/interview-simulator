@@ -11,9 +11,9 @@ param openAISkuName = 'S0'
 param openAIDeployModel = true
 param openAIDeployments = [
 	{
-		name: 'gpt-4o-mini'
-		modelName: 'gpt-4o-mini'
-		modelVersion: '2024-07-18'
+		name: 'gpt-4.1-mini'
+		modelName: 'gpt-4.1-mini'
+		modelVersion: '2025-04-14'
 		deploymentSkuName: 'GlobalStandard'
 		deploymentCapacity: 10
 	}
