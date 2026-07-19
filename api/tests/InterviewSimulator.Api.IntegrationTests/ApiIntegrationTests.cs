@@ -71,7 +71,7 @@ public sealed class ApiIntegrationTests
         var exception = Assert.Throws<OptionsValidationException>(() => factory.CreateClient());
 
         Assert.Contains("AzureOpenAI:Endpoint must be an absolute URI.", exception.Failures);
-        Assert.Contains("AzureOpenAI:DeploymentName is required.", exception.Failures);
+        Assert.Contains("AzureOpenAI:Either DefaultDeploymentName or DeploymentNames[] is required.", exception.Failures);
     }
 
     private class TestWebApplicationFactory : WebApplicationFactory<Program>
@@ -87,7 +87,7 @@ public sealed class ApiIntegrationTests
                     [$"{AzureSpeechOptions.SectionName}:TokenEndpoint"] = "https://centralus.api.cognitive.microsoft.com/sts/v1.0/issueToken",
                     [$"{AzureSpeechOptions.SectionName}:Key"] = "test-key",
                     [$"{AzureOpenAIOptions.SectionName}:Endpoint"] = "https://example.openai.azure.com/",
-                    [$"{AzureOpenAIOptions.SectionName}:DeploymentName"] = "gpt-4o-mini"
+                    [$"{AzureOpenAIOptions.SectionName}:DefaultDeploymentName"] = "gpt-4o-mini"
                 });
             });
         }
@@ -115,7 +115,7 @@ public sealed class ApiIntegrationTests
                     [$"{AzureSpeechOptions.SectionName}:TokenEndpoint"] = "",
                     [$"{AzureSpeechOptions.SectionName}:Key"] = "",
                     [$"{AzureOpenAIOptions.SectionName}:Endpoint"] = "https://example.openai.azure.com/",
-                    [$"{AzureOpenAIOptions.SectionName}:DeploymentName"] = "gpt-4o-mini"
+                    [$"{AzureOpenAIOptions.SectionName}:DefaultDeploymentName"] = "gpt-4o-mini"
                 });
             });
         }
@@ -134,7 +134,7 @@ public sealed class ApiIntegrationTests
                     [$"{AzureSpeechOptions.SectionName}:TokenEndpoint"] = "https://centralus.api.cognitive.microsoft.com/sts/v1.0/issueToken",
                     [$"{AzureSpeechOptions.SectionName}:Key"] = "test-key",
                     [$"{AzureOpenAIOptions.SectionName}:Endpoint"] = "",
-                    [$"{AzureOpenAIOptions.SectionName}:DeploymentName"] = ""
+                    [$"{AzureOpenAIOptions.SectionName}:DefaultDeploymentName"] = ""
                 });
             });
         }

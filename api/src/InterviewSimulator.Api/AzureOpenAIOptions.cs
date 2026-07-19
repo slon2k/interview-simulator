@@ -8,7 +8,9 @@ public sealed class AzureOpenAIOptions
 
     public string Endpoint { get; init; } = string.Empty;
 
-    public string DeploymentName { get; init; } = string.Empty;
+    public string DefaultDeploymentName { get; init; } = string.Empty;
+
+    public string[] DeploymentNames { get; init; } = [];
 }
 
 public sealed class AzureOpenAIOptionsValidator : IValidateOptions<AzureOpenAIOptions>
@@ -22,9 +24,26 @@ public sealed class AzureOpenAIOptionsValidator : IValidateOptions<AzureOpenAIOp
             failures.Add("AzureOpenAI:Endpoint must be an absolute URI.");
         }
 
-        if (string.IsNullOrWhiteSpace(options.DeploymentName))
+        if (string.IsNullOrWhiteSpace(options.DefaultDeploymentName))
         {
-            failures.Add("AzureOpenAI:DeploymentName is required.");
+            var hasAnyDeploymentName = options.DeploymentNames.Any(name => !string.IsNullOrWhiteSpace(name));
+
+            if (!hasAnyDeploymentName)
+            {
+                failures.Add("AzureOpenAI:Either DefaultDeploymentName or DeploymentNames[] is required.");
+            }
+        }
+
+        if (options.DeploymentNames.Any(string.IsNullOrWhiteSpace))
+        {
+            failures.Add("AzureOpenAI:DeploymentNames[] cannot contain empty values.");
+        }
+
+        if (options.DeploymentNames.Length > 0
+            && !string.IsNullOrWhiteSpace(options.DefaultDeploymentName)
+            && !options.DeploymentNames.Contains(options.DefaultDeploymentName, StringComparer.OrdinalIgnoreCase))
+        {
+            failures.Add("AzureOpenAI:DefaultDeploymentName must exist in DeploymentNames[] when both are provided.");
         }
 
         return failures.Count > 0
