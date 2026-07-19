@@ -14,21 +14,21 @@ param openAIDeployments = [
 		name: 'gpt-4o-mini'
 		modelName: 'gpt-4o-mini'
 		modelVersion: '2024-07-18'
-		deploymentSkuName: 'Standard'
+		deploymentSkuName: 'GlobalStandard'
 		deploymentCapacity: 10
 	}
 	{
 		name: 'gpt-5-nano'
 		modelName: 'gpt-5-nano'
 		modelVersion: '2025-08-07'
-		deploymentSkuName: 'Standard'
+		deploymentSkuName: 'GlobalStandard'
 		deploymentCapacity: 10
 	}
 	{
 		name: 'gpt-5-mini'
 		modelName: 'gpt-5-mini'
 		modelVersion: '2025-08-07'
-		deploymentSkuName: 'Standard'
+		deploymentSkuName: 'GlobalStandard'
 		deploymentCapacity: 10
 	}
 ]
