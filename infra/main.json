@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.45.15.27210",
-      "templateHash": "9097909830916373125"
+      "templateHash": "5092017672988286798"
     }
   },
   "parameters": {
@@ -1047,7 +1047,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.45.15.27210",
-              "templateHash": "7226432904728397065"
+              "templateHash": "11086177379097468162"
             }
           },
           "parameters": {
@@ -1140,7 +1140,9 @@
             {
               "copy": {
                 "name": "openAIModelDeployment",
-                "count": "[length(variables('effectiveDeployments'))]"
+                "count": "[length(variables('effectiveDeployments'))]",
+                "mode": "serial",
+                "batchSize": 1
               },
               "type": "Microsoft.CognitiveServices/accounts/deployments",
               "apiVersion": "2024-10-01",
