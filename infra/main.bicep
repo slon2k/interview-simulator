@@ -41,7 +41,30 @@ param speechAccountName string = toLower('${take(baseName, 16)}-${environment}-s
 ])
 param speechSkuName string = 'F0'
 
+@description('Azure OpenAI account name, should be globally unique.')
+param openAIAccountName string = toLower('${take(baseName, 16)}-${environment}-oai-${take(uniqueString(resourceGroup().id), 6)}')
+
+@description('Enable Azure OpenAI resource deployment and runtime app settings wiring.')
+param enableAzureOpenAI bool = true
+
+@description('Azure OpenAI SKU.')
+@allowed([
+  'S0'
+])
+param openAISkuName string = 'S0'
+
+@description('Whether to deploy a model inside the Azure OpenAI account.')
+param openAIDeployModel bool = false
+
+@description('List of Azure OpenAI model deployments. Each item should contain: name, modelName, modelVersion, deploymentSkuName, deploymentCapacity.')
+param openAIDeployments array = []
+
 var appNameSuffix = take(uniqueString(subscription().id, resourceGroup().id, baseName, environment), 6)
+var effectiveOpenAIDeploymentName = empty(openAIDeployments) ? '' : string(first(openAIDeployments).name)
+var openAIDeploymentNameAppSettings = [for (deployment, i) in openAIDeployments: {
+  name: 'AzureOpenAI__DeploymentNames__${i}'
+  value: string(deployment.name)
+}]
 
 
 // ── Modules ──────────────────────────────────────────────────────────────────
@@ -70,24 +93,41 @@ module api 'modules/appService.bicep' = {
     alwaysOn: skuName != 'F1'
 
     applicationInsightsConnectionString: appInsights.outputs.connectionString
-    appSettings: [
-      {
-        name: 'AzureSpeech__Region'
-        value: speech.outputs.speechRegion
-      }
-      {
-        name: 'AzureSpeech__Endpoint'
-        value: speech.outputs.speechEndpoint
-      }
-      {
-        name: 'AzureSpeech__TokenEndpoint'
-        value: speech.outputs.speechTokenEndpoint
-      }
-      {
-        name: 'AzureSpeech__Key'
-        value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=azure-speech-key)'
-      }
-    ]
+    appSettings: concat(
+      [
+        {
+          name: 'AzureSpeech__Region'
+          value: speech.outputs.speechRegion
+        }
+        {
+          name: 'AzureSpeech__Endpoint'
+          value: speech.outputs.speechEndpoint
+        }
+        {
+          name: 'AzureSpeech__TokenEndpoint'
+          value: speech.outputs.speechTokenEndpoint
+        }
+        {
+          name: 'AzureSpeech__Key'
+          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=azure-speech-key)'
+        }
+      ],
+      enableAzureOpenAI
+        ? concat(
+            [
+              {
+                name: 'AzureOpenAI__Endpoint'
+                value: 'https://${openAIAccountName}.openai.azure.com/'
+              }
+              {
+                name: 'AzureOpenAI__DefaultDeploymentName'
+                value: effectiveOpenAIDeploymentName
+              }
+            ],
+            openAIDeploymentNameAppSettings
+          )
+        : []
+    )
     extraTags: extraTags
   }
 }
@@ -124,6 +164,20 @@ module speech 'modules/speechService.bicep' = {
   }
 }
 
+module openAI 'modules/openaiService.bicep' = if (enableAzureOpenAI) {
+  name: 'openAIService'
+  params: {
+    accountName: openAIAccountName
+    environment: environment
+    location: location
+    skuName: openAISkuName
+    deployModel: openAIDeployModel
+    deployments: openAIDeployments
+    extraTags: extraTags
+    openAIUserPrincipalIds: [api.outputs.webAppPrincipalId]
+  }
+}
+
 // ── Variables for Outputs ─────────────────────────────────────────────────────
 
 output appServicePlanName string = plan.outputs.appServicePlanName
@@ -142,3 +196,8 @@ output speechAccountId string = speech.outputs.speechAccountId
 output speechRegion string = speech.outputs.speechRegion
 output speechEndpoint string = speech.outputs.speechEndpoint
 output speechTokenEndpoint string = speech.outputs.speechTokenEndpoint
+output openAIAccountName string = enableAzureOpenAI ? openAI!.outputs.openAIAccountName : ''
+output openAIAccountId string = enableAzureOpenAI ? openAI!.outputs.openAIAccountId : ''
+output openAIEndpoint string = enableAzureOpenAI ? openAI!.outputs.openAIEndpoint : ''
+output openAIDeploymentName string = enableAzureOpenAI ? effectiveOpenAIDeploymentName : ''
+output openAIDeploymentNames array = enableAzureOpenAI ? openAI!.outputs.openAIDeploymentNames : []

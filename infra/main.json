@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.45.15.27210",
-      "templateHash": "3243961343207247679"
+      "templateHash": "9097909830916373125"
     }
   },
   "parameters": {
@@ -107,10 +107,59 @@
       "metadata": {
         "description": "Azure Speech SKU for dev/test/prod."
       }
+    },
+    "openAIAccountName": {
+      "type": "string",
+      "defaultValue": "[toLower(format('{0}-{1}-oai-{2}', take(parameters('baseName'), 16), parameters('environment'), take(uniqueString(resourceGroup().id), 6)))]",
+      "metadata": {
+        "description": "Azure OpenAI account name, should be globally unique."
+      }
+    },
+    "enableAzureOpenAI": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable Azure OpenAI resource deployment and runtime app settings wiring."
+      }
+    },
+    "openAISkuName": {
+      "type": "string",
+      "defaultValue": "S0",
+      "allowedValues": [
+        "S0"
+      ],
+      "metadata": {
+        "description": "Azure OpenAI SKU."
+      }
+    },
+    "openAIDeployModel": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Whether to deploy a model inside the Azure OpenAI account."
+      }
+    },
+    "openAIDeployments": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "description": "List of Azure OpenAI model deployments. Each item should contain: name, modelName, modelVersion, deploymentSkuName, deploymentCapacity."
+      }
     }
   },
   "variables": {
-    "appNameSuffix": "[take(uniqueString(subscription().id, resourceGroup().id, parameters('baseName'), parameters('environment')), 6)]"
+    "copy": [
+      {
+        "name": "openAIDeploymentNameAppSettings",
+        "count": "[length(parameters('openAIDeployments'))]",
+        "input": {
+          "name": "[format('AzureOpenAI__DeploymentNames__{0}', copyIndex('openAIDeploymentNameAppSettings'))]",
+          "value": "[string(parameters('openAIDeployments')[copyIndex('openAIDeploymentNameAppSettings')].name)]"
+        }
+      }
+    ],
+    "appNameSuffix": "[take(uniqueString(subscription().id, resourceGroup().id, parameters('baseName'), parameters('environment')), 6)]",
+    "effectiveOpenAIDeploymentName": "[if(empty(parameters('openAIDeployments')), '', string(first(parameters('openAIDeployments')).name))]"
   },
   "resources": [
     {
@@ -302,24 +351,7 @@
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'applicationInsights'), '2025-04-01').outputs.connectionString.value]"
           },
           "appSettings": {
-            "value": [
-              {
-                "name": "AzureSpeech__Region",
-                "value": "[reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechRegion.value]"
-              },
-              {
-                "name": "AzureSpeech__Endpoint",
-                "value": "[reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechEndpoint.value]"
-              },
-              {
-                "name": "AzureSpeech__TokenEndpoint",
-                "value": "[reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechTokenEndpoint.value]"
-              },
-              {
-                "name": "AzureSpeech__Key",
-                "value": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=azure-speech-key)', parameters('keyVaultName'))]"
-              }
-            ]
+            "value": "[concat(createArray(createObject('name', 'AzureSpeech__Region', 'value', reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechRegion.value), createObject('name', 'AzureSpeech__Endpoint', 'value', reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechEndpoint.value), createObject('name', 'AzureSpeech__TokenEndpoint', 'value', reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechTokenEndpoint.value), createObject('name', 'AzureSpeech__Key', 'value', format('@Microsoft.KeyVault(VaultName={0};SecretName=azure-speech-key)', parameters('keyVaultName')))), if(parameters('enableAzureOpenAI'), concat(createArray(createObject('name', 'AzureOpenAI__Endpoint', 'value', format('https://{0}.openai.azure.com/', parameters('openAIAccountName'))), createObject('name', 'AzureOpenAI__DefaultDeploymentName', 'value', variables('effectiveOpenAIDeploymentName'))), variables('openAIDeploymentNameAppSettings')), createArray()))]"
           },
           "extraTags": {
             "value": "[parameters('extraTags')]"
@@ -969,6 +1001,214 @@
           }
         }
       }
+    },
+    {
+      "condition": "[parameters('enableAzureOpenAI')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "openAIService",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "accountName": {
+            "value": "[parameters('openAIAccountName')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "skuName": {
+            "value": "[parameters('openAISkuName')]"
+          },
+          "deployModel": {
+            "value": "[parameters('openAIDeployModel')]"
+          },
+          "deployments": {
+            "value": "[parameters('openAIDeployments')]"
+          },
+          "extraTags": {
+            "value": "[parameters('extraTags')]"
+          },
+          "openAIUserPrincipalIds": {
+            "value": [
+              "[reference(resourceId('Microsoft.Resources/deployments', 'appService'), '2025-04-01').outputs.webAppPrincipalId.value]"
+            ]
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.45.15.27210",
+              "templateHash": "7226432904728397065"
+            }
+          },
+          "parameters": {
+            "accountName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the Azure OpenAI account. Must be globally unique."
+              }
+            },
+            "environment": {
+              "type": "string",
+              "metadata": {
+                "description": "Environment moniker, e.g. \"dev\", \"test\", \"prod\"."
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region for the OpenAI resource."
+              }
+            },
+            "skuName": {
+              "type": "string",
+              "defaultValue": "S0",
+              "allowedValues": [
+                "S0"
+              ],
+              "metadata": {
+                "description": "Azure OpenAI SKU."
+              }
+            },
+            "deployModel": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Whether to create an Azure OpenAI model deployment in this module."
+              }
+            },
+            "deployments": {
+              "type": "array",
+              "defaultValue": [],
+              "metadata": {
+                "description": "List of model deployments. When deployModel=true, each object should contain name, modelName, modelVersion, deploymentSkuName, and deploymentCapacity."
+              }
+            },
+            "extraTags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Extra tags merged into the defaults."
+              }
+            },
+            "openAIUserPrincipalIds": {
+              "type": "array",
+              "defaultValue": [],
+              "metadata": {
+                "description": "Principal IDs (object IDs) to grant the Cognitive Services OpenAI User role. Typically includes the App Service managed identity."
+              }
+            }
+          },
+          "variables": {
+            "cognitiveServicesOpenAIUserRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd')]",
+            "normalizedEnvironment": "[toLower(parameters('environment'))]",
+            "baseTags": {
+              "environment": "[variables('normalizedEnvironment')]",
+              "workload": "openai",
+              "managedBy": "iac"
+            },
+            "finalTags": "[union(variables('baseTags'), parameters('extraTags'))]",
+            "effectiveDeployments": "[if(parameters('deployModel'), parameters('deployments'), createArray())]",
+            "effectiveDeploymentName": "[if(empty(variables('effectiveDeployments')), '', string(first(variables('effectiveDeployments')).name))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.CognitiveServices/accounts",
+              "apiVersion": "2023-05-01",
+              "name": "[parameters('accountName')]",
+              "location": "[parameters('location')]",
+              "kind": "OpenAI",
+              "sku": {
+                "name": "[parameters('skuName')]"
+              },
+              "tags": "[variables('finalTags')]",
+              "properties": {
+                "customSubDomainName": "[parameters('accountName')]",
+                "publicNetworkAccess": "Enabled",
+                "disableLocalAuth": true
+              }
+            },
+            {
+              "copy": {
+                "name": "openAIModelDeployment",
+                "count": "[length(variables('effectiveDeployments'))]"
+              },
+              "type": "Microsoft.CognitiveServices/accounts/deployments",
+              "apiVersion": "2024-10-01",
+              "name": "[format('{0}/{1}', parameters('accountName'), string(variables('effectiveDeployments')[copyIndex()].name))]",
+              "sku": {
+                "name": "[string(variables('effectiveDeployments')[copyIndex()].deploymentSkuName)]",
+                "capacity": "[int(variables('effectiveDeployments')[copyIndex()].deploymentCapacity)]"
+              },
+              "properties": {
+                "model": {
+                  "format": "OpenAI",
+                  "name": "[string(variables('effectiveDeployments')[copyIndex()].modelName)]",
+                  "version": "[string(variables('effectiveDeployments')[copyIndex()].modelVersion)]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accountName'))]"
+              ]
+            },
+            {
+              "copy": {
+                "name": "openAIUserRoleAssignment",
+                "count": "[length(parameters('openAIUserPrincipalIds'))]"
+              },
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accountName'))]",
+              "name": "[guid(resourceId('Microsoft.CognitiveServices/accounts', parameters('accountName')), parameters('openAIUserPrincipalIds')[copyIndex()], variables('cognitiveServicesOpenAIUserRoleId'))]",
+              "properties": {
+                "roleDefinitionId": "[variables('cognitiveServicesOpenAIUserRoleId')]",
+                "principalId": "[parameters('openAIUserPrincipalIds')[copyIndex()]]",
+                "principalType": "ServicePrincipal"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accountName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "openAIAccountName": {
+              "type": "string",
+              "value": "[parameters('accountName')]"
+            },
+            "openAIAccountId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('accountName'))]"
+            },
+            "openAIEndpoint": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('accountName')), '2023-05-01').endpoint]"
+            },
+            "openAIDeploymentName": {
+              "type": "string",
+              "value": "[variables('effectiveDeploymentName')]"
+            },
+            "openAIDeploymentNames": {
+              "type": "array",
+              "copy": {
+                "count": "[length(variables('effectiveDeployments'))]",
+                "input": "[string(variables('effectiveDeployments')[copyIndex()].name)]"
+              }
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'appService')]"
+      ]
     }
   ],
   "outputs": {
@@ -1035,6 +1275,26 @@
     "speechTokenEndpoint": {
       "type": "string",
       "value": "[reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechTokenEndpoint.value]"
+    },
+    "openAIAccountName": {
+      "type": "string",
+      "value": "[if(parameters('enableAzureOpenAI'), reference(resourceId('Microsoft.Resources/deployments', 'openAIService'), '2025-04-01').outputs.openAIAccountName.value, '')]"
+    },
+    "openAIAccountId": {
+      "type": "string",
+      "value": "[if(parameters('enableAzureOpenAI'), reference(resourceId('Microsoft.Resources/deployments', 'openAIService'), '2025-04-01').outputs.openAIAccountId.value, '')]"
+    },
+    "openAIEndpoint": {
+      "type": "string",
+      "value": "[if(parameters('enableAzureOpenAI'), reference(resourceId('Microsoft.Resources/deployments', 'openAIService'), '2025-04-01').outputs.openAIEndpoint.value, '')]"
+    },
+    "openAIDeploymentName": {
+      "type": "string",
+      "value": "[if(parameters('enableAzureOpenAI'), variables('effectiveOpenAIDeploymentName'), '')]"
+    },
+    "openAIDeploymentNames": {
+      "type": "array",
+      "value": "[if(parameters('enableAzureOpenAI'), reference(resourceId('Microsoft.Resources/deployments', 'openAIService'), '2025-04-01').outputs.openAIDeploymentNames.value, createArray())]"
     }
   }
 }
