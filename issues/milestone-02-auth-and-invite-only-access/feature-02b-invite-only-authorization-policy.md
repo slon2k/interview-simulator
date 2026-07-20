@@ -21,6 +21,9 @@ This feature ensures only invited authenticated users can use protected applicat
 - Implement config-based invite source strategy using admin and invited GitHub ID allowlists
 - Enforce policy for protected API endpoints
 - Return consistent forbidden or access-denied responses for non-invited users
+- Define and document concrete allowlist configuration shape (example):
+  - `Auth:AdminGitHubUserIds: []`
+  - `Auth:InvitedGitHubUserIds: []`
 
 ## Out of Scope
 
@@ -36,6 +39,7 @@ This feature ensures only invited authenticated users can use protected applicat
 - [ ] Admin GitHub IDs are treated as invited users
 - [ ] Config-based admin and invited allowlists are documented
 - [ ] `/api/me` includes `isInvited` and `isAdmin` based on current allowlist configuration.
+- [ ] Unauthorized and forbidden responses for protected `/api/*` endpoints are returned as JSON with `401`/`403` status codes (no HTML redirect payloads).
 
 ## Sub-Issues
 
@@ -52,6 +56,7 @@ This feature ensures only invited authenticated users can use protected applicat
 - [ ] Admin users are treated as invited users
 - [ ] Non-invited authenticated users receive a clear forbidden response/page
 - [ ] Anonymous users are challenged or denied as expected
+- [ ] Protected `/api/*` endpoints return JSON payloads for `401` and `403` cases.
 
 ## Dependencies and Blockers
 

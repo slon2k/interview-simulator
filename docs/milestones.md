@@ -46,15 +46,18 @@ Acceptance Criteria:
 
 ## 03 - Cosmos DB persistence
 
-Set up Cosmos DB and implement persistence for sessions, turns, and optional user profile data.
+Deliver Cosmos DB in two steps: infrastructure and runtime configuration first, then API persistence integration.
 
 Acceptance Criteria:
 
-- [ ] Cosmos DB free tier account/container exists
-- [ ] Partition key strategy is documented
-- [ ] Repository abstraction is implemented
-- [ ] Test read/write works from ASP.NET Core API
-- [ ] Session and turn document models are defined
+- [ ] Cosmos DB account, SQL database, and SQL container are provisioned through Bicep
+- [ ] App Service managed identity has Cosmos DB data-plane access, and account keys are not used by the app
+- [ ] App Service receives non-secret Cosmos DB configuration values
+- [ ] Cosmos DB SDK integration and validated CosmosDb options are implemented in API
+- [ ] Session and turn document models are defined with deterministic ID strategy
+- [ ] Repository abstraction and Cosmos DB repository implementation are in place
+- [ ] API-level read/write smoke check works in dev with invite-only authorization
+- [ ] Normal CI does not require live Cosmos DB credentials
 
 ---
 
