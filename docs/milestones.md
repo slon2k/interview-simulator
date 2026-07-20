@@ -40,6 +40,7 @@ Acceptance Criteria:
 - [ ] Non-invited authenticated users receive a clear unauthorized response/page
 - [ ] API checks user authorization defensively
 - [ ] Frontend login and logout UX is implemented and integrated with backend auth flow
+- [ ] API endpoints return `401`/`403` JSON responses instead of unexpected HTML redirects.
 
 ---
 

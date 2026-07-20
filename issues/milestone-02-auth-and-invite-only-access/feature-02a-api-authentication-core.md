@@ -29,21 +29,15 @@ This feature provides the identity foundation for invite-only authorization and 
 - Frontend login/logout UX and route handling
 - Additional identity providers such as Entra ID
 
-## Traceability
+## Acceptance Criteria
 
-- Phase: 1
-- Milestone: 02 - Auth and invite-only access
-- Related ADRs: ADR 0001, ADR 0003, ADR 0004, ADR 0008 in `docs/decisions.md`
-- Related docs: `docs/roadmap.md`, `docs/milestones.md`, `docs/architecture.md`
-- Requirement IDs: FR-002, FR-003, FR-004
-
-Acceptance Criteria:
-
-- [ ] GitHub OAuth login callback flow works in ASP.NET Core
-- [ ] Authenticated session cookie is issued and validated correctly
-- [ ] GitHub numeric user id is captured and normalized as `github|{githubUserId}`
-- [ ] `/api/me` returns `isAuthenticated`, `isInvited`, `isAdmin`, `userId`, `identityProvider`, and `displayName`
-- [ ] Backend auth configuration is documented for local and deployed environments
+- [ ] GitHub OAuth login callback flow works in ASP.NET Core.
+- [ ] Authenticated session cookie is issued and validated correctly.
+- [ ] GitHub numeric user id is captured.
+- [ ] Authenticated app user id is normalized as `github|{githubUserId}`.
+- [ ] `/api/me` returns `isAuthenticated`, `userId`, `identityProvider`, and `displayName`.
+- [ ] `/api/me` returns anonymous state when no user is logged in.
+- [ ] Backend auth configuration is documented for local and deployed environments.
 
 ## Sub-Issues
 
@@ -58,7 +52,7 @@ Acceptance Criteria:
 
 - [ ] Login flow succeeds and session cookie is present
 - [ ] `/api/me` returns authenticated identity payload when logged in
-- [ ] `/api/me` is denied or empty when not authenticated
+- [ ] `/api/me` returns a consistent anonymous payload when no user is logged in.
 
 ## Dependencies and Blockers
 

@@ -28,16 +28,7 @@ This feature provides a usable authentication experience aligned with backend au
 - Invite management UI
 - Multi-provider login selector
 
-## Traceability
-
-- Phase: 1
-- Milestone: 02 - Auth and invite-only access
-- Related ADRs: ADR 0001, ADR 0004 in `docs/decisions.md`
-- Related ADRs: ADR 0008 in `docs/decisions.md`
-- Related docs: `docs/roadmap.md`, `docs/milestones.md`, `docs/architecture.md`
-- Requirement IDs: FR-001, FR-002, FR-003, FR-006
-
-Acceptance Criteria:
+## Acceptance Criteria
 
 - [ ] Users can trigger login and logout from the frontend
 - [ ] Frontend can resolve current auth state from backend user context with `isAuthenticated`, `isInvited`, and `isAdmin`
