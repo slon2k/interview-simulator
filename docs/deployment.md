@@ -133,6 +133,7 @@ Variables required by app deployment workflow:
 Variables required by secret management workflow:
 
 - `AZURE_KEY_VAULT_NAME`
+- `AZURE_SPEECH_ACCOUNT_NAME`
 
 Secrets required by app deployment workflow:
 
@@ -185,7 +186,7 @@ Manual run inputs:
 
 - `target_environment` (`dev`, `test`, or `prod`)
 - `secret_target` (`speech` or `github-oauth`)
-- `speech_account_name`
+- `speech_account_name` (optional override; defaults to `AZURE_SPEECH_ACCOUNT_NAME`)
 - `key_vault_name` (optional override; defaults to `AZURE_KEY_VAULT_NAME`)
 - `speech_secret_name` (default: `azure-speech-key`)
 - `key_slot` (`key1` or `key2`)
