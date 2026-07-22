@@ -21,7 +21,7 @@ public static class AuthenticationEndpoints
             .AllowAnonymous();
 
         endpoints.MapGet("/api/auth/smoke", SmokeHandler)
-            .RequireAuthorization();
+            .RequireAuthorization(AuthorizationPolicies.InvitedUser);
 
         return endpoints;
     }
