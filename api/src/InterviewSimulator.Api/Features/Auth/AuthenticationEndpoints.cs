@@ -15,13 +15,13 @@ public static class AuthenticationEndpoints
             .AllowAnonymous();
 
         endpoints.MapPost("/api/auth/logout", LogoutHandler)
-            .AllowAnonymous();
+            .RequireAuthorization();
 
         endpoints.MapGet("/api/me", MeHandler)
             .AllowAnonymous();
 
         endpoints.MapGet("/api/auth/smoke", SmokeHandler)
-            .RequireAuthorization();
+            .RequireAuthorization(AuthorizationPolicies.InvitedUser);
 
         return endpoints;
     }
@@ -46,11 +46,13 @@ public static class AuthenticationEndpoints
             authenticationSchemes: [GitHubAuthenticationDefaults.AuthenticationScheme]);
     }
 
-    private static IResult MeHandler(ClaimsPrincipal user)
+    private static IResult MeHandler(
+        ClaimsPrincipal user,
+        IAccessControlService accessControlService)
     {
-        var isAuthenticated = user.Identity?.IsAuthenticated == true;
+        var accessStatus = accessControlService.GetStatus(user);
 
-        if (!isAuthenticated)
+        if (!accessStatus.IsAuthenticated)
         {
             return Results.Ok(new CurrentUserResponse(
                 IsAuthenticated: false,
@@ -63,10 +65,6 @@ public static class AuthenticationEndpoints
                 AvatarUrl: null));
         }
 
-        var userId =
-            user.FindFirstValue(AppClaimTypes.UserId)
-            ?? user.FindFirstValue(ClaimTypes.NameIdentifier);
-
         var identityProvider = user.FindFirstValue(AppClaimTypes.IdentityProvider);
         var displayName = user.FindFirstValue(ClaimTypes.Name);
         var githubLogin = user.FindFirstValue(AppClaimTypes.GitHubLogin);
@@ -74,12 +72,9 @@ public static class AuthenticationEndpoints
 
         return Results.Ok(new CurrentUserResponse(
             IsAuthenticated: true,
-
-            // These will become real in 02b.
-            IsInvited: false,
-            IsAdmin: false,
-
-            UserId: userId,
+            IsInvited: accessStatus.IsInvited,
+            IsAdmin: accessStatus.IsAdmin,
+            UserId: accessStatus.UserId,
             IdentityProvider: identityProvider,
             DisplayName: displayName,
             GithubLogin: githubLogin,

@@ -143,7 +143,12 @@ public static class Authentication
             };
         });
 
-        builder.Services.AddAuthorization();
+        builder.Services.AddAuthorizationBuilder()
+            .AddPolicy(AuthorizationPolicies.InvitedUser, policy =>
+            {
+                policy.RequireAuthenticatedUser();
+                policy.AddRequirements(new InvitedUserRequirement());
+            });
 
         return builder;
     }
