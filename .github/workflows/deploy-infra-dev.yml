@@ -56,6 +56,11 @@ jobs:
             exit 1
           fi
 
+          if [ -z "${{ vars.AUTH_GITHUB_OAUTH_CLIENT_ID }}" ]; then
+            echo "Missing GitHub variable: AUTH_GITHUB_OAUTH_CLIENT_ID"
+            exit 1
+          fi
+
       - name: Azure login
         uses: azure/login@v3
         with:
@@ -81,7 +86,8 @@ jobs:
           az deployment group what-if \
             --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
             --template-file "${{ env.TEMPLATE_FILE }}" \
-            --parameters "${{ env.PARAMETERS_FILE }}"
+            --parameters "${{ env.PARAMETERS_FILE }}" \
+            --parameters githubOAuthClientId="${{ vars.AUTH_GITHUB_OAUTH_CLIENT_ID }}"
 
       - name: Deploy infrastructure
         id: deploy
@@ -94,6 +100,7 @@ jobs:
             --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
             --template-file "${{ env.TEMPLATE_FILE }}" \
             --parameters "${{ env.PARAMETERS_FILE }}" \
+            --parameters githubOAuthClientId="${{ vars.AUTH_GITHUB_OAUTH_CLIENT_ID }}" \
             --output json > deployment-output.json
 
           echo "deployment_name=$DEPLOYMENT_NAME" >> "$GITHUB_OUTPUT"

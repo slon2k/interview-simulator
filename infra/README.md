@@ -43,6 +43,7 @@ The main template currently accepts these parameters:
 - `skuCapacity`: App Service plan worker count
 - `linuxFxVersion`: Linux runtime stack in `<RUNTIME>|<VERSION>` format
 - `extraTags`: additional Azure tags merged into the defaults
+- `githubOAuthClientId`: GitHub OAuth app client id used by ASP.NET Core authentication
 
 ## Current Defaults
 
@@ -62,7 +63,8 @@ Deploy to a resource group:
 az deployment group create \
   --resource-group rg-interview-sim-dev \
   --template-file infra/main.bicep \
-  --parameters infra/dev.bicepparam
+  --parameters infra/dev.bicepparam \
+  --parameters githubOAuthClientId=<github-oauth-client-id>
 ```
 
 Run a what-if preview:
@@ -71,7 +73,8 @@ Run a what-if preview:
 az deployment group what-if \
   --resource-group rg-interview-sim-dev \
   --template-file infra/main.bicep \
-  --parameters infra/dev.bicepparam
+  --parameters infra/dev.bicepparam \
+  --parameters githubOAuthClientId=<github-oauth-client-id>
 ```
 
 ## Validate
@@ -94,3 +97,7 @@ Detailed Azure and GitHub setup for deployment workflows is documented in [docs/
 - If a new environment is introduced, add a new `*.bicepparam` file and document it here.
 - App Service runtime mode is set with `ASPNETCORE_ENVIRONMENT=Production` for hosted deployments.
 - Application-specific environment routing uses `APP_ENVIRONMENT` (for example `dev`, `test`, `prod`).
+- GitHub OAuth runtime configuration is injected as App Service settings:
+  - `Authentication__CookieName`
+  - `Authentication__GitHub__ClientId`
+  - `Authentication__GitHub__ClientSecret` via Key Vault reference to `github-oauth-client-secret`

@@ -32,3 +32,5 @@ param openAIDeployments = [
 		deploymentCapacity: 10
 	}
 ]
+
+param githubOAuthClientId = '<github-oauth-client-id>'
