@@ -2,6 +2,8 @@ namespace InterviewSimulator.Api.Startup;
 
 public static class Diagnostics
 {
+    public const int DefaultSlowRequestThresholdMs = 500;
+
     public static WebApplicationBuilder AddApplicationDiagnostics(this WebApplicationBuilder builder)
     {
         builder.Services.AddOpenApi();
@@ -19,7 +21,7 @@ public static class Diagnostics
 
     public static WebApplication UseApplicationDiagnostics(
         this WebApplication app,
-        int slowRequestThresholdMs)
+        int slowRequestThresholdMs = DefaultSlowRequestThresholdMs)
     {
         bool isDevelopment = app.Environment.IsDevelopment();
 
