@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.45.15.27210",
-      "templateHash": "5092017672988286798"
+      "templateHash": "2219652034924684366"
     }
   },
   "parameters": {
@@ -115,6 +115,12 @@
         "description": "Azure OpenAI account name, should be globally unique."
       }
     },
+    "githubOAuthClientId": {
+      "type": "string",
+      "metadata": {
+        "description": "GitHub OAuth client id for ASP.NET Core authentication."
+      }
+    },
     "enableAzureOpenAI": {
       "type": "bool",
       "defaultValue": true,
@@ -159,7 +165,8 @@
       }
     ],
     "appNameSuffix": "[take(uniqueString(subscription().id, resourceGroup().id, parameters('baseName'), parameters('environment')), 6)]",
-    "effectiveOpenAIDeploymentName": "[if(empty(parameters('openAIDeployments')), '', string(first(parameters('openAIDeployments')).name))]"
+    "effectiveOpenAIDeploymentName": "[if(empty(parameters('openAIDeployments')), '', string(first(parameters('openAIDeployments')).name))]",
+    "githubOAuthClientSecretName": "github-oauth-client-secret"
   },
   "resources": [
     {
@@ -351,7 +358,7 @@
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'applicationInsights'), '2025-04-01').outputs.connectionString.value]"
           },
           "appSettings": {
-            "value": "[concat(createArray(createObject('name', 'AzureSpeech__Region', 'value', reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechRegion.value), createObject('name', 'AzureSpeech__Endpoint', 'value', reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechEndpoint.value), createObject('name', 'AzureSpeech__TokenEndpoint', 'value', reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechTokenEndpoint.value), createObject('name', 'AzureSpeech__Key', 'value', format('@Microsoft.KeyVault(VaultName={0};SecretName=azure-speech-key)', parameters('keyVaultName')))), if(parameters('enableAzureOpenAI'), concat(createArray(createObject('name', 'AzureOpenAI__Endpoint', 'value', format('https://{0}.openai.azure.com/', parameters('openAIAccountName'))), createObject('name', 'AzureOpenAI__DefaultDeploymentName', 'value', variables('effectiveOpenAIDeploymentName'))), variables('openAIDeploymentNameAppSettings')), createArray()))]"
+            "value": "[concat(createArray(createObject('name', 'Authentication__CookieName', 'value', 'InterviewSimulator.Auth'), createObject('name', 'Authentication__GitHub__ClientId', 'value', parameters('githubOAuthClientId')), createObject('name', 'Authentication__GitHub__ClientSecret', 'value', format('@Microsoft.KeyVault(VaultName={0};SecretName={1})', parameters('keyVaultName'), variables('githubOAuthClientSecretName'))), createObject('name', 'AzureSpeech__Region', 'value', reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechRegion.value), createObject('name', 'AzureSpeech__Endpoint', 'value', reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechEndpoint.value), createObject('name', 'AzureSpeech__TokenEndpoint', 'value', reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechTokenEndpoint.value), createObject('name', 'AzureSpeech__Key', 'value', format('@Microsoft.KeyVault(VaultName={0};SecretName=azure-speech-key)', parameters('keyVaultName')))), if(parameters('enableAzureOpenAI'), concat(createArray(createObject('name', 'AzureOpenAI__Endpoint', 'value', format('https://{0}.openai.azure.com/', parameters('openAIAccountName'))), createObject('name', 'AzureOpenAI__DefaultDeploymentName', 'value', variables('effectiveOpenAIDeploymentName'))), variables('openAIDeploymentNameAppSettings')), createArray()))]"
           },
           "extraTags": {
             "value": "[parameters('extraTags')]"

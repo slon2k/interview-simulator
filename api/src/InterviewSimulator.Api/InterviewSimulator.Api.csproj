@@ -8,14 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AspNet.Security.OAuth.GitHub" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.OpenApi" />
   </ItemGroup>
 
-  <Target
-    Name="BuildFrontendForPublish"
-    AfterTargets="ComputeFilesToPublish"
-    Condition="'$(SkipFrontendBuild)' != 'true' and Exists('$(WebProjectDir)/package.json')">
+  <Target Name="BuildFrontendForPublish" AfterTargets="ComputeFilesToPublish" Condition="'$(SkipFrontendBuild)' != 'true' and Exists('$(WebProjectDir)/package.json')">
 
     <Message Importance="high" Text="Building frontend assets in $(WebProjectDir)" />
 
@@ -25,9 +23,7 @@
     <ItemGroup>
       <DistFiles Include="$(WebDistDir)/**/*" />
 
-      <ResolvedFileToPublish
-        Include="@(DistFiles->'%(FullPath)')"
-        Exclude="@(ResolvedFileToPublish)">
+      <ResolvedFileToPublish Include="@(DistFiles->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
 
         <RelativePath>wwwroot/%(RecursiveDir)%(Filename)%(Extension)</RelativePath>
         <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>

@@ -4,7 +4,7 @@ This guide covers setup and execution for:
 
 - [.github/workflows/deploy-infra-dev.yml](../.github/workflows/deploy-infra-dev.yml)
 - [.github/workflows/deploy-app-dev.yml](../.github/workflows/deploy-app-dev.yml)
-- [.github/workflows/manage-dev-secrets.yml](../.github/workflows/manage-dev-secrets.yml)
+- [.github/workflows/manage-secrets.yml](../.github/workflows/manage-secrets.yml)
 
 ## Prerequisites
 
@@ -122,6 +122,7 @@ Variables required by infra deployment workflow:
 - `AZURE_TENANT_ID`
 - `AZURE_SUBSCRIPTION_ID`
 - `AZURE_RESOURCE_GROUP`
+- `AUTH_GITHUB_OAUTH_CLIENT_ID`
 
 Variables required by app deployment workflow:
 
@@ -129,13 +130,43 @@ Variables required by app deployment workflow:
 - `AZURE_WEBAPP_URL`
 - `NODE_VERSION` (optional, defaults to `24.x`)
 
+Variables required by secret management workflow:
+
+- `AZURE_KEY_VAULT_NAME`
+
 Secrets required by app deployment workflow:
 
 - `AZURE_WEBAPP_PUBLISH_PROFILE` (publish profile XML from App Service)
 
+Secret required by secret management workflow:
+
+- `AUTH_GITHUB_OAUTH_CLIENT_SECRET`
+
+The secret management workflow writes `AUTH_GITHUB_OAUTH_CLIENT_SECRET` into Key Vault as `github-oauth-client-secret`, then App Service consumes it through the runtime setting `Authentication__GitHub__ClientSecret=@Microsoft.KeyVault(...)`.
+
+`AUTH_GITHUB_OAUTH_CLIENT_ID` is a non-secret GitHub environment variable because the client id is public metadata.
+
+For manual deployment commands, pass the client id as an extra Bicep parameter:
+
+```powershell
+az deployment group create \
+  --resource-group rg-interview-sim-dev \
+  --template-file infra/main.bicep \
+  --parameters infra/dev.bicepparam \
+  --parameters githubOAuthClientId=<github-oauth-client-id>
+```
+
+```powershell
+az deployment group what-if \
+  --resource-group rg-interview-sim-dev \
+  --template-file infra/main.bicep \
+  --parameters infra/dev.bicepparam \
+  --parameters githubOAuthClientId=<github-oauth-client-id>
+```
+
 ## Secret Management Workflow
 
-Use `.github/workflows/manage-dev-secrets.yml` to store (and optionally rotate) Speech keys in Key Vault.
+Use `.github/workflows/manage-secrets.yml` to store (and optionally rotate) secrets in Key Vault.
 
 This workflow is manual (`workflow_dispatch`) and uses the `dev` environment.
 
@@ -152,26 +183,34 @@ Why the extra Key Vault role is needed:
 
 Manual run inputs:
 
+- `target_environment` (`dev`, `test`, or `prod`)
+- `secret_target` (`speech` or `github-oauth`)
 - `speech_account_name`
-- `key_vault_name`
-- `secret_name` (default: `azure-speech-key`)
+- `key_vault_name` (optional override; defaults to `AZURE_KEY_VAULT_NAME`)
+- `speech_secret_name` (default: `azure-speech-key`)
 - `key_slot` (`key1` or `key2`)
 - `rotate_key` (`true` to regenerate selected key slot before storing)
 
+Notes:
+
+- For `secret_target=github-oauth`, `speech_account_name`, `key_slot`, and `rotate_key` are ignored.
+- For `secret_target=github-oauth`, the workflow writes secret name `github-oauth-client-secret`.
+
 Suggested usage:
 
-1. First run: `rotate_key=false`, verify secret storage path works.
-2. Rotation run: `rotate_key=true` for the slot not currently in active use.
-3. Update app/config to consume the rotated slot secret, then rotate the other slot in a follow-up run.
+1. Speech first run: `secret_target=speech`, `rotate_key=false`, verify secret storage path works.
+2. Speech rotation run: `secret_target=speech`, `rotate_key=true` for the slot not currently in active use.
+3. GitHub OAuth run: `secret_target=github-oauth` to sync `AUTH_GITHUB_OAUTH_CLIENT_SECRET` into Key Vault.
 
 ## Deployment Order
 
 1. Run infrastructure deployment workflow first.
-2. Read deployment outputs and set:
+2. Run secret management workflow to populate Key Vault secrets (Speech and GitHub OAuth).
+3. Read deployment outputs and set:
    - `AZURE_WEBAPP_NAME` from `webAppName`
    - `AZURE_WEBAPP_URL` from `webAppUrl`
-3. Add `AZURE_WEBAPP_PUBLISH_PROFILE` secret.
-4. Run app deployment workflow.
+4. Add `AZURE_WEBAPP_PUBLISH_PROFILE` secret.
+5. Run app deployment workflow.
 
 ## Environment Mode Notes
 

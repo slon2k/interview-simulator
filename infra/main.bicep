@@ -44,6 +44,9 @@ param speechSkuName string = 'F0'
 @description('Azure OpenAI account name, should be globally unique.')
 param openAIAccountName string = toLower('${take(baseName, 16)}-${environment}-oai-${take(uniqueString(resourceGroup().id), 6)}')
 
+@description('GitHub OAuth client id for ASP.NET Core authentication.')
+param githubOAuthClientId string
+
 @description('Enable Azure OpenAI resource deployment and runtime app settings wiring.')
 param enableAzureOpenAI bool = true
 
@@ -61,6 +64,8 @@ param openAIDeployments array = []
 
 var appNameSuffix = take(uniqueString(subscription().id, resourceGroup().id, baseName, environment), 6)
 var effectiveOpenAIDeploymentName = empty(openAIDeployments) ? '' : string(first(openAIDeployments).name)
+var githubOAuthClientSecretName = 'github-oauth-client-secret'
+var azureSpeechKeySecretName = 'azure-speech-key'
 var openAIDeploymentNameAppSettings = [for (deployment, i) in openAIDeployments: {
   name: 'AzureOpenAI__DeploymentNames__${i}'
   value: string(deployment.name)
@@ -96,6 +101,14 @@ module api 'modules/appService.bicep' = {
     appSettings: concat(
       [
         {
+          name: 'Authentication__GitHub__ClientId'
+          value: githubOAuthClientId
+        }
+        {
+          name: 'Authentication__GitHub__ClientSecret'
+          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${githubOAuthClientSecretName})'
+        }
+        {
           name: 'AzureSpeech__Region'
           value: speech.outputs.speechRegion
         }
@@ -109,7 +122,7 @@ module api 'modules/appService.bicep' = {
         }
         {
           name: 'AzureSpeech__Key'
-          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=azure-speech-key)'
+          value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${azureSpeechKeySecretName})'
         }
       ],
       enableAzureOpenAI
