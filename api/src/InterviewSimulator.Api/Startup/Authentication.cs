@@ -12,25 +12,6 @@ public static class Authentication
 {
     public static WebApplicationBuilder AddApplicationAuthentication(this WebApplicationBuilder builder)
     {
-        var githubClientId = builder.Configuration["Authentication:GitHub:ClientId"];
-        var githubClientSecret = builder.Configuration["Authentication:GitHub:ClientSecret"];
-        var cookieName = builder.Configuration["Authentication:Cookie:Name"];
-
-        if (string.IsNullOrWhiteSpace(githubClientId))
-        {
-            throw new InvalidOperationException("Missing configuration: Authentication:GitHub:ClientId");
-        }
-
-        if (string.IsNullOrWhiteSpace(githubClientSecret))
-        {
-            throw new InvalidOperationException("Missing configuration: Authentication:GitHub:ClientSecret");
-        }
-
-        if (string.IsNullOrWhiteSpace(cookieName))
-        {
-            throw new InvalidOperationException("Missing configuration: Authentication:Cookie:Name");
-        }
-
         builder.Services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -41,6 +22,13 @@ public static class Authentication
         })
         .AddCookie(options =>
         {
+            var cookieName = builder.Configuration["Authentication:Cookie:Name"];
+
+            if (string.IsNullOrWhiteSpace(cookieName))
+            {
+                throw new InvalidOperationException("Missing configuration: Authentication:Cookie:Name");
+            }
+
             options.Cookie.Name = cookieName;
             options.Cookie.HttpOnly = true;
             options.Cookie.SameSite = SameSiteMode.Lax;
@@ -69,6 +57,19 @@ public static class Authentication
         })
         .AddGitHub(options =>
         {
+            var githubClientId = builder.Configuration["Authentication:GitHub:ClientId"];
+            var githubClientSecret = builder.Configuration["Authentication:GitHub:ClientSecret"];
+
+            if (string.IsNullOrWhiteSpace(githubClientId))
+            {
+                throw new InvalidOperationException("Missing configuration: Authentication:GitHub:ClientId");
+            }
+
+            if (string.IsNullOrWhiteSpace(githubClientSecret))
+            {
+                throw new InvalidOperationException("Missing configuration: Authentication:GitHub:ClientSecret");
+            }
+
             options.ClientId = githubClientId;
             options.ClientSecret = githubClientSecret;
             options.CallbackPath = "/signin-github";

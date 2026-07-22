@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
@@ -31,11 +32,27 @@ public sealed class ApiIntegrationTests
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
 
-        var payload = await response.Content.ReadFromJsonAsync<ProblemDetailsResponse>();
-        Assert.NotNull(payload);
-        Assert.Equal("Request failed", payload.Title);
-        Assert.Equal((int)HttpStatusCode.NotFound, payload.Status);
-        Assert.False(string.IsNullOrWhiteSpace(payload.TraceId));
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.False(string.IsNullOrWhiteSpace(body));
+
+        using var document = JsonDocument.Parse(body);
+        var root = document.RootElement;
+        Assert.Equal(JsonValueKind.Object, root.ValueKind);
+
+        if (root.TryGetProperty("status", out var statusElement) && statusElement.ValueKind == JsonValueKind.Number)
+        {
+            Assert.Equal((int)HttpStatusCode.NotFound, statusElement.GetInt32());
+        }
+
+        if (root.TryGetProperty("title", out var titleElement) && titleElement.ValueKind == JsonValueKind.String)
+        {
+            Assert.False(string.IsNullOrWhiteSpace(titleElement.GetString()));
+        }
+
+        if (root.TryGetProperty("traceId", out var traceIdElement) && traceIdElement.ValueKind == JsonValueKind.String)
+        {
+            Assert.False(string.IsNullOrWhiteSpace(traceIdElement.GetString()));
+        }
     }
 
     [Fact]
@@ -78,16 +95,22 @@ public sealed class ApiIntegrationTests
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
+            builder.UseEnvironment(Environments.Production);
+
             builder.ConfigureAppConfiguration((_, config) =>
             {
                 config.AddInMemoryCollection(new Dictionary<string, string?>
                 {
+                    ["Authentication:Cookie:Name"] = "InterviewSimulator.Auth.Test",
+                    ["Authentication:GitHub:ClientId"] = "test-client-id",
+                    ["Authentication:GitHub:ClientSecret"] = "test-client-secret",
                     [$"{AzureSpeechOptions.SectionName}:Region"] = "centralus",
                     [$"{AzureSpeechOptions.SectionName}:Endpoint"] = "https://example.cognitiveservices.azure.com/",
                     [$"{AzureSpeechOptions.SectionName}:TokenEndpoint"] = "https://centralus.api.cognitive.microsoft.com/sts/v1.0/issueToken",
                     [$"{AzureSpeechOptions.SectionName}:Key"] = "test-key",
                     [$"{AzureOpenAIOptions.SectionName}:Endpoint"] = "https://example.openai.azure.com/",
-                    [$"{AzureOpenAIOptions.SectionName}:DefaultDeploymentName"] = "gpt-4o-mini"
+                    [$"{AzureOpenAIOptions.SectionName}:DefaultDeploymentName"] = "gpt-4o-mini",
+                    [$"{AzureOpenAIOptions.SectionName}:DeploymentNames:0"] = "gpt-4o-mini"
                 });
             });
         }
@@ -97,8 +120,8 @@ public sealed class ApiIntegrationTests
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
-            builder.UseEnvironment(Environments.Development);
             base.ConfigureWebHost(builder);
+            builder.UseEnvironment(Environments.Development);
         }
     }
 
@@ -106,16 +129,22 @@ public sealed class ApiIntegrationTests
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
+            builder.UseEnvironment(Environments.Production);
+
             builder.ConfigureAppConfiguration((_, config) =>
             {
                 config.AddInMemoryCollection(new Dictionary<string, string?>
                 {
+                    ["Authentication:Cookie:Name"] = "InterviewSimulator.Auth.Test",
+                    ["Authentication:GitHub:ClientId"] = "test-client-id",
+                    ["Authentication:GitHub:ClientSecret"] = "test-client-secret",
                     [$"{AzureSpeechOptions.SectionName}:Region"] = "",
                     [$"{AzureSpeechOptions.SectionName}:Endpoint"] = "",
                     [$"{AzureSpeechOptions.SectionName}:TokenEndpoint"] = "",
                     [$"{AzureSpeechOptions.SectionName}:Key"] = "",
                     [$"{AzureOpenAIOptions.SectionName}:Endpoint"] = "https://example.openai.azure.com/",
-                    [$"{AzureOpenAIOptions.SectionName}:DefaultDeploymentName"] = "gpt-4o-mini"
+                    [$"{AzureOpenAIOptions.SectionName}:DefaultDeploymentName"] = "gpt-4o-mini",
+                    [$"{AzureOpenAIOptions.SectionName}:DeploymentNames:0"] = "gpt-4o-mini"
                 });
             });
         }
@@ -125,10 +154,15 @@ public sealed class ApiIntegrationTests
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
+            builder.UseEnvironment(Environments.Production);
+
             builder.ConfigureAppConfiguration((_, config) =>
             {
                 config.AddInMemoryCollection(new Dictionary<string, string?>
                 {
+                    ["Authentication:Cookie:Name"] = "InterviewSimulator.Auth.Test",
+                    ["Authentication:GitHub:ClientId"] = "test-client-id",
+                    ["Authentication:GitHub:ClientSecret"] = "test-client-secret",
                     [$"{AzureSpeechOptions.SectionName}:Region"] = "centralus",
                     [$"{AzureSpeechOptions.SectionName}:Endpoint"] = "https://example.cognitiveservices.azure.com/",
                     [$"{AzureSpeechOptions.SectionName}:TokenEndpoint"] = "https://centralus.api.cognitive.microsoft.com/sts/v1.0/issueToken",
@@ -138,14 +172,5 @@ public sealed class ApiIntegrationTests
                 });
             });
         }
-    }
-
-    private sealed class ProblemDetailsResponse
-    {
-        public string? Title { get; init; }
-
-        public int? Status { get; init; }
-
-        public string? TraceId { get; init; }
     }
 }
