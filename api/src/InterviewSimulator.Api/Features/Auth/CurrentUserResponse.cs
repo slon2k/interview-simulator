@@ -7,5 +7,5 @@ public sealed record CurrentUserResponse(
     string? UserId,
     string? IdentityProvider,
     string? DisplayName,
-    string? GitHubLogin,
+    string? GithubLogin,
     string? AvatarUrl);
