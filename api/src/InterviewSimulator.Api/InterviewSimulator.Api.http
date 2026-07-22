@@ -1,6 +1,12 @@
-@InterviewSimulator.Api_HostAddress = http://localhost:5078
+# To launch the API project with HTTPS, run the following command in the terminal from the root of the repository:
+# dotnet run --project "api/src/InterviewSimulator.Api/InterviewSimulator.Api.csproj" --launch-profile https
+
+@InterviewSimulator.Api_HostAddress = https://localhost:5001
 
 GET {{InterviewSimulator.Api_HostAddress}}/api/health
 Accept: application/json
 
 ###
+
+POST {{InterviewSimulator.Api_HostAddress}}/api/auth/logout
+Content-Type: application/json
