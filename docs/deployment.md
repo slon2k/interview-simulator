@@ -183,6 +183,7 @@ Why the extra Key Vault role is needed:
 
 Manual run inputs:
 
+- `target_environment` (`dev`, `test`, or `prod`)
 - `secret_target` (`speech` or `github-oauth`)
 - `speech_account_name`
 - `key_vault_name` (optional override; defaults to `AZURE_KEY_VAULT_NAME`)
