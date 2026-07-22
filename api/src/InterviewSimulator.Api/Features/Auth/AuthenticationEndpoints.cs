@@ -82,7 +82,7 @@ public static class AuthenticationEndpoints
             UserId: userId,
             IdentityProvider: identityProvider,
             DisplayName: displayName,
-            GitHubLogin: githubLogin,
+            GithubLogin: githubLogin,
             AvatarUrl: avatarUrl));
     }
 
