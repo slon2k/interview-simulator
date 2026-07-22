@@ -59,7 +59,7 @@ public static class AuthenticationEndpoints
                 UserId: null,
                 IdentityProvider: null,
                 DisplayName: null,
-                GitHubLogin: null,
+                GithubLogin: null,
                 AvatarUrl: null));
         }
 
