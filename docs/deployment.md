@@ -134,6 +134,7 @@ Variables required by secret management workflow:
 
 - `AZURE_KEY_VAULT_NAME`
 - `AZURE_SPEECH_ACCOUNT_NAME`
+- `AZURE_WEBAPP_NAME` (required when `restart_web_app=true`)
 
 Secrets required by app deployment workflow:
 
@@ -190,12 +191,15 @@ Manual run inputs:
 - `key_vault_name` (optional override; defaults to `AZURE_KEY_VAULT_NAME`)
 - `speech_secret_name` (default: `azure-speech-key`)
 - `key_slot` (`key1` or `key2`)
+- `web_app_name` (optional override; defaults to `AZURE_WEBAPP_NAME`)
+- `restart_web_app` (`true` by default)
 - `rotate_key` (`true` to regenerate selected key slot before storing)
 
 Notes:
 
 - For `secret_target=github-oauth`, `speech_account_name`, `key_slot`, and `rotate_key` are ignored.
 - For `secret_target=github-oauth`, the workflow writes secret name `github-oauth-client-secret`.
+- Set `restart_web_app=false` to skip restart after secret updates.
 
 Suggested usage:
 
