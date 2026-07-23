@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace InterviewSimulator.Api.IntegrationTests;
+namespace InterviewSimulator.Api.IntegrationTests.Auth;
 
 public sealed class AuthWebApplicationFactory : WebApplicationFactory<Program>
 {
