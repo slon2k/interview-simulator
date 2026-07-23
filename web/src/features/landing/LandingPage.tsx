@@ -1,6 +1,7 @@
 import { Badge, Button, Card, Group, Stack, Text, Title } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import { getHealth } from '../../api/healthApi'
+import { AuthDebugPanel } from '../auth/AuthDebugPanel'
 
 export function LandingPage() {
   const healthQuery = useQuery({
@@ -44,6 +45,8 @@ export function LandingPage() {
           </Text>
         </Stack>
       </Card>
+
+      <AuthDebugPanel />
     </Stack>
   )
 }
