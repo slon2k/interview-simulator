@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom'
 import { RootLayout } from '../components/layout/RootLayout'
+import { ProtectedRoute } from '../components/routing/ProtectedRoute'
 import { LandingPage } from '../features/landing/LandingPage'
 import { DashboardPage } from '../features/dashboard/DashboardPage'
 import { InterviewSetupPage } from '../features/interview/InterviewSetupPage'
@@ -19,19 +20,35 @@ export const router = createBrowserRouter([
       },
       {
         path: 'dashboard',
-        element: <DashboardPage />,
+        element: (
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        ),
       },
       {
         path: 'interview/new',
-        element: <InterviewSetupPage />,
+        element: (
+          <ProtectedRoute>
+            <InterviewSetupPage />
+          </ProtectedRoute>
+        ),
       },
       {
         path: 'history',
-        element: <SessionHistoryPage />,
+        element: (
+          <ProtectedRoute>
+            <SessionHistoryPage />
+          </ProtectedRoute>
+        ),
       },
       {
         path: 'history/:sessionId',
-        element: <SessionDetailPage />,
+        element: (
+          <ProtectedRoute>
+            <SessionDetailPage />
+          </ProtectedRoute>
+        ),
       },
       {
         path: 'unauthorized',
