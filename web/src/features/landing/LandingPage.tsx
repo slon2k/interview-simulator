@@ -1,4 +1,4 @@
-import { Badge, Button, Card, Group, Stack, Text, Title } from '@mantine/core'
+import { Badge, Card, Group, Stack, Text, Title } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import { getHealth } from '../../api/healthApi'
 import { AuthDebugPanel } from '../auth/AuthDebugPanel'
@@ -17,15 +17,6 @@ export function LandingPage() {
           An invite-only AI Interview Simulator for realistic text-based interview practice,
           structured feedback, and progress tracking.
         </Text>
-
-        <Group>
-          <Button component="a" href="/login">
-            Sign in with GitHub
-          </Button>
-          <Button variant="light" component="a" href="/api/health">
-            Check API Health
-          </Button>
-        </Group>
       </Stack>
 
       <Card withBorder shadow="sm" radius="md">

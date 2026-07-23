@@ -1,19 +1,8 @@
-import { Badge, Button, Card, Code, Group, Stack, Text } from '@mantine/core'
+import { Badge, Card, Code, Group, Stack, Text } from '@mantine/core'
 import { useAuth } from './authContext'
-import { buildLoginUrl } from './authApi'
 
 export function AuthDebugPanel() {
-  const { user, isLoading, error, isAuthenticated, isInvited, isAdmin, logout } = useAuth()
-
-  const handleLogin = () => {
-    window.location.href = buildLoginUrl(window.location.pathname)
-  }
-
-  const handleLogout = () => {
-    void logout().then(() => {
-      window.location.href = '/'
-    })
-  }
+  const { user, isLoading, error, isAuthenticated, isInvited, isAdmin } = useAuth()
 
   return (
     <Card withBorder shadow="sm" radius="md">
@@ -37,19 +26,6 @@ export function AuthDebugPanel() {
             {JSON.stringify({ isAuthenticated, isInvited, isAdmin, user }, null, 2)}
           </Code>
         )}
-
-        <Group>
-          {!isAuthenticated && (
-            <Button size="xs" onClick={handleLogin}>
-              Login with GitHub
-            </Button>
-          )}
-          {isAuthenticated && (
-            <Button size="xs" variant="light" color="red" onClick={handleLogout}>
-              Logout
-            </Button>
-          )}
-        </Group>
       </Stack>
     </Card>
   )
