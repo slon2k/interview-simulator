@@ -252,22 +252,22 @@ Possible later provider:
 Microsoft Entra ID
 ```
 
-Invite-only access is implemented using a configuration-based allowlist of GitHub numeric user IDs.
+Invite-only access is implemented using a configuration-based allowlist of canonical application user IDs.
 
 Configuration values:
 
 ```text
-ACCESS_ADMIN_GITHUB_IDS
-ACCESS_INVITED_GITHUB_IDS
+AccessControl:AdminUserIds
+AccessControl:InvitedUserIds
 ```
 
 Admin users are treated as invited users for access control.
 
 ```text
-invited
+github|{githubUserId}
 ```
 
-Protected routes require the `invited` role.
+Protected routes require the backend `InvitedUser` authorization policy.
 
 Examples of protected routes:
 
@@ -277,7 +277,7 @@ Examples of protected routes:
 /api/speech/token
 ```
 
-The backend also checks the authenticated user and role defensively.
+The backend also checks the authenticated user and effective access state defensively.
 
 Frontend route guards are a UX optimization only. Backend authorization policies on `/api/*` are the enforcement boundary.
 
@@ -290,7 +290,9 @@ The `/api/me` endpoint should return a normalized auth view such as:
   "isAdmin": false,
   "userId": "github|123456789",
   "identityProvider": "github",
-  "displayName": "octocat"
+  "displayName": "octocat",
+  "githubLogin": "octocat",
+  "avatarUrl": "https://avatars.githubusercontent.com/u/123456789"
 }
 ```
 
@@ -593,7 +595,7 @@ Managed identity can be considered later, especially for Cosmos DB access.
 
 - Keep `/api/health` anonymous or minimally protected for deployment verification
 - Keep `/api/me` available to authenticated users
-- Protect session, dashboard, AI, and speech endpoints with the `invited` role
+- Protect session, dashboard, AI, and speech endpoints with the `InvitedUser` authorization policy
 - Check authorization policy in ASP.NET Core defensively
 - Keep frontend route guards for UX only; never treat them as security boundaries
 - Never trust `sessionId` alone
