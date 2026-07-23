@@ -22,8 +22,8 @@ This feature ensures only invited authenticated users can use protected applicat
 - Enforce policy for protected API endpoints
 - Return consistent forbidden or access-denied responses for non-invited users
 - Define and document concrete allowlist configuration shape (example):
-  - `Auth:AdminGitHubUserIds: []`
-  - `Auth:InvitedGitHubUserIds: []`
+  - `AccessControl:AdminUserIds: []`
+  - `AccessControl:InvitedUserIds: []`
 
 ## Out of Scope
 
@@ -33,30 +33,30 @@ This feature ensures only invited authenticated users can use protected applicat
 
 ## Acceptance Criteria
 
-- [ ] Invite-only policy is implemented in backend authorization
-- [ ] Protected API endpoints require authenticated invited users
-- [ ] Non-invited authenticated users are denied protected endpoints
-- [ ] Admin GitHub IDs are treated as invited users
-- [ ] Config-based admin and invited allowlists are documented
-- [ ] `/api/me` includes `isInvited` and `isAdmin` based on current allowlist configuration.
-- [ ] Unauthorized and forbidden responses for protected `/api/*` endpoints are returned as JSON with `401`/`403` status codes (no HTML redirect payloads).
+- [x] Invite-only policy is implemented in backend authorization
+- [x] Protected API endpoints require authenticated invited users
+- [x] Non-invited authenticated users are denied protected endpoints
+- [x] Admin GitHub IDs are treated as invited users
+- [x] Config-based admin and invited allowlists are documented
+- [x] `/api/me` includes `isInvited` and `isAdmin` based on current allowlist configuration.
+- [x] Unauthorized and forbidden responses for protected `/api/*` endpoints are returned as JSON with `401`/`403` status codes (no HTML redirect payloads).
 
 ## Sub-Issues
 
-- [ ] Task: Define invite-only policy and policy handlers
-- [ ] Task: Implement config-based invite allowlist strategy
-- [ ] Task: Treat admin GitHub IDs as invited users
-- [ ] Task: Apply policy to protected endpoints
-- [ ] Task: Add authorization tests for invited and non-invited users
-- [ ] Task: Document policy behavior and expected denial responses
+- [x] Task: Define invite-only policy and policy handlers
+- [x] Task: Implement config-based invite allowlist strategy
+- [x] Task: Treat admin GitHub IDs as invited users
+- [x] Task: Apply policy to protected endpoints
+- [x] Task: Add authorization tests for invited and non-invited users
+- [x] Task: Document policy behavior and expected denial responses
 
 ## Verification
 
-- [ ] Invited users can access protected endpoints
-- [ ] Admin users are treated as invited users
-- [ ] Non-invited authenticated users receive a clear forbidden response/page
-- [ ] Anonymous users are challenged or denied as expected
-- [ ] Protected `/api/*` endpoints return JSON payloads for `401` and `403` cases.
+- [x] Invited users can access protected endpoints
+- [x] Admin users are treated as invited users
+- [x] Non-invited authenticated users receive a clear forbidden response/page
+- [x] Anonymous users are challenged or denied as expected
+- [x] Protected `/api/*` endpoints return JSON payloads for `401` and `403` cases.
 
 ## Dependencies and Blockers
 

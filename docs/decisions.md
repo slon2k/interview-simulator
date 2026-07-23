@@ -318,13 +318,13 @@ The MVP needs a simple, low-ceremony way to control access without introducing i
 
 ## Decision
 
-Use a configuration-based allowlist of GitHub numeric user IDs for MVP access control.
+Use a configuration-based allowlist of canonical application user IDs for MVP access control.
 
 Use separate configuration values for admin users and invited users:
 
 ```text
-ACCESS_ADMIN_GITHUB_IDS
-ACCESS_INVITED_GITHUB_IDS
+AccessControl:AdminUserIds
+AccessControl:InvitedUserIds
 ```
 
 Treat admin users as invited users for access control.
