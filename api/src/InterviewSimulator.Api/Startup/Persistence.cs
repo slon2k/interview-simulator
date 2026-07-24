@@ -3,6 +3,7 @@ using InterviewSimulator.Api.Infrastructure.Cosmos;
 using Microsoft.Extensions.Options;
 using Microsoft.Azure.Cosmos;
 using Azure.Identity;
+using InterviewSimulator.Api.Infrastructure.Data;
 
 namespace InterviewSimulator.Api.Startup;
 
@@ -50,6 +51,8 @@ public static class CosmosPersistence
                 tokenCredential: new DefaultAzureCredential(),
                 clientOptions: clientOptions);
         });
+
+        services.AddScoped<ICosmosDbInitializer, CosmosDbInitializer>();
 
         return builder;
     }
