@@ -156,6 +156,10 @@ module api 'modules/appService.bicep' = {
           value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${azureSpeechKeySecretName})'
         }
         {
+          name: 'CosmosDb__Enabled'
+          value: true
+        }
+        {
           name: 'CosmosDb__Endpoint'
           value: cosmos.outputs.endpoint
         }
