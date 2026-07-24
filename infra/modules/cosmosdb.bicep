@@ -20,28 +20,30 @@ param automaticFailover bool = false
 @description('Enable free tier. Only available for one account per subscription.')
 param enableFreeTier bool = false
 
-// enable serverless capability for Cosmos DB
 @description('Enable serverless capability for Cosmos DB.')
-param enableServerless bool = true
+param enableServerless bool = false
 
 @description('Database-level shared throughput for provisioned Cosmos DB accounts. Ignored when serverless is enabled.')
 @minValue(400)
 param databaseThroughput int = 400
 
-// ── Cosmos DB Account ──────────────────────────────────────────────────────
+var effectiveConsistencyPolicy = union(
+  {
+    defaultConsistencyLevel: consistencyLevel
+  },
+  consistencyLevel == 'BoundedStaleness'
+    ? {
+        maxIntervalInSeconds: 5
+        maxStalenessPrefix: 100
+      }
+    : {}
+)
 
-resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = {
-  name: cosmosAccountName
-  location: location
-  kind: 'GlobalDocumentDB'
-  properties: {
+var cosmosAccountProperties = union(
+  {
     databaseAccountOfferType: 'Standard'
     enableFreeTier: enableFreeTier
-    consistencyPolicy: {
-      defaultConsistencyLevel: consistencyLevel
-      maxIntervalInSeconds: consistencyLevel == 'BoundedStaleness' ? 5 : null
-      maxStalenessPrefix: consistencyLevel == 'BoundedStaleness' ? 100 : null
-    }
+    consistencyPolicy: effectiveConsistencyPolicy
     locations: [
       {
         locationName: location
@@ -50,13 +52,40 @@ resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = {
       }
     ]
     enableAutomaticFailover: automaticFailover
-
-    capabilities: enableServerless ? [
-      {
-        name: 'EnableServerless'
+  },
+  enableServerless
+    ? {
+        capabilities: [
+          {
+            name: 'EnableServerless'
+          }
+        ]
       }
-    ] : []
-  }
+    : {}
+)
+
+var databaseProperties = union(
+  {
+    resource: {
+      id: databaseName
+    }
+  },
+  enableServerless
+    ? {}
+    : {
+        options: {
+          throughput: databaseThroughput
+        }
+      }
+)
+
+// ── Cosmos DB Account ──────────────────────────────────────────────────────
+
+resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = {
+  name: cosmosAccountName
+  location: location
+  kind: 'GlobalDocumentDB'
+  properties: cosmosAccountProperties
 }
 
 // ── Cosmos DB Database ──────────────────────────────────────────────────────
@@ -64,18 +93,7 @@ resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = {
 resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2024-05-15' = {
   parent: cosmosAccount
   name: databaseName
-  properties: union(
-    {
-      resource: {
-        id: databaseName
-      }
-    },
-    enableServerless ? {} : {
-      options: {
-        throughput: databaseThroughput
-      }
-    }
-  )
+  properties: databaseProperties
 }
 
 // ── Cosmos DB Containers ────────────────────────────────────────────────────
