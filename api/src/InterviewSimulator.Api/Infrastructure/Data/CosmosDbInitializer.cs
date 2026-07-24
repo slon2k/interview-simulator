@@ -1,5 +1,4 @@
 using InterviewSimulator.Api.Infrastructure.Cosmos;
-
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Options;
 
@@ -21,7 +20,7 @@ public sealed class CosmosDbInitializer(
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
-        if (!_options.Enabled)
+        if (!_options.Enabled || !_options.InitializeOnStartup)
         {
             return;
         }
@@ -30,14 +29,14 @@ public sealed class CosmosDbInitializer(
         {
             _logger.LogInformation("Initializing Cosmos DB database and containers");
 
-            // Create database if it doesn't exist
-            var database = await _cosmosClient.CreateDatabaseIfNotExistsAsync(
+            var databaseResponse = await _cosmosClient.CreateDatabaseIfNotExistsAsync(
                 _options.DatabaseName,
                 cancellationToken: cancellationToken);
 
+            var database = databaseResponse.Database;
+
             _logger.LogInformation("Database '{DatabaseName}' is ready", _options.DatabaseName);
 
-            // Create containers if they don't exist
             await CreateContainerIfNotExistsAsync(
                 database,
                 _options.UsersContainerName,
@@ -67,7 +66,7 @@ public sealed class CosmosDbInitializer(
     {
         try
         {
-            var container = await database.CreateContainerIfNotExistsAsync(
+            await database.CreateContainerIfNotExistsAsync(
                 new ContainerProperties
                 {
                     Id = containerName,

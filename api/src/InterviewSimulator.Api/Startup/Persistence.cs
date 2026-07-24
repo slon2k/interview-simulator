@@ -1,9 +1,8 @@
-using InterviewSimulator.Api.Infrastructure.Cosmos;
-
-using Microsoft.Extensions.Options;
-using Microsoft.Azure.Cosmos;
 using Azure.Identity;
+using InterviewSimulator.Api.Infrastructure.Cosmos;
 using InterviewSimulator.Api.Infrastructure.Data;
+using Microsoft.Azure.Cosmos;
+using Microsoft.Extensions.Options;
 
 namespace InterviewSimulator.Api.Startup;
 
@@ -57,6 +56,24 @@ public static class CosmosPersistence
         return builder;
     }
 
+    public static async Task InitializeCosmosPersistenceAsync(this WebApplication app)
+    {
+        var options = app.Services
+            .GetRequiredService<IOptions<CosmosDbOptions>>()
+            .Value;
+
+        if (!options.Enabled || !options.InitializeOnStartup)
+        {
+            return;
+        }
+
+        using var scope = app.Services.CreateScope();
+
+        var initializer = scope.ServiceProvider.GetRequiredService<ICosmosDbInitializer>();
+
+        await initializer.InitializeAsync(app.Lifetime.ApplicationStopping);
+    }
+
     private static bool ValidateCosmosOptions(CosmosDbOptions options)
     {
         if (!options.Enabled)
@@ -64,7 +81,10 @@ public static class CosmosPersistence
             return true;
         }
 
-        return !string.IsNullOrWhiteSpace(options.Endpoint)
+        var hasEndpoint = !string.IsNullOrWhiteSpace(options.Endpoint);
+        var hasConnectionString = !string.IsNullOrWhiteSpace(options.ConnectionString);
+
+        return (hasEndpoint || hasConnectionString)
             && !string.IsNullOrWhiteSpace(options.DatabaseName)
             && !string.IsNullOrWhiteSpace(options.UsersContainerName)
             && !string.IsNullOrWhiteSpace(options.SessionsContainerName);
@@ -76,9 +96,9 @@ public static class CosmosPersistence
             " ",
             "Cosmos DB persistence is enabled, but required configuration is missing.",
             "Required settings:",
-            "CosmosDb:Endpoint,",
             "CosmosDb:DatabaseName,",
             "CosmosDb:UsersContainerName,",
-            "CosmosDb:SessionsContainerName.");
+            "CosmosDb:SessionsContainerName,",
+            "and either CosmosDb:Endpoint for managed identity or CosmosDb:ConnectionString for local emulator/key auth.");
     }
 }
