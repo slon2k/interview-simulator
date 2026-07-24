@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.45.15.27210",
-      "templateHash": "2219652034924684366"
+      "templateHash": "2998439315018178442"
     }
   },
   "parameters": {
@@ -151,6 +151,65 @@
       "metadata": {
         "description": "List of Azure OpenAI model deployments. Each item should contain: name, modelName, modelVersion, deploymentSkuName, deploymentCapacity."
       }
+    },
+    "cosmosAccountName": {
+      "type": "string",
+      "defaultValue": "[toLower(format('{0}-{1}-cosmos-{2}', take(parameters('baseName'), 16), parameters('environment'), take(uniqueString(resourceGroup().id), 6)))]",
+      "metadata": {
+        "description": "Cosmos DB account name, should be globally unique."
+      }
+    },
+    "cosmosDatabaseName": {
+      "type": "string",
+      "defaultValue": "interview-sim-db",
+      "metadata": {
+        "description": "Cosmos DB SQL API database name."
+      }
+    },
+    "cosmosContainers": {
+      "type": "array",
+      "defaultValue": [
+        {
+          "name": "users",
+          "partitionKey": "/userId"
+        },
+        {
+          "name": "sessions",
+          "partitionKey": "/userId"
+        }
+      ],
+      "metadata": {
+        "description": "Cosmos DB SQL containers. Each item should contain: name and partitionKey."
+      }
+    },
+    "cosmosEnableFreeTier": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable Cosmos DB free tier (one per subscription)."
+      }
+    },
+    "cosmosEnableServerless": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable serverless capability for Cosmos DB."
+      }
+    },
+    "cosmosDataContributorPrincipalIds": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "description": "Additional principal IDs to grant Cosmos DB SQL Data Contributor, for example local developer object IDs."
+      }
+    },
+    "cosmosDatabaseThroughput": {
+      "type": "int",
+      "defaultValue": 400,
+      "minValue": 400,
+      "metadata": {
+        "description": "Cosmos DB database-level shared throughput when serverless is disabled."
+      }
     }
   },
   "variables": {
@@ -166,7 +225,8 @@
     ],
     "appNameSuffix": "[take(uniqueString(subscription().id, resourceGroup().id, parameters('baseName'), parameters('environment')), 6)]",
     "effectiveOpenAIDeploymentName": "[if(empty(parameters('openAIDeployments')), '', string(first(parameters('openAIDeployments')).name))]",
-    "githubOAuthClientSecretName": "github-oauth-client-secret"
+    "githubOAuthClientSecretName": "github-oauth-client-secret",
+    "azureSpeechKeySecretName": "azure-speech-key"
   },
   "resources": [
     {
@@ -358,7 +418,7 @@
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'applicationInsights'), '2025-04-01').outputs.connectionString.value]"
           },
           "appSettings": {
-            "value": "[concat(createArray(createObject('name', 'Authentication__CookieName', 'value', 'InterviewSimulator.Auth'), createObject('name', 'Authentication__GitHub__ClientId', 'value', parameters('githubOAuthClientId')), createObject('name', 'Authentication__GitHub__ClientSecret', 'value', format('@Microsoft.KeyVault(VaultName={0};SecretName={1})', parameters('keyVaultName'), variables('githubOAuthClientSecretName'))), createObject('name', 'AzureSpeech__Region', 'value', reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechRegion.value), createObject('name', 'AzureSpeech__Endpoint', 'value', reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechEndpoint.value), createObject('name', 'AzureSpeech__TokenEndpoint', 'value', reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechTokenEndpoint.value), createObject('name', 'AzureSpeech__Key', 'value', format('@Microsoft.KeyVault(VaultName={0};SecretName=azure-speech-key)', parameters('keyVaultName')))), if(parameters('enableAzureOpenAI'), concat(createArray(createObject('name', 'AzureOpenAI__Endpoint', 'value', format('https://{0}.openai.azure.com/', parameters('openAIAccountName'))), createObject('name', 'AzureOpenAI__DefaultDeploymentName', 'value', variables('effectiveOpenAIDeploymentName'))), variables('openAIDeploymentNameAppSettings')), createArray()))]"
+            "value": "[concat(createArray(createObject('name', 'Authentication__GitHub__ClientId', 'value', parameters('githubOAuthClientId')), createObject('name', 'Authentication__GitHub__ClientSecret', 'value', format('@Microsoft.KeyVault(VaultName={0};SecretName={1})', parameters('keyVaultName'), variables('githubOAuthClientSecretName'))), createObject('name', 'AzureSpeech__Region', 'value', reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechRegion.value), createObject('name', 'AzureSpeech__Endpoint', 'value', reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechEndpoint.value), createObject('name', 'AzureSpeech__TokenEndpoint', 'value', reference(resourceId('Microsoft.Resources/deployments', 'speechService'), '2025-04-01').outputs.speechTokenEndpoint.value), createObject('name', 'AzureSpeech__Key', 'value', format('@Microsoft.KeyVault(VaultName={0};SecretName={1})', parameters('keyVaultName'), variables('azureSpeechKeySecretName'))), createObject('name', 'CosmosDb__Endpoint', 'value', reference(resourceId('Microsoft.Resources/deployments', 'cosmosDB'), '2025-04-01').outputs.endpoint.value), createObject('name', 'CosmosDb__DatabaseName', 'value', reference(resourceId('Microsoft.Resources/deployments', 'cosmosDB'), '2025-04-01').outputs.databaseName.value), createObject('name', 'CosmosDb__UsersContainerName', 'value', 'users'), createObject('name', 'CosmosDb__SessionsContainerName', 'value', 'sessions')), if(parameters('enableAzureOpenAI'), concat(createArray(createObject('name', 'AzureOpenAI__Endpoint', 'value', format('https://{0}.openai.azure.com/', parameters('openAIAccountName'))), createObject('name', 'AzureOpenAI__DefaultDeploymentName', 'value', variables('effectiveOpenAIDeploymentName'))), variables('openAIDeploymentNameAppSettings')), createArray()))]"
           },
           "extraTags": {
             "value": "[parameters('extraTags')]"
@@ -563,6 +623,7 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'applicationInsights')]",
+        "[resourceId('Microsoft.Resources/deployments', 'cosmosDB')]",
         "[resourceId('Microsoft.Resources/deployments', 'appServicePlan')]",
         "[resourceId('Microsoft.Resources/deployments', 'speechService')]"
       ]
@@ -1218,6 +1279,279 @@
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'appService')]"
       ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "cosmosDB",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "cosmosAccountName": {
+            "value": "[parameters('cosmosAccountName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "databaseName": {
+            "value": "[parameters('cosmosDatabaseName')]"
+          },
+          "containers": {
+            "value": "[parameters('cosmosContainers')]"
+          },
+          "enableFreeTier": {
+            "value": "[parameters('cosmosEnableFreeTier')]"
+          },
+          "enableServerless": {
+            "value": "[parameters('cosmosEnableServerless')]"
+          },
+          "databaseThroughput": {
+            "value": "[parameters('cosmosDatabaseThroughput')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.45.15.27210",
+              "templateHash": "11353605483135323020"
+            }
+          },
+          "parameters": {
+            "cosmosAccountName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the Cosmos DB account."
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Location for Cosmos DB."
+              }
+            },
+            "databaseName": {
+              "type": "string",
+              "metadata": {
+                "description": "Cosmos DB SQL API database name."
+              }
+            },
+            "containers": {
+              "type": "array",
+              "defaultValue": [],
+              "metadata": {
+                "description": "Cosmos DB container configurations. Each item should contain: name and partitionKey."
+              }
+            },
+            "consistencyLevel": {
+              "type": "string",
+              "defaultValue": "Session",
+              "allowedValues": [
+                "Strong",
+                "BoundedStaleness",
+                "Session",
+                "ConsistentPrefix",
+                "Eventual"
+              ],
+              "metadata": {
+                "description": "Cosmos DB API default consistency level."
+              }
+            },
+            "automaticFailover": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Enable automatic failover."
+              }
+            },
+            "enableFreeTier": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Enable free tier. Only available for one account per subscription."
+              }
+            },
+            "enableServerless": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable serverless capability for Cosmos DB."
+              }
+            },
+            "databaseThroughput": {
+              "type": "int",
+              "defaultValue": 400,
+              "minValue": 400,
+              "metadata": {
+                "description": "Database-level shared throughput for provisioned Cosmos DB accounts. Ignored when serverless is enabled."
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.DocumentDB/databaseAccounts",
+              "apiVersion": "2024-05-15",
+              "name": "[parameters('cosmosAccountName')]",
+              "location": "[parameters('location')]",
+              "kind": "GlobalDocumentDB",
+              "properties": {
+                "databaseAccountOfferType": "Standard",
+                "enableFreeTier": "[parameters('enableFreeTier')]",
+                "consistencyPolicy": {
+                  "defaultConsistencyLevel": "[parameters('consistencyLevel')]",
+                  "maxIntervalInSeconds": "[if(equals(parameters('consistencyLevel'), 'BoundedStaleness'), 5, null())]",
+                  "maxStalenessPrefix": "[if(equals(parameters('consistencyLevel'), 'BoundedStaleness'), 100, null())]"
+                },
+                "locations": [
+                  {
+                    "locationName": "[parameters('location')]",
+                    "failoverPriority": 0,
+                    "isZoneRedundant": false
+                  }
+                ],
+                "enableAutomaticFailover": "[parameters('automaticFailover')]",
+                "capabilities": "[if(parameters('enableServerless'), createArray(createObject('name', 'EnableServerless')), createArray())]"
+              }
+            },
+            {
+              "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
+              "apiVersion": "2024-05-15",
+              "name": "[format('{0}/{1}', parameters('cosmosAccountName'), parameters('databaseName'))]",
+              "properties": "[union(createObject('resource', createObject('id', parameters('databaseName'))), if(parameters('enableServerless'), createObject(), createObject('options', createObject('throughput', parameters('databaseThroughput')))))]",
+              "dependsOn": [
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosAccountName'))]"
+              ]
+            },
+            {
+              "copy": {
+                "name": "container",
+                "count": "[length(parameters('containers'))]"
+              },
+              "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
+              "apiVersion": "2024-05-15",
+              "name": "[format('{0}/{1}/{2}', parameters('cosmosAccountName'), parameters('databaseName'), parameters('containers')[copyIndex()].name)]",
+              "properties": {
+                "resource": {
+                  "id": "[parameters('containers')[copyIndex()].name]",
+                  "partitionKey": {
+                    "paths": [
+                      "[parameters('containers')[copyIndex()].partitionKey]"
+                    ],
+                    "kind": "Hash"
+                  }
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', parameters('cosmosAccountName'), parameters('databaseName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "accountName": {
+              "type": "string",
+              "metadata": {
+                "description": "The Cosmos DB account name."
+              },
+              "value": "[parameters('cosmosAccountName')]"
+            },
+            "endpoint": {
+              "type": "string",
+              "metadata": {
+                "description": "The Cosmos DB account endpoint."
+              },
+              "value": "[reference(resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosAccountName')), '2024-05-15').documentEndpoint]"
+            },
+            "databaseName": {
+              "type": "string",
+              "metadata": {
+                "description": "The Cosmos DB database name."
+              },
+              "value": "[parameters('databaseName')]"
+            },
+            "accountId": {
+              "type": "string",
+              "metadata": {
+                "description": "The Cosmos DB account resource ID."
+              },
+              "value": "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosAccountName'))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "cosmosDataPlaneRbac",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "cosmosAccountName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'cosmosDB'), '2025-04-01').outputs.accountName.value]"
+          },
+          "principalIds": {
+            "value": "[union(createArray(reference(resourceId('Microsoft.Resources/deployments', 'appService'), '2025-04-01').outputs.webAppPrincipalId.value), parameters('cosmosDataContributorPrincipalIds'))]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.45.15.27210",
+              "templateHash": "17015059650750126312"
+            }
+          },
+          "parameters": {
+            "cosmosAccountName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the existing Cosmos DB account."
+              }
+            },
+            "principalIds": {
+              "type": "array",
+              "defaultValue": [],
+              "metadata": {
+                "description": "Principal IDs to grant Cosmos DB SQL Built-in Data Contributor."
+              }
+            }
+          },
+          "variables": {
+            "cosmosDbSqlDataContributorRoleDefinitionId": "00000000-0000-0000-0000-000000000002"
+          },
+          "resources": [
+            {
+              "copy": {
+                "name": "sqlDataContributorAssignments",
+                "count": "[length(parameters('principalIds'))]"
+              },
+              "type": "Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments",
+              "apiVersion": "2024-05-15",
+              "name": "[format('{0}/{1}', parameters('cosmosAccountName'), guid(resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosAccountName')), parameters('principalIds')[copyIndex()], variables('cosmosDbSqlDataContributorRoleDefinitionId')))]",
+              "properties": {
+                "roleDefinitionId": "[format('{0}/sqlRoleDefinitions/{1}', resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosAccountName')), variables('cosmosDbSqlDataContributorRoleDefinitionId'))]",
+                "principalId": "[parameters('principalIds')[copyIndex()]]",
+                "scope": "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosAccountName'))]"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'appService')]",
+        "[resourceId('Microsoft.Resources/deployments', 'cosmosDB')]"
+      ]
     }
   ],
   "outputs": {
@@ -1304,6 +1638,22 @@
     "openAIDeploymentNames": {
       "type": "array",
       "value": "[if(parameters('enableAzureOpenAI'), reference(resourceId('Microsoft.Resources/deployments', 'openAIService'), '2025-04-01').outputs.openAIDeploymentNames.value, createArray())]"
+    },
+    "cosmosAccountName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'cosmosDB'), '2025-04-01').outputs.accountName.value]"
+    },
+    "cosmosAccountId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'cosmosDB'), '2025-04-01').outputs.accountId.value]"
+    },
+    "cosmosEndpoint": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'cosmosDB'), '2025-04-01').outputs.endpoint.value]"
+    },
+    "cosmosDatabaseName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'cosmosDB'), '2025-04-01').outputs.databaseName.value]"
     }
   }
 }
