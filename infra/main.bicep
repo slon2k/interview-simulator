@@ -62,6 +62,37 @@ param openAIDeployModel bool = false
 @description('List of Azure OpenAI model deployments. Each item should contain: name, modelName, modelVersion, deploymentSkuName, deploymentCapacity.')
 param openAIDeployments array = []
 
+@description('Cosmos DB account name, should be globally unique.')
+param cosmosAccountName string = toLower('${take(baseName, 16)}-${environment}-cosmos-${take(uniqueString(resourceGroup().id), 6)}')
+
+@description('Cosmos DB SQL API database name.')
+param cosmosDatabaseName string = 'interview-sim-db'
+
+@description('Cosmos DB SQL containers. Each item should contain: name and partitionKey.')
+param cosmosContainers array = [
+  {
+    name: 'users'
+    partitionKey: '/userId'
+  }
+  {
+    name: 'sessions'
+    partitionKey: '/userId'
+  }
+]
+
+@description('Enable Cosmos DB free tier (one per subscription).')
+param cosmosEnableFreeTier bool = true
+
+@description('Enable serverless capability for Cosmos DB.')
+param cosmosEnableServerless bool = false
+
+@description('Additional principal IDs to grant Cosmos DB SQL Data Contributor, for example local developer object IDs.')
+param cosmosDataContributorPrincipalIds array = []
+
+@description('Cosmos DB database-level shared throughput when serverless is disabled.')
+@minValue(400)
+param cosmosDatabaseThroughput int = 400
+
 var appNameSuffix = take(uniqueString(subscription().id, resourceGroup().id, baseName, environment), 6)
 var effectiveOpenAIDeploymentName = empty(openAIDeployments) ? '' : string(first(openAIDeployments).name)
 var githubOAuthClientSecretName = 'github-oauth-client-secret'
@@ -123,6 +154,22 @@ module api 'modules/appService.bicep' = {
         {
           name: 'AzureSpeech__Key'
           value: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=${azureSpeechKeySecretName})'
+        }
+        {
+          name: 'CosmosDb__Endpoint'
+          value: cosmos.outputs.endpoint
+        }
+        {
+          name: 'CosmosDb__DatabaseName'
+          value: cosmos.outputs.databaseName
+        }
+        {
+          name: 'CosmosDb__UsersContainerName'
+          value: 'users'
+        }
+        {
+          name: 'CosmosDb__SessionsContainerName'
+          value: 'sessions'
         }
       ],
       enableAzureOpenAI
@@ -191,6 +238,32 @@ module openAI 'modules/openaiService.bicep' = if (enableAzureOpenAI) {
   }
 }
 
+module cosmos 'modules/cosmosdb.bicep' = {
+  name: 'cosmosDB'
+  params: {
+    cosmosAccountName: cosmosAccountName
+    location: location
+    databaseName: cosmosDatabaseName
+    containers: cosmosContainers
+    enableFreeTier: cosmosEnableFreeTier
+    enableServerless: cosmosEnableServerless
+    databaseThroughput: cosmosDatabaseThroughput
+  }
+}
+
+module cosmosDataPlaneRbac 'modules/cosmosdbSqlRoleAssignments.bicep' = {
+  name: 'cosmosDataPlaneRbac'
+  params: {
+    cosmosAccountName: cosmos.outputs.accountName
+    principalIds: union(
+      [
+        api.outputs.webAppPrincipalId
+      ],
+      cosmosDataContributorPrincipalIds
+    )
+  }
+}
+
 // ── Variables for Outputs ─────────────────────────────────────────────────────
 
 output appServicePlanName string = plan.outputs.appServicePlanName
@@ -214,3 +287,7 @@ output openAIAccountId string = enableAzureOpenAI ? openAI!.outputs.openAIAccoun
 output openAIEndpoint string = enableAzureOpenAI ? openAI!.outputs.openAIEndpoint : ''
 output openAIDeploymentName string = enableAzureOpenAI ? effectiveOpenAIDeploymentName : ''
 output openAIDeploymentNames array = enableAzureOpenAI ? openAI!.outputs.openAIDeploymentNames : []
+output cosmosAccountName string = cosmos.outputs.accountName
+output cosmosAccountId string = cosmos.outputs.accountId
+output cosmosEndpoint string = cosmos.outputs.endpoint
+output cosmosDatabaseName string = cosmos.outputs.databaseName

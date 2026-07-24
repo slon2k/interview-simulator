@@ -34,3 +34,6 @@ param openAIDeployments = [
 ]
 
 param githubOAuthClientId = '<github-oauth-client-id>'
+param cosmosEnableFreeTier = true
+param cosmosEnableServerless = false
+param cosmosDatabaseThroughput = 400
