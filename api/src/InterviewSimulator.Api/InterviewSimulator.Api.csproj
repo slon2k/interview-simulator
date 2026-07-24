@@ -9,8 +9,11 @@
 
   <ItemGroup>
     <PackageReference Include="AspNet.Security.OAuth.GitHub" />
+    <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.Azure.Cosmos" />
     <PackageReference Include="Microsoft.OpenApi" />
+    <PackageReference Include="Newtonsoft.Json" />
   </ItemGroup>
 
   <Target Name="BuildFrontendForPublish" AfterTargets="ComputeFilesToPublish" Condition="'$(SkipFrontendBuild)' != 'true' and Exists('$(WebProjectDir)/package.json')">

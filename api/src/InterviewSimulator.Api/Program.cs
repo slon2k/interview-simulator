@@ -6,6 +6,7 @@ builder.AddApplicationOptions();
 builder.AddApplicationDiagnostics();
 builder.AddApplicationServices();
 builder.AddApplicationAuthentication();
+builder.AddCosmosPersistence();
 
 var app = builder.Build();
 
