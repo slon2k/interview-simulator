@@ -1,126 +1,16 @@
-using System.Security.Claims;
-
-using AspNet.Security.OAuth.GitHub;
-
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
-
 namespace InterviewSimulator.Api.Features.Auth;
 
 public static class AuthenticationEndpoints
 {
     public static IEndpointRouteBuilder MapAuthenticationEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet("/api/auth/login", LoginHandler)
-            .AllowAnonymous();
+        var group = endpoints.MapGroup("/api/auth")
+            .WithTags("Authentication");
 
-        endpoints.MapPost("/api/auth/logout", LogoutHandler)
-            .RequireAuthorization();
-
-        endpoints.MapGet("/api/me", MeHandler)
-            .AllowAnonymous();
-
-        endpoints.MapGet("/api/auth/smoke", SmokeHandler)
-            .RequireAuthorization(AuthorizationPolicies.InvitedUser);
+        group.MapLogin();
+        group.MapLogout();
+        group.MapSmokeTest();
 
         return endpoints;
-    }
-
-    private static IResult LogoutHandler()
-    {
-        return Results.SignOut(
-            authenticationSchemes: [CookieAuthenticationDefaults.AuthenticationScheme]);
-    }
-
-    private static IResult LoginHandler(string? returnUrl)
-    {
-        var safeReturnUrl = GetSafeReturnUrl(returnUrl);
-
-        var properties = new AuthenticationProperties
-        {
-            RedirectUri = safeReturnUrl
-        };
-
-        return Results.Challenge(
-            properties,
-            authenticationSchemes: [GitHubAuthenticationDefaults.AuthenticationScheme]);
-    }
-
-    private static IResult MeHandler(
-        ClaimsPrincipal user,
-        IAccessControlService accessControlService)
-    {
-        var accessStatus = accessControlService.GetStatus(user);
-
-        if (!accessStatus.IsAuthenticated)
-        {
-            return Results.Ok(new CurrentUserResponse(
-                IsAuthenticated: false,
-                IsInvited: false,
-                IsAdmin: false,
-                UserId: null,
-                IdentityProvider: null,
-                DisplayName: null,
-                GithubLogin: null,
-                AvatarUrl: null));
-        }
-
-        var identityProvider = user.FindFirstValue(AppClaimTypes.IdentityProvider);
-        var displayName = user.FindFirstValue(ClaimTypes.Name);
-        var githubLogin = user.FindFirstValue(AppClaimTypes.GitHubLogin);
-        var avatarUrl = user.FindFirstValue(AppClaimTypes.GitHubAvatarUrl);
-
-        return Results.Ok(new CurrentUserResponse(
-            IsAuthenticated: true,
-            IsInvited: accessStatus.IsInvited,
-            IsAdmin: accessStatus.IsAdmin,
-            UserId: accessStatus.UserId,
-            IdentityProvider: identityProvider,
-            DisplayName: displayName,
-            GithubLogin: githubLogin,
-            AvatarUrl: avatarUrl));
-    }
-
-    private static IResult SmokeHandler(ClaimsPrincipal user)
-    {
-        var userId =
-            user.FindFirstValue(AppClaimTypes.UserId)
-            ?? user.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        return Results.Ok(new
-        {
-            status = "authenticated",
-            userId
-        });
-    }
-
-    private static string GetSafeReturnUrl(string? returnUrl)
-    {
-        if (string.IsNullOrWhiteSpace(returnUrl))
-        {
-            return "/";
-        }
-
-        if (!returnUrl.StartsWith('/'))
-        {
-            return "/";
-        }
-
-        if (returnUrl.StartsWith("//", StringComparison.Ordinal))
-        {
-            return "/";
-        }
-
-        if (returnUrl.Contains('\\', StringComparison.Ordinal))
-        {
-            return "/";
-        }
-
-        if (!Uri.TryCreate(returnUrl, UriKind.Relative, out _))
-        {
-            return "/";
-        }
-
-        return returnUrl;
     }
 }

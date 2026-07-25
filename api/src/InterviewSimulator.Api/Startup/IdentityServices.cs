@@ -6,9 +6,13 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace InterviewSimulator.Api.Startup;
 
-public static class Services
+/// <summary>
+/// Registers identity and authorization application services.
+/// These are orchestration services that coordinate access control, authorization, and user profile management.
+/// </summary>
+public static class IdentityServices
 {
-    public static WebApplicationBuilder AddApplicationServices(this WebApplicationBuilder builder)
+    public static WebApplicationBuilder AddIdentityServices(this WebApplicationBuilder builder)
     {
         builder.Services.AddScoped<IAccessControlService, AccessControlService>();
         builder.Services.AddScoped<IAuthorizationHandler, InvitedUserAuthorizationHandler>();

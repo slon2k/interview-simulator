@@ -1,6 +1,11 @@
 using Azure.Identity;
+
+using InterviewSimulator.Api.Features.Identity.Access;
+using InterviewSimulator.Api.Features.Identity.CurrentUser;
 using InterviewSimulator.Api.Infrastructure.Cosmos;
 using InterviewSimulator.Api.Infrastructure.Data;
+using InterviewSimulator.Api.Infrastructure.Identity;
+
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Options;
 
@@ -25,6 +30,16 @@ public static class CosmosPersistence
 
         if (!cosmosOptions.Enabled)
         {
+            services.AddScoped<DisabledIdentityUserStore>();
+
+            services.AddScoped<IUserProfileStore>(
+                sp => sp.GetRequiredService<DisabledIdentityUserStore>());
+
+            services.AddScoped<IUserAccessReader>(
+                sp => sp.GetRequiredService<DisabledIdentityUserStore>());
+
+            services.AddScoped<IRepository<CosmosUserDocument>, NullRepository<CosmosUserDocument>>(); 
+        
             return builder;
         }
 
@@ -52,6 +67,21 @@ public static class CosmosPersistence
         });
 
         services.AddScoped<ICosmosDbInitializer, CosmosDbInitializer>();
+        services.AddScoped<IRepository<CosmosUserDocument>>(sp =>
+        {
+            var options = sp.GetRequiredService<IOptions<CosmosDbOptions>>().Value;
+            var client = sp.GetRequiredService<CosmosClient>();
+            return new CosmosRepository<CosmosUserDocument>(
+                            client.GetContainer(
+                                options.DatabaseName,
+                                options.UsersContainerName));
+        });
+        services.AddScoped<CosmosIdentityUserStore>();
+        services.AddScoped<IUserProfileStore>(
+            sp => sp.GetRequiredService<CosmosIdentityUserStore>());
+
+        services.AddScoped<IUserAccessReader>(
+            sp => sp.GetRequiredService<CosmosIdentityUserStore>());
 
         return builder;
     }

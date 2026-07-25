@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 
 using Microsoft.Extensions.Options;
 
-namespace InterviewSimulator.Api.Features.Auth;
+namespace InterviewSimulator.Api.Features.Identity.Access;
 
 public sealed class AccessControlOptionsValidator : IValidateOptions<AccessControlOptions>
 {
@@ -13,11 +13,6 @@ public sealed class AccessControlOptionsValidator : IValidateOptions<AccessContr
     public ValidateOptionsResult Validate(string? name, AccessControlOptions options)
     {
         var failures = new List<string>();
-
-        ValidateUserIds(
-            options.InvitedUserIds,
-            nameof(AccessControlOptions.InvitedUserIds),
-            failures);
 
         ValidateUserIds(
             options.AdminUserIds,
