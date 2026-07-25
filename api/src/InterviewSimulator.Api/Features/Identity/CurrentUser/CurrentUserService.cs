@@ -11,7 +11,7 @@ public sealed class CurrentUserService(
         ClaimsPrincipal user,
         CancellationToken cancellationToken = default)
     {
-        var accessStatus = await accessControlService.GetStatus(
+        var accessStatus = await accessControlService.GetStatusAsync(
             user,
             cancellationToken);
 

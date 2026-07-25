@@ -4,23 +4,16 @@ using InterviewSimulator.Api.Infrastructure.Data;
 
 namespace InterviewSimulator.Api.Infrastructure.Identity;
 
-public sealed class CosmosIdentityUserStore(IRepository<CosmosUserDocument> repository) : IUserRepository, IUserAccessReader
+public sealed class CosmosIdentityUserStore(IRepository<CosmosUserDocument> repository) : IUserProfileStore, IUserAccessReader
 {
-    public async Task<CosmosUserDocument?> GetByUserIdAsync(
-        string userId,
-        CancellationToken cancellationToken = default)
-    {
-        return await repository.GetByIdAsync(userId, userId, cancellationToken);
-    }
-
-    public async Task<CosmosUserDocument?> UpsertAuthenticatedUserAsync(
+    public async Task UpsertAuthenticatedUserProfileAsync(
         AuthenticatedUserProfile profile,
         CancellationToken cancellationToken = default)
     {
-        var existingUser = await GetByUserIdAsync(profile.UserId, cancellationToken);
+        var existingUser = await repository.GetByIdAsync(profile.UserId, profile.UserId, cancellationToken);
         var now = DateTimeOffset.UtcNow;
         var userDocument = CreateOrUpdateUserDocument(existingUser, profile, now);
-        return await repository.UpsertAsync(userDocument, profile.UserId, cancellationToken: cancellationToken);
+        await repository.UpsertAsync(userDocument, profile.UserId, cancellationToken: cancellationToken);
     }
 
     private static CosmosUserDocument CreateOrUpdateUserDocument(CosmosUserDocument? document, AuthenticatedUserProfile profile, DateTimeOffset now)
@@ -64,7 +57,8 @@ public sealed class CosmosIdentityUserStore(IRepository<CosmosUserDocument> repo
 
     public async Task<UserAccessSnapshot?> GetAccessByUserIdAsync(string userId, CancellationToken cancellationToken = default)
     {
-        var userDocument = await GetByUserIdAsync(
+        var userDocument = await repository.GetByIdAsync(
+            userId,
             userId,
             cancellationToken);
 

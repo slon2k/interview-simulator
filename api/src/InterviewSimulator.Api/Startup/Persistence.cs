@@ -1,6 +1,7 @@
 using Azure.Identity;
 
 using InterviewSimulator.Api.Features.Identity.Access;
+using InterviewSimulator.Api.Features.Identity.CurrentUser;
 using InterviewSimulator.Api.Infrastructure.Cosmos;
 using InterviewSimulator.Api.Infrastructure.Data;
 using InterviewSimulator.Api.Infrastructure.Identity;
@@ -31,7 +32,7 @@ public static class CosmosPersistence
         {
             services.AddScoped<DisabledIdentityUserStore>();
 
-            services.AddScoped<IUserRepository>(
+            services.AddScoped<IUserProfileStore>(
                 sp => sp.GetRequiredService<DisabledIdentityUserStore>());
 
             services.AddScoped<IUserAccessReader>(
@@ -76,7 +77,7 @@ public static class CosmosPersistence
                                 options.UsersContainerName));
         });
         services.AddScoped<CosmosIdentityUserStore>();
-        services.AddScoped<IUserRepository>(
+        services.AddScoped<IUserProfileStore>(
             sp => sp.GetRequiredService<CosmosIdentityUserStore>());
 
         services.AddScoped<IUserAccessReader>(

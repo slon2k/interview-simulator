@@ -4,7 +4,7 @@ namespace InterviewSimulator.Api.Features.Identity.Access;
 
 public interface IAccessControlService
 {
-    Task<AccessControlStatus> GetStatus(ClaimsPrincipal user, CancellationToken cancellationToken = default);
+    Task<AccessControlStatus> GetStatusAsync(ClaimsPrincipal user, CancellationToken cancellationToken = default);
 }
 
 public sealed record AccessControlStatus(

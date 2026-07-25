@@ -1,4 +1,5 @@
 using InterviewSimulator.Api.Features.Identity.Access;
+using InterviewSimulator.Api.Features.Identity.CurrentUser;
 using InterviewSimulator.Api.Infrastructure.Data;
 using InterviewSimulator.Api.Infrastructure.Identity;
 
@@ -43,6 +44,10 @@ public sealed class AuthWebApplicationFactory : WebApplicationFactory<Program>
             // Replace the generic repository with a test stub that seeds access levels.
             services.AddScoped<IRepository<CosmosUserDocument>>(_ => new TestUserRepository());
 
+            // Replace identity stores with test implementations (Cosmos is disabled, so these are normally no-ops).
+            services.AddScoped<IUserProfileStore>(_ => new TestUserProfileStore());
+            services.AddScoped<IUserAccessReader>(_ => new TestUserAccessReader());
+
             services.AddAuthentication()
                 .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(
                     TestAuthHandler.SchemeName,
@@ -81,4 +86,42 @@ file sealed class TestUserRepository : IRepository<CosmosUserDocument>
 
     public Task DeleteAsync(string id, string partitionKey, CancellationToken cancellationToken = default)
         => Task.CompletedTask;
+}
+
+/// <summary>
+/// Test implementation of IUserProfileStore that seeds user profiles for testing.
+/// </summary>
+file sealed class TestUserProfileStore : IUserProfileStore
+{
+    public Task UpsertAuthenticatedUserProfileAsync(
+        AuthenticatedUserProfile profile,
+        CancellationToken cancellationToken = default)
+    {
+        // No-op: profiles are pre-seeded in TestUserAccessReader
+        return Task.CompletedTask;
+    }
+}
+
+/// <summary>
+/// Test implementation of IUserAccessReader that returns pre-seeded access levels for testing.
+/// github|100 → Member, github|200 → Admin, all others → null (guest/unknown).
+/// </summary>
+file sealed class TestUserAccessReader : IUserAccessReader
+{
+    private static readonly Dictionary<string, UserAccessSnapshot> _accessLevels = new()
+    {
+        ["github|100"] = new UserAccessSnapshot(
+            UserId: "github|100",
+            AccessLevel: UserAccessLevels.Member,
+            IsDisabled: false),
+        ["github|200"] = new UserAccessSnapshot(
+            UserId: "github|200",
+            AccessLevel: UserAccessLevels.Admin,
+            IsDisabled: false),
+    };
+
+    public Task<UserAccessSnapshot?> GetAccessByUserIdAsync(
+        string userId,
+        CancellationToken cancellationToken = default)
+        => Task.FromResult(_accessLevels.GetValueOrDefault(userId));
 }

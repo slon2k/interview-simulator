@@ -10,7 +10,7 @@ public sealed class AccessControlService(IUserAccessReader userAccessReader, IOp
              options.Value.AdminUserIds ?? [],
             StringComparer.Ordinal);
 
-    public async Task<AccessControlStatus> GetStatus(ClaimsPrincipal user, CancellationToken cancellationToken = default)
+    public async Task<AccessControlStatus> GetStatusAsync(ClaimsPrincipal user, CancellationToken cancellationToken = default)
     {
         if (user.Identity?.IsAuthenticated != true)
         {

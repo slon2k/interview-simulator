@@ -19,7 +19,7 @@ public sealed class InvitedUserAuthorizationHandler(
         AuthorizationHandlerContext context,
         InvitedUserRequirement requirement)
     {
-        var accessStatus = await accessControlService.GetStatus(context.User);
+        var accessStatus = await accessControlService.GetStatusAsync(context.User);
 
         if (accessStatus.IsAuthenticated && accessStatus.IsInvited)
         {
