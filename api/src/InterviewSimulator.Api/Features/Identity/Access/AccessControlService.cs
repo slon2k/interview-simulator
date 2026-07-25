@@ -1,13 +1,10 @@
 using System.Security.Claims;
 
-using InterviewSimulator.Api.Features.Users;
-using InterviewSimulator.Api.Infrastructure.Data;
-
 using Microsoft.Extensions.Options;
 
-namespace InterviewSimulator.Api.Features.Auth;
+namespace InterviewSimulator.Api.Features.Identity.Access;
 
-public sealed class AccessControlService(IRepository<UserDocument> userRepository, IOptions<AccessControlOptions> options) : IAccessControlService
+public sealed class AccessControlService(IUserAccessReader userAccessReader, IOptions<AccessControlOptions> options) : IAccessControlService
 {
     private readonly HashSet<string> _configuredAdminUserIds = new(
              options.Value.AdminUserIds ?? [],
@@ -45,10 +42,10 @@ public sealed class AccessControlService(IRepository<UserDocument> userRepositor
                 IsAdmin: true);
         }
 
-        var userDocument = await userRepository.GetByIdAsync(userId, userId, cancellationToken);
+        var userAccess = await userAccessReader.GetAccessByUserIdAsync(userId, cancellationToken);
 
-        var isAdmin = IsAdmin(userDocument);
-        var isInvited = IsInvited(userDocument);
+        var isAdmin = IsAdmin(userAccess);
+        var isInvited = IsInvited(userAccess);
 
         return new AccessControlStatus(
             IsAuthenticated: true,
@@ -57,13 +54,13 @@ public sealed class AccessControlService(IRepository<UserDocument> userRepositor
             IsAdmin: isAdmin);
     }
 
-    private static bool IsAdmin(UserDocument? userDocument)
+    private static bool IsAdmin(UserAccessSnapshot? userAccess)
     {
-        return userDocument?.IsDisabled != true && userDocument?.AccessLevel?.IsAdmin() == true;
+        return userAccess?.IsDisabled != true && userAccess?.AccessLevel?.IsAdmin() == true;
     }
 
-    private static bool IsInvited(UserDocument? userDocument)
+    private static bool IsInvited(UserAccessSnapshot? userAccess)
     {
-        return userDocument?.IsDisabled != true && userDocument?.AccessLevel?.IsMemberOrAdmin() == true;
+        return userAccess?.IsDisabled != true && userAccess?.AccessLevel?.IsMemberOrAdmin() == true;
     }
 }

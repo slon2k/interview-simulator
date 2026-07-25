@@ -1,4 +1,4 @@
-namespace InterviewSimulator.Api.Features.Auth;
+namespace InterviewSimulator.Api.Features.Identity.Access;
 
 public sealed class AccessControlOptions
 {

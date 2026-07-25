@@ -5,7 +5,7 @@ namespace InterviewSimulator.Api.Infrastructure.Data;
 /// Returns null for reads and no-ops for writes.
 /// </summary>
 internal sealed class NullRepository<TDocument> : IRepository<TDocument>
-    where TDocument : IDocument
+    where TDocument : ICosmosDocument
 {
     public Task<TDocument?> GetByIdAsync(string id, string partitionKey, CancellationToken cancellationToken = default)
         => Task.FromResult<TDocument?>(default);

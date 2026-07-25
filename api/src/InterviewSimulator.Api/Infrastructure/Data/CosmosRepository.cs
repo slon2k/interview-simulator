@@ -3,7 +3,7 @@ using Microsoft.Azure.Cosmos;
 namespace InterviewSimulator.Api.Infrastructure.Data;
 
 public sealed class CosmosRepository<TDocument>(Container container) : IRepository<TDocument>
-    where TDocument : IDocument
+    where TDocument : ICosmosDocument
 {
     public async Task<TDocument?> GetByIdAsync(string id, string partitionKey, CancellationToken cancellationToken = default)
     {

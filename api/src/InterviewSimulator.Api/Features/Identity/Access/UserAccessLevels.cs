@@ -1,4 +1,4 @@
-namespace InterviewSimulator.Api.Features.Users;
+namespace InterviewSimulator.Api.Features.Identity.Access;
 
 /// <summary>
 /// Defines the access levels for users in the system.

@@ -1,6 +1,8 @@
+using InterviewSimulator.Api.Features.Identity.Access;
+
 using Microsoft.AspNetCore.Authorization;
 
-namespace InterviewSimulator.Api.Features.Auth;
+namespace InterviewSimulator.Api.Features.Identity.Authorization;
 
 public static class AuthorizationPolicies
 {

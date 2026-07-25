@@ -1,11 +1,12 @@
+using InterviewSimulator.Api.Features.Identity.Access;
 using InterviewSimulator.Api.Infrastructure.Data;
 
-namespace InterviewSimulator.Api.Features.Users;
+namespace InterviewSimulator.Api.Infrastructure.Identity;
 
 /// <summary>
 /// Represents a user document stored in the system, containing information about the user's identity, access level, and timestamps for tracking user activity.
 /// </summary>
-public sealed class UserDocument : IDocument
+public sealed class CosmosUserDocument : ICosmosDocument
 {
     public string Id { get; init; } = string.Empty;
 

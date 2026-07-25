@@ -1,6 +1,6 @@
 namespace InterviewSimulator.Api.Infrastructure.Data;
 
-public interface IDocument
+public interface ICosmosDocument
 {
     string Id { get; init; }
 }

@@ -1,4 +1,7 @@
-using InterviewSimulator.Api.Features.Auth;
+using InterviewSimulator.Api.Features.Identity.Access;
+using InterviewSimulator.Api.Features.Identity.Authorization;
+using InterviewSimulator.Api.Features.Identity.CurrentUser;
+
 using Microsoft.AspNetCore.Authorization;
 
 namespace InterviewSimulator.Api.Startup;
@@ -9,6 +12,7 @@ public static class Services
     {
         builder.Services.AddScoped<IAccessControlService, AccessControlService>();
         builder.Services.AddScoped<IAuthorizationHandler, InvitedUserAuthorizationHandler>();
+        builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
         return builder;
     }

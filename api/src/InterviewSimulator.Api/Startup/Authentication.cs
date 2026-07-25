@@ -2,7 +2,8 @@ using System.Globalization;
 using System.Security.Claims;
 using System.Text.Json;
 
-using InterviewSimulator.Api.Features.Auth;
+using InterviewSimulator.Api.Features.Identity.Access;
+using InterviewSimulator.Api.Features.Identity.Authorization;
 
 using Microsoft.AspNetCore.Authentication.Cookies;
 

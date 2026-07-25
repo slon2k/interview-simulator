@@ -1,17 +1,19 @@
+using InterviewSimulator.Api.Features.Identity.Access;
+using InterviewSimulator.Api.Features.Identity.CurrentUser;
 using InterviewSimulator.Api.Infrastructure.Data;
 
-namespace InterviewSimulator.Api.Features.Users;
+namespace InterviewSimulator.Api.Infrastructure.Identity;
 
-public sealed class UserRepository(IRepository<UserDocument> repository) : IUserRepository
+public sealed class CosmosIdentityUserStore(IRepository<CosmosUserDocument> repository) : IUserRepository, IUserAccessReader
 {
-    public async Task<UserDocument?> GetByUserIdAsync(
+    public async Task<CosmosUserDocument?> GetByUserIdAsync(
         string userId,
         CancellationToken cancellationToken = default)
     {
         return await repository.GetByIdAsync(userId, userId, cancellationToken);
     }
 
-    public async Task<UserDocument?> UpsertAuthenticatedUserAsync(
+    public async Task<CosmosUserDocument?> UpsertAuthenticatedUserAsync(
         AuthenticatedUserProfile profile,
         CancellationToken cancellationToken = default)
     {
@@ -21,7 +23,7 @@ public sealed class UserRepository(IRepository<UserDocument> repository) : IUser
         return await repository.UpsertAsync(userDocument, profile.UserId, cancellationToken: cancellationToken);
     }
 
-    private static UserDocument CreateOrUpdateUserDocument(UserDocument? document, AuthenticatedUserProfile profile, DateTimeOffset now)
+    private static CosmosUserDocument CreateOrUpdateUserDocument(CosmosUserDocument? document, AuthenticatedUserProfile profile, DateTimeOffset now)
     {
         if (document is not null)
         {
@@ -37,7 +39,7 @@ public sealed class UserRepository(IRepository<UserDocument> repository) : IUser
         }
         else
         {
-            return new UserDocument
+            return new CosmosUserDocument
             {
                 Id = profile.UserId,
                 UserId = profile.UserId,
@@ -58,5 +60,22 @@ public sealed class UserRepository(IRepository<UserDocument> repository) : IUser
                 AccessUpdatedBy = null,
             };
         }
+    }
+
+    public async Task<UserAccessSnapshot?> GetAccessByUserIdAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        var userDocument = await GetByUserIdAsync(
+            userId,
+            cancellationToken);
+
+        if (userDocument is null)
+        {
+            return null;
+        }
+
+        return new UserAccessSnapshot(
+            UserId: userDocument.UserId,
+            AccessLevel: userDocument.AccessLevel,
+            IsDisabled: userDocument.IsDisabled);
     }
 }
