@@ -20,7 +20,7 @@ public static class CurrentUserEndpoint
         var currentUser = await currentUserService.GetCurrentUserAsync(user, cancellationToken);
 
         return Results.Ok(new CurrentUserResponse(
-            IsAuthenticated: true,
+            IsAuthenticated: currentUser.IsAuthenticated,
             IsInvited: currentUser.IsInvited,
             IsAdmin: currentUser.IsAdmin,
             UserId: currentUser.UserId,

@@ -1,5 +1,3 @@
-using InterviewSimulator.Api.Features.Identity.CurrentUser;
-
 namespace InterviewSimulator.Api.Features.Auth;
 
 public static class AuthenticationEndpoints
@@ -16,4 +14,3 @@ public static class AuthenticationEndpoints
         return endpoints;
     }
 }
-
