@@ -1,28 +1,19 @@
 using System.Security.Claims;
 
+using InterviewSimulator.Api.Features.Users;
+using InterviewSimulator.Api.Infrastructure.Data;
+
 using Microsoft.Extensions.Options;
 
 namespace InterviewSimulator.Api.Features.Auth;
 
-public sealed class ConfigAccessControlService : IAccessControlService
+public sealed class AccessControlService(IRepository<UserDocument> userRepository, IOptions<AccessControlOptions> options) : IAccessControlService
 {
-    private readonly HashSet<string> _invitedUserIds;
-    private readonly HashSet<string> _adminUserIds;
-
-    public ConfigAccessControlService(IOptions<AccessControlOptions> options)
-    {
-        var accessControlOptions = options.Value;
-
-        _invitedUserIds = new HashSet<string>(
-            accessControlOptions.InvitedUserIds ?? [],
+    private readonly HashSet<string> _configuredAdminUserIds = new(
+             options.Value.AdminUserIds ?? [],
             StringComparer.Ordinal);
 
-        _adminUserIds = new HashSet<string>(
-            accessControlOptions.AdminUserIds ?? [],
-            StringComparer.Ordinal);
-    }
-
-    public AccessControlStatus GetStatus(ClaimsPrincipal user)
+    public async Task<AccessControlStatus> GetStatus(ClaimsPrincipal user, CancellationToken cancellationToken = default)
     {
         if (user.Identity?.IsAuthenticated != true)
         {
@@ -33,12 +24,31 @@ public sealed class ConfigAccessControlService : IAccessControlService
                 IsAdmin: false);
         }
 
-        var userId =
-            user.FindFirstValue(AppClaimTypes.UserId)
+        var userId = user.FindFirstValue(AppClaimTypes.UserId)
             ?? user.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        var isAdmin = IsAdmin(userId);
-        var isInvited = IsInvited(userId);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return new AccessControlStatus(
+                IsAuthenticated: true,
+                UserId: null,
+                IsInvited: false,
+                IsAdmin: false);
+        }
+
+        if (_configuredAdminUserIds.Contains(userId))
+        {
+            return new AccessControlStatus(
+                IsAuthenticated: true,
+                UserId: userId,
+                IsInvited: true,
+                IsAdmin: true);
+        }
+
+        var userDocument = await userRepository.GetByIdAsync(userId, userId, cancellationToken);
+
+        var isAdmin = IsAdmin(userDocument);
+        var isInvited = IsInvited(userDocument);
 
         return new AccessControlStatus(
             IsAuthenticated: true,
@@ -47,24 +57,13 @@ public sealed class ConfigAccessControlService : IAccessControlService
             IsAdmin: isAdmin);
     }
 
-    public bool IsInvited(string? userId)
+    private static bool IsAdmin(UserDocument? userDocument)
     {
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            return false;
-        }
-
-        // Admins are always treated as invited.
-        return _invitedUserIds.Contains(userId) || _adminUserIds.Contains(userId);
+        return userDocument?.IsDisabled != true && userDocument?.AccessLevel?.IsAdmin() == true;
     }
 
-    public bool IsAdmin(string? userId)
+    private static bool IsInvited(UserDocument? userDocument)
     {
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            return false;
-        }
-
-        return _adminUserIds.Contains(userId);
+        return userDocument?.IsDisabled != true && userDocument?.AccessLevel?.IsMemberOrAdmin() == true;
     }
 }

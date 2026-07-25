@@ -7,8 +7,8 @@ public static class Services
 {
     public static WebApplicationBuilder AddApplicationServices(this WebApplicationBuilder builder)
     {
-        builder.Services.AddSingleton<IAccessControlService, ConfigAccessControlService>();
-        builder.Services.AddSingleton<IAuthorizationHandler, InvitedUserAuthorizationHandler>();
+        builder.Services.AddScoped<IAccessControlService, AccessControlService>();
+        builder.Services.AddScoped<IAuthorizationHandler, InvitedUserAuthorizationHandler>();
 
         return builder;
     }

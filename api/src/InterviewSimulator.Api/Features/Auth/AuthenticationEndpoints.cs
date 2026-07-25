@@ -46,11 +46,12 @@ public static class AuthenticationEndpoints
             authenticationSchemes: [GitHubAuthenticationDefaults.AuthenticationScheme]);
     }
 
-    private static IResult MeHandler(
+    private static async Task<IResult> MeHandler(
         ClaimsPrincipal user,
-        IAccessControlService accessControlService)
+        IAccessControlService accessControlService,
+        CancellationToken cancellationToken = default)
     {
-        var accessStatus = accessControlService.GetStatus(user);
+        var accessStatus = await accessControlService.GetStatus(user, cancellationToken);
 
         if (!accessStatus.IsAuthenticated)
         {
@@ -124,3 +125,13 @@ public static class AuthenticationEndpoints
         return returnUrl;
     }
 }
+
+public sealed record CurrentUserResponse(
+    bool IsAuthenticated,
+    bool IsInvited,
+    bool IsAdmin,
+    string? UserId,
+    string? IdentityProvider,
+    string? DisplayName,
+    string? GithubLogin,
+    string? AvatarUrl);

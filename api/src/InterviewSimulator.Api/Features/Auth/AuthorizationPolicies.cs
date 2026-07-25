@@ -13,18 +13,16 @@ public sealed class InvitedUserAuthorizationHandler(
     IAccessControlService accessControlService)
     : AuthorizationHandler<InvitedUserRequirement>
 {
-    protected override Task HandleRequirementAsync(
+    protected override async Task HandleRequirementAsync(
         AuthorizationHandlerContext context,
         InvitedUserRequirement requirement)
     {
-        var accessStatus = accessControlService.GetStatus(context.User);
+        var accessStatus = await accessControlService.GetStatus(context.User);
 
         if (accessStatus.IsAuthenticated && accessStatus.IsInvited)
         {
             context.Succeed(requirement);
         }
-
-        return Task.CompletedTask;
     }
 }
 

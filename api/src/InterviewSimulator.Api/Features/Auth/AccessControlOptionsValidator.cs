@@ -15,11 +15,6 @@ public sealed class AccessControlOptionsValidator : IValidateOptions<AccessContr
         var failures = new List<string>();
 
         ValidateUserIds(
-            options.InvitedUserIds,
-            nameof(AccessControlOptions.InvitedUserIds),
-            failures);
-
-        ValidateUserIds(
             options.AdminUserIds,
             nameof(AccessControlOptions.AdminUserIds),
             failures);

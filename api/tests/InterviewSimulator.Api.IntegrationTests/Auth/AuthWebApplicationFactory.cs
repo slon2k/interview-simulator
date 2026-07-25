@@ -1,3 +1,6 @@
+using InterviewSimulator.Api.Features.Users;
+using InterviewSimulator.Api.Infrastructure.Data;
+
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Hosting;
@@ -22,7 +25,6 @@ public sealed class AuthWebApplicationFactory : WebApplicationFactory<Program>
                 ["Authentication:Cookie:Name"] = "InterviewSimulator.Auth.Test",
 
                 // Access-control test data.
-                ["AccessControl:InvitedUserIds:0"] = "github|100",
                 ["AccessControl:AdminUserIds:0"] = "github|200",
 
                 [$"{AzureSpeechOptions.SectionName}:Region"] = "centralus",
@@ -37,6 +39,9 @@ public sealed class AuthWebApplicationFactory : WebApplicationFactory<Program>
 
         builder.ConfigureServices(services =>
         {
+            // Replace the generic repository with a test stub that seeds access levels.
+            services.AddScoped<IRepository<UserDocument>>(_ => new TestUserRepository());
+
             services.AddAuthentication()
                 .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(
                     TestAuthHandler.SchemeName,
@@ -53,4 +58,26 @@ public sealed class AuthWebApplicationFactory : WebApplicationFactory<Program>
             });
         });
     }
+}
+
+/// <summary>
+/// In-memory repository stub that returns pre-seeded user documents for integration tests.
+/// github|100 → Member, github|200 → Admin, all others → null (guest/unknown).
+/// </summary>
+file sealed class TestUserRepository : IRepository<UserDocument>
+{
+    private static readonly Dictionary<string, UserDocument> _users = new()
+    {
+        ["github|100"] = new UserDocument { Id = "github|100", UserId = "github|100", AccessLevel = UserAccessLevels.Member },
+        ["github|200"] = new UserDocument { Id = "github|200", UserId = "github|200", AccessLevel = UserAccessLevels.Admin },
+    };
+
+    public Task<UserDocument?> GetByIdAsync(string id, string partitionKey, CancellationToken cancellationToken = default)
+        => Task.FromResult(_users.GetValueOrDefault(id));
+
+    public Task<UserDocument> UpsertAsync(UserDocument document, string partitionKey, CancellationToken cancellationToken = default)
+        => Task.FromResult(document);
+
+    public Task DeleteAsync(string id, string partitionKey, CancellationToken cancellationToken = default)
+        => Task.CompletedTask;
 }

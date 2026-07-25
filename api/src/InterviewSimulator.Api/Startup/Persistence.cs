@@ -1,4 +1,6 @@
 using Azure.Identity;
+
+using InterviewSimulator.Api.Features.Users;
 using InterviewSimulator.Api.Infrastructure.Cosmos;
 using InterviewSimulator.Api.Infrastructure.Data;
 using Microsoft.Azure.Cosmos;
@@ -25,6 +27,8 @@ public static class CosmosPersistence
 
         if (!cosmosOptions.Enabled)
         {
+            builder.Services.AddScoped<IUserRepository, DisabledUserRepository>();
+            builder.Services.AddScoped<IRepository<UserDocument>, NullRepository<UserDocument>>();
             return builder;
         }
 
@@ -52,6 +56,16 @@ public static class CosmosPersistence
         });
 
         services.AddScoped<ICosmosDbInitializer, CosmosDbInitializer>();
+        services.AddScoped<IRepository<UserDocument>>(sp =>
+        {
+            var options = sp.GetRequiredService<IOptions<CosmosDbOptions>>().Value;
+            var client = sp.GetRequiredService<CosmosClient>();
+            return new CosmosRepository<UserDocument>(
+                            client.GetContainer(
+                                options.DatabaseName,
+                                options.UsersContainerName));
+        });
+        services.AddScoped<IUserRepository, UserRepository>();
 
         return builder;
     }
