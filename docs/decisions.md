@@ -8,16 +8,16 @@ Each decision captures context, selected option, consequences, and alternatives 
 
 ## Decision Index
 
-| ADR | Title | Status |
-| --- | --- | --- |
-| ADR 0001 | Vite React + ASP.NET Core + App Service | Accepted |
-| ADR 0002 | Cosmos DB for Primary Persistence | Accepted |
-| ADR 0003 | GitHub OAuth as Initial Identity Provider | Accepted |
-| ADR 0004 | Cookie Session Auth in ASP.NET Core | Accepted |
-| ADR 0005 | Session-Centric API Resource Model | Accepted |
+| ADR      | Title                                              | Status   |
+| -------- | -------------------------------------------------- | -------- |
+| ADR 0001 | Vite React + ASP.NET Core + App Service            | Accepted |
+| ADR 0002 | Cosmos DB for Primary Persistence                  | Accepted |
+| ADR 0003 | GitHub OAuth as Initial Identity Provider          | Accepted |
+| ADR 0004 | Cookie Session Auth in ASP.NET Core                | Accepted |
+| ADR 0005 | Session-Centric API Resource Model                 | Accepted |
 | ADR 0006 | Deterministic Cosmos IDs and Partitioning Strategy | Accepted |
-| ADR 0007 | IaC and CI/CD Baseline from Phase 1 | Accepted |
-| ADR 0008 | Config-Based Invite Allowlist for MVP | Accepted |
+| ADR 0007 | IaC and CI/CD Baseline from Phase 1                | Accepted |
+| ADR 0008 | Config-Based Invite Allowlist for MVP              | Accepted |
 
 ---
 
@@ -231,16 +231,20 @@ Accepted
 
 ## Context
 
-The app must support user-scoped reads safely and efficiently while keeping query patterns simple.
+The app must support user-scoped reads safely and efficiently while keeping query patterns simple. Document IDs must be derivable from domain keys without random generation.
 
 ## Decision
 
 Use deterministic document IDs and user partitioning:
 
-- Session domain ID format: `{sessionId}`, for example `session_123`
-- Session document ID format: `session|{sessionId}`
-- Turn document ID format: `turn|{sessionId}|{turnNumber}`
-- Partition key: `/userId`
+- **Session ID**: GUID (for domain/API use), stored in separate `sessionId` field as N-format string (no dashes)
+- **Session Cosmos ID**: `session|{guid}` (full UUID with dashes)
+- **Turn Cosmos ID**: `turn|{guid}|{turnNumber:D3}` with **zero-padded 3-digit turn number** for correct alphabetic ordering
+  - Turn 1 → `001`, Turn 99 → `099`, Turn 100 → `100`, Turn 999 → `999` (orders correctly in string comparisons)
+- **User Cosmos ID**: `{userId}` (format: `github|{providerId}`)
+- **Partition key**: `/userId`
+
+Use static `ToCosmosId()` methods on document classes for consistent ID derivation. Factory methods (`Create()`) provide validated construction.
 
 Always read session and turn documents with the authenticated user partition key.
 

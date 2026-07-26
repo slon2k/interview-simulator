@@ -69,3 +69,52 @@ This enables:
 - Partition key: `/userId` (format: `github|{githubId}`)
 
 **Performance note**: Currently writes on every authenticated request. This is acceptable for MVP but debouncing (e.g., update max once per 5 minutes) should be considered before large-scale deployment. Monitor Cosmos DB RU consumption and implement debouncing if needed.
+
+## Session and Turn Persistence
+
+**Status**: Document models and repositories registered; endpoint implementations deferred to phase 2.
+
+### Document Models
+
+Session and turn documents follow the deterministic ID strategy documented in ADR 0006:
+
+**Creating a session**:
+
+```csharp
+var sessionDoc = CosmosSessionDocument.Create(
+    sessionId: Guid.NewGuid(),
+    userId: authenticatedUserId,
+    role: "backend-engineer",
+    seniority: "mid",
+    topic: "dotnet",
+    interviewType: "technical",
+    createdAt: DateTimeOffset.UtcNow,
+    questionCount: 5,
+    status: "active",
+    answeredCount: 0);
+
+await repository.UpsertAsync(sessionDoc, userId, ct);
+```
+
+**Creating a turn**:
+
+```csharp
+var question = new CosmosQuestionDocument { Text = "Your question here" };
+var turnDoc = CosmosTurnDocument.Create(
+    sessionId: sessionId,
+    userId: authenticatedUserId,
+    turnNumber: 1,
+    question: question,
+    createdAt: DateTimeOffset.UtcNow);
+
+await repository.UpsertAsync(turnDoc, userId, ct);
+```
+
+**Reading a session**:
+
+```csharp
+var cosmosId = CosmosSessionDocument.ToCosmosId(sessionId);
+var doc = await repository.GetByIdAsync(cosmosId, userId, ct);
+```
+
+Static `ToCosmosId()` methods ensure consistent ID derivation across CRUD operations. Always pass the authenticated `userId` as the partition key.
