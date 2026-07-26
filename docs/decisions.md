@@ -237,8 +237,8 @@ The app must support user-scoped reads safely and efficiently while keeping quer
 
 Use deterministic document IDs and user partitioning:
 
-- **Session ID**: GUID (for domain/API use), stored in separate `sessionId` field as N-format string (no dashes)
-- **Session Cosmos ID**: `session|{guid}` (full UUID with dashes)
+- **Session ID**: GUID (for domain/API use), stored in `sessionId` field using `"D"` format (with dashes, e.g. `550e8400-e29b-41d4-a716-446655440000`)
+- **Session Cosmos ID**: `session|{guid}` (same format, e.g. `session|550e8400-e29b-41d4-a716-446655440000`)
 - **Turn Cosmos ID**: `turn|{guid}|{turnNumber:D3}` with **zero-padded 3-digit turn number** for correct alphabetic ordering
   - Turn 1 → `001`, Turn 99 → `099`, Turn 100 → `100`, Turn 999 → `999` (orders correctly in string comparisons)
 - **User Cosmos ID**: `{userId}` (format: `github|{providerId}`)

@@ -4,7 +4,7 @@ using InterviewSimulator.Api.Infrastructure.Data;
 
 namespace InterviewSimulator.Api.Infrastructure.Interviews;
 
-public sealed class CosmosSessionDocument : ICosmosDocument, IUserCosmosDocument
+public sealed class CosmosSessionDocument : IUserCosmosDocument
 {
     public string Id { get; init; } = string.Empty;
 
@@ -52,11 +52,6 @@ public sealed class CosmosSessionDocument : ICosmosDocument, IUserCosmosDocument
         string status,
         int answeredCount)
     {
-        if (sessionId == Guid.Empty)
-        {
-            throw new ArgumentException("Session ID cannot be empty.", nameof(sessionId));
-        }
-
         if (string.IsNullOrWhiteSpace(userId))
         {
             throw new ArgumentException("User ID cannot be null or whitespace.", nameof(userId));
@@ -65,7 +60,7 @@ public sealed class CosmosSessionDocument : ICosmosDocument, IUserCosmosDocument
         return new CosmosSessionDocument
         {
             Id = ToCosmosId(sessionId),
-            SessionId = sessionId.ToString("N", CultureInfo.InvariantCulture),
+            SessionId = FormatSessionId(sessionId),
             UserId = userId,
             Role = role,
             Seniority = seniority,
@@ -79,14 +74,11 @@ public sealed class CosmosSessionDocument : ICosmosDocument, IUserCosmosDocument
         };
     }
 
-    public static string ToCosmosId(Guid sessionId)
-    {
-        if (sessionId == Guid.Empty)
-        {
-            throw new ArgumentException("Session ID cannot be empty.", nameof(sessionId));
-        }
-        return $"session|{sessionId}";
-    }
+    public static string ToCosmosId(Guid sessionId) => $"session|{FormatSessionId(sessionId)}";
+
+    private static string FormatSessionId(Guid sessionId) => sessionId == Guid.Empty
+        ? throw new ArgumentException("Session ID cannot be empty.", nameof(sessionId))
+        : sessionId.ToString("D", CultureInfo.InvariantCulture);
 }
 
 public sealed class CosmosSessionSummaryDocument
