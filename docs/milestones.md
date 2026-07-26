@@ -71,17 +71,17 @@ Acceptance Criteria:
 
 ---
 
-## 04 - Text interview flow (placeholder)
+## 04 - Text interview flow
 
 Build the core text-based interview experience with stub question generation. M05 replaces stubs with real AI.
 
 Acceptance Criteria:
 
-- [ ] POST /api/interviews creates an interview with deterministic ID, persists to Cosmos
-- [ ] GET /api/interviews returns list of user's interviews with optional status filter (`inProgress`, `completed`, `all`)
+- [ ] POST /api/interviews creates an interview in `active` status with deterministic ID, persists to Cosmos
+- [ ] GET /api/interviews returns list of user's interviews with optional status filter (`active`, `completed`)
 - [ ] GET /api/interviews/{id} retrieves interview state by ID with authenticated userId partition key
 - [ ] POST /api/interviews/{id}/answers saves answer, returns stubbed next question
-- [ ] POST /api/interviews/{id}/complete marks interview done, sets completedAt
+- [ ] POST /api/interviews/{id}/complete marks interview `completed`, sets completedAt
 - [ ] /interviews page lists user interviews with resume/view links (supports status filtering)
 - [ ] /interviews/new page shows setup form (role/topic/seniority/type) → POST /api/interviews → navigates to active interview
 - [ ] /interviews/{id} page displays active interview (question, answer input, next/complete buttons)

@@ -25,8 +25,8 @@ This milestone proves the full session lifecycle works without introducing AI co
   - `/interviews/new` — setup form
   - `/interviews/{id}` — active interview
 - **API**:
-  - `POST /api/interviews` — create
-  - `GET /api/interviews` — list (with optional `?status=` filter)
+  - `POST /api/interviews` — create (starts in `active` status)
+  - `GET /api/interviews` — list (with optional `?status=active|completed` filter)
   - `GET /api/interviews/{id}` — retrieve
   - `POST /api/interviews/{id}/answers` — submit answer
   - `POST /api/interviews/{id}/complete` — finish
@@ -42,3 +42,10 @@ This milestone proves the full session lifecycle works without introducing AI co
 ## Notes
 
 Placeholder question generator returns a simple hardcoded question per topic. No OpenAI calls, no prompt versioning, no evaluation. Fully testable without external services.
+
+**Query Support (TBD)**: M04 needs to filter interviews by status and retrieve turns. Two approaches:
+
+1. Extend generic `IRepository<T>` with query methods (e.g., `QueryAsync()`)
+2. Add query methods to concrete implementations (e.g., `CosmosSessionDocumentRepository.GetByUserIdAndStatusAsync()`)
+
+Decision deferred to implementation phase.

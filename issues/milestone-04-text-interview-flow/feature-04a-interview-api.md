@@ -1,77 +1,236 @@
 # 04a - Interview API
 
-Phase: 2
-Milestone: 04 - Text interview flow
-Type: Feature
+Phase: 2  
+Milestone: 04 - Text interview flow  
+Type: Feature  
 Status: Planned
 
 ## Summary
 
-Implement core interview CRUD operations and list endpoint. Covers session lifecycle: create, retrieve, list (with status filter), submit answers, and complete. Questions are stubbed with a hardcoded placeholder. All endpoints validate invite-only authorization.
+Implement the backend API for the core text-based interview flow.
+
+This feature covers creating an interview, listing interviews, retrieving interview state, submitting answers, generating stubbed next questions, and completing an interview.
+
+Questions are hardcoded/stubbed in M04. Real AI question generation and answer evaluation are planned for M05.
 
 ## Problem and User Value
 
-M03 delivered the persistence foundation (Cosmos DB repository, session/turn models). Now M04 adds the HTTP API and state machine to make interviews work end-to-end. This feature provides the backend for setup form, active interview UI, and resume/list pages.
+M03 delivered the Cosmos DB persistence foundation and interview session/turn document models. M04 needs an API layer that turns those persistence models into a usable text interview flow.
+
+This feature provides the backend needed for:
+
+- Interview setup page
+- Active interview page
+- Interview list/resume page
+- Persisted text interview state
+
+Users should be able to start an interview, answer questions, resume an active interview, and complete it.
 
 ## Scope
 
-- Implement `IQuestionGenerator` interface with stubbed hardcoded implementation
-- Create `InterviewService` or similar domain service encapsulating interview state machine
-- Implement `POST /api/interviews` to create interview, persist to Cosmos, return first question (stubbed)
-- Implement `GET /api/interviews` to list user's interviews with optional `?status=` filter (`inProgress`, `completed`, `all`)
-- Implement `GET /api/interviews/{id}` to retrieve interview by ID
-- Implement `POST /api/interviews/{id}/answers` to save answer turn, return next question (stubbed)
-- Implement `POST /api/interviews/{id}/complete` to mark interview done
-- Add request/response DTOs for all endpoints
-- Add unit tests for question generator stub and state transitions
-- Add integration tests for all endpoints with auth scenarios (anonymous, non-invited, invited, admin)
-- Document API contract (OpenAPI/Swagger)
+- Add interview API endpoints:
+  - `POST /api/interviews`
+  - `GET /api/interviews`
+  - `GET /api/interviews/{id}`
+  - `POST /api/interviews/{id}/answers`
+  - `POST /api/interviews/{id}/complete`
+- Add request/response DTOs for interview API
+- Add hardcoded/stubbed question generation for M04
+- Add interview state handling for:
+  - active interviews
+  - completed interviews
+  - current question
+  - answered count
+  - turn progression
+- Persist interview state using existing M03 documents:
+  - `CosmosSessionDocument`
+  - `CosmosTurnDocument`
+- Support listing current user’s interviews with optional status filter:
+  - `active`
+  - `completed`
+- Ensure all interview operations are scoped to the authenticated user
+- Ensure all endpoints require invited-user authorization
+- Add unit tests for question generation and interview state transitions
+- Add integration tests for endpoint happy path and authorization scenarios
+- Update Swagger/OpenAPI documentation if applicable
 
 ## Out of Scope
 
-- Real AI question generation (M05)
-- Answer evaluation or scoring
+- Real AI question generation
+- Answer evaluation
+- Scoring
+- Rubrics
 - Prompt versioning
-- Error recovery or retries for OpenAI
+- AI response validation
+- AI retries/error handling
+- Final interview summaries
+- Dashboard analytics
+- Admin cross-user interview access
+- Voice input/output
 
 ## Acceptance Criteria
 
-- [ ] `IQuestionGenerator` interface exists with one method: `GenerateQuestion(topic, role, seniority) -> string`
-- [ ] `HardcodedQuestionGenerator` implements `IQuestionGenerator` with hardcoded questions by topic
-- [ ] POST `/api/interviews` accepts `{ role, seniority, topic, interviewType, questionCount }`
-- [ ] POST `/api/interviews` creates `CosmosInterviewDocument`, persists to Cosmos, returns `{ id, status, question, createdAt }`
-- [ ] GET `/api/interviews` returns `{ interviews: [...], count }` filtered by optional `?status=`
-- [ ] GET `/api/interviews/{id}` returns full interview state including all turns, questions, answers
-- [ ] POST `/api/interviews/{id}/answers` accepts `{ text }`, saves turn to Cosmos, returns next question
-- [ ] POST `/api/interviews/{id}/complete` sets `status=completed`, `completedAt=now`
-- [ ] All endpoints require authenticated invited user (401 anonymous, 403 non-invited)
-- [ ] Admin users can list/retrieve any user's interviews (or admin-only endpoint) — TBD
-- [ ] Interview state transitions validated (e.g., can't complete twice, can't answer after complete)
-- [ ] Unit tests cover question generator and state transitions
-- [ ] Integration tests cover all endpoints with auth scenarios
-- [ ] All existing tests continue to pass
-- [ ] Swagger/OpenAPI updated
+- [ ] `POST /api/interviews` accepts interview setup data:
+  - `role`
+  - `seniority`
+  - `topic`
+  - `interviewType`
+  - `questionCount`
+- [ ] `POST /api/interviews` creates a new persisted interview session with `status=active`
+- [ ] `POST /api/interviews` creates the first persisted turn with a stubbed question
+- [ ] `POST /api/interviews` returns the created interview state and first/current question
+- [ ] `GET /api/interviews` returns the current user’s interview summaries
+- [ ] `GET /api/interviews` supports optional `?status=active|completed` filtering
+- [ ] `GET /api/interviews/{id}` returns current interview state needed to resume the interview
+- [ ] `GET /api/interviews/{id}` includes the current question/current turn for active interviews
+- [ ] `GET /api/interviews/{id}` does not return full turn/answer history in M04
+- [ ] `GET /api/interviews/{id}` does not generate new questions
+- [ ] `POST /api/interviews/{id}/answers` accepts answer text and the current `turnNumber`
+- [ ] Invalid interview state transitions return `409 Conflict`
+- [ ] Answer submission saves the answer to the existing current turn
+- [ ] Answer submission creates the next stubbed question/turn when questions remain
+- [ ] Answer submission increments `answeredCount`
+- [ ] Answering the final question automatically marks the interview as `completed`
+- [ ] `POST /api/interviews/{id}/complete` marks an active interview as `completed`
+- [ ] Completing an interview sets `completedAt`
+- [ ] Completed interviews cannot receive new answers
+- [ ] Completed interviews cannot be completed again
+- [ ] Duplicate, stale, or wrong-turn answer submissions are rejected
+- [ ] Interview persistence uses existing `CosmosSessionDocument` and `CosmosTurnDocument`
+- [ ] Existing M03 document ID formats are preserved:
+  - `session|{guid:D}`
+  - `turn|{guid:D}|{turnNumber:D3}`
+- [ ] Public API returns the raw interview/session id, not the Cosmos document id
+- [ ] Users can only list/retrieve/update their own interviews
+- [ ] Admin users do not receive cross-user interview access in M04
+- [ ] Anonymous users receive `401`
+- [ ] Authenticated non-invited users receive `403`
+- [ ] Invited users can create/list/retrieve/answer/complete their own interviews
+- [ ] Unit tests cover question generator behavior
+- [ ] Unit tests cover interview state transitions
+- [ ] Integration tests cover endpoint happy path
+- [ ] Integration tests cover authorization scenarios
+- [ ] Existing tests continue to pass
 
-## Sub-Issues
+## Tasks
 
-- [ ] Task: Define `IQuestionGenerator` interface and `HardcodedQuestionGenerator`
-- [ ] Task: Create `InterviewService` domain service with state machine logic
-- [ ] Task: Implement POST /api/interviews endpoint with Cosmos persistence
-- [ ] Task: Implement GET /api/interviews endpoint with status filtering
-- [ ] Task: Implement GET /api/interviews/{id} endpoint
-- [ ] Task: Implement POST /api/interviews/{id}/answers endpoint
-- [ ] Task: Implement POST /api/interviews/{id}/complete endpoint
-- [ ] Task: Add DTOs for requests and responses
-- [ ] Task: Add unit tests for question generator and service logic
-- [ ] Task: Add integration tests for all endpoints with auth scenarios
-- [ ] Task: Update Swagger/OpenAPI documentation
+### [ ] Interview persistence/query support
+
+- [ ] Define interview API request/response DTOs
+- [ ] Add hardcoded question generator
+- [ ] Add interview state constants: `active`, `completed`
+- [ ] Add interview service/state handling
+- [ ] Add persistence access for listing sessions and loading session turns
+- [ ] Add unit tests for state transitions
+
+### [ ] Interview API endpoint implementation
+
+- [ ] Implement `POST /api/interviews`
+- [ ] Implement `GET /api/interviews`
+- [ ] Implement `GET /api/interviews/{id}`
+- [ ] Implement `POST /api/interviews/{id}/answers`
+- [ ] Implement `POST /api/interviews/{id}/complete`
+
+### [ ] Interview API tests and documentation
+
+- [ ] Add integration tests for interview API happy path
+- [ ] Add integration tests for authorization scenarios
+- [ ] Update Swagger/OpenAPI documentation if applicable
 
 ## Verification
 
-- [ ] `HardcodedQuestionGenerator` returns same question for same topic (deterministic)
-- [ ] POST /api/interviews creates document with `id=interview|{guid}` format (or similar deterministic)
-- [ ] GET /api/interviews?status=inProgress returns only interviews with `status=inProgress`
-- [ ] POST /api/interviews/{id}/answers increments turn count and returns next question
-- [ ] Anonymous user GET /api/interviews returns 401
-- [ ] Non-invited authenticated user GET /api/interviews returns 403
-- [ ] Invited user GET /api/interviews returns 200 with their interviews
+- [ ] `POST /api/interviews` creates a persisted session document
+- [ ] `POST /api/interviews` creates turn 1 with a stubbed question
+- [ ] Created session document uses id format `session|{guid:D}`
+- [ ] Created turn document uses id format `turn|{guid:D}|001`
+- [ ] `GET /api/interviews` returns only the current user’s interviews
+- [ ] `GET /api/interviews?status=active` returns only active interviews
+- [ ] `GET /api/interviews?status=completed` returns only completed interviews
+- [ ] `GET /api/interviews/{id}` returns the persisted current question for active interviews without generating new turns
+- [ ] `GET /api/interviews/{id}` does not return full turn/answer history in M04
+- [ ] `POST /api/interviews/{id}/answers` saves the submitted answer
+- [ ] `POST /api/interviews/{id}/answers` creates the next turn when questions remain
+- [ ] Final answer marks interview as completed
+- [ ] Duplicate answer submission is rejected
+- [ ] Wrong or stale `turnNumber` is rejected
+- [ ] Answer submission after completion is rejected
+- [ ] Completing an already completed interview is rejected
+- [ ] Anonymous requests return `401`
+- [ ] Non-invited authenticated requests return `403`
+- [ ] Invited user can complete the full API flow
+- [ ] User cannot access another user’s interview
+- [ ] Full test suite passes
+
+## Dependencies and Blockers
+
+Depends on:
+
+- 03 - Cosmos DB persistence ✅
+- 03c - Session and turn document models ✅
+- Invite-only authorization from identity/access foundation ✅
+
+Blocks:
+
+- 04b - Interview list/setup UI
+- 04c - Active interview UI
+- 05 - AI prompts and rubric evaluation
+- 06 - Session history and summaries
+
+## Risks and Open Questions
+
+### Risks
+
+- The API may need query support beyond the current point-read repository abstraction.
+- State transition logic may become more complex once AI evaluation is added in M05.
+
+## Notes
+
+Public API uses interview terminology:
+
+```http
+POST /api/interviews
+GET  /api/interviews
+GET  /api/interviews/{id}
+POST /api/interviews/{id}/answers
+POST /api/interviews/{id}/complete
+```
+
+Persistence remains session/turn based:
+
+```text
+CosmosSessionDocument
+CosmosTurnDocument
+```
+
+M04 statuses:
+
+```text
+active
+completed
+```
+
+Question generation should be behind a small abstraction so M05 can replace the hardcoded generator with real AI generation.
+
+Example shape:
+
+```csharp
+public interface IQuestionGenerator
+{
+    Task<GeneratedQuestion> GenerateQuestionAsync(
+        GenerateQuestionRequest request,
+        CancellationToken cancellationToken = default);
+}
+```
+
+The M04 implementation should be deterministic and hardcoded. It may use role, seniority, topic, interview type, and turn number. It does not need AI context yet.
+
+Suggested answer request shape:
+
+```json
+{
+  "turnNumber": 1,
+  "text": "My answer..."
+}
+```
+
+Including `turnNumber` allows the backend to reject duplicate or stale submissions.
