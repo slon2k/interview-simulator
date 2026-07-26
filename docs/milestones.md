@@ -46,18 +46,28 @@ Acceptance Criteria:
 
 ## 03 - Cosmos DB persistence
 
-Deliver Cosmos DB in two steps: infrastructure and runtime configuration first, then API persistence integration.
+**Status: 03a & 03b ✅ Complete, 03c In Progress**
+
+Delivered Cosmos DB in layers: infrastructure and runtime configuration (03a/03b), now adding session/turn document models (03c).
 
 Acceptance Criteria:
 
-- [ ] Cosmos DB account, SQL database, and SQL container are provisioned through Bicep
-- [ ] App Service managed identity has Cosmos DB data-plane access, and account keys are not used by the app
-- [ ] App Service receives non-secret Cosmos DB configuration values
-- [ ] Cosmos DB SDK integration and validated CosmosDb options are implemented in API
+- [x] Cosmos DB account, SQL database, and SQL container are provisioned through Bicep
+- [x] App Service managed identity has Cosmos DB data-plane access, and account keys are not used by the app
+- [x] App Service receives non-secret Cosmos DB configuration values
+- [x] Cosmos DB SDK integration and validated CosmosDb options are implemented in API
 - [ ] Session and turn document models are defined with deterministic ID strategy
-- [ ] Repository abstraction and Cosmos DB repository implementation are in place
-- [ ] API-level read/write smoke check works in dev with invite-only authorization
-- [ ] Normal CI does not require live Cosmos DB credentials
+- [ ] Repository abstraction and Cosmos DB repository implementation are in place ✅ (beyond scope)
+- [ ] User persistence on OAuth login is working ✅ (out-of-scope implementation)
+- [ ] API-level read/write smoke check works in dev with invite-only authorization (in progress: 03c)
+- [ ] Normal CI does not require live Cosmos DB credentials ✅
+
+### Summary
+
+- **03a**: Cosmos DB IaC, configuration, managed identity ✅ Complete
+- **03b**: SDK integration, repository abstraction, options validation ✅ Complete
+- **03c**: Session/turn models, deterministic IDs, smoke tests (new issue)
+- **Bonus**: User persistence middleware for OAuth login ✅ Implemented (closes authentication gap)
 
 ---
 

@@ -61,6 +61,13 @@ This enables:
 - User session tracking (first seen, last seen timestamps)
 - Foundation for invite allowlist and admin override
 
+**Implementation details**:
+
+- `UserProfilePersistenceMiddleware` in `Infrastructure/Identity/`
+- `CosmosIdentityUserStore` persists to Cosmos; `DisabledIdentityUserStore` is a no-op when Cosmos disabled
+- Tests use `TestUserProfileStore` with pre-seeded member/admin users
+- Partition key: `/userId` (format: `github|{githubId}`)
+
 **Performance note**: Currently writes on every authenticated request. This is acceptable for MVP but debouncing (e.g., update max once per 5 minutes) should be considered before large-scale deployment. Monitor Cosmos DB RU consumption and implement debouncing if needed.
 
 ## Session and Turn Persistence
