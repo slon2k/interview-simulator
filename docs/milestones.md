@@ -71,18 +71,25 @@ Acceptance Criteria:
 
 ---
 
-## 04 - Text interview flow
+## 04 - Text interview flow (placeholder)
 
-Build the core text-based interview experience.
+Build the core text-based interview experience with stub question generation. M05 replaces stubs with real AI.
 
 Acceptance Criteria:
 
-- [ ] User can configure interview settings
-- [ ] User can start a session
-- [ ] First question is generated
-- [ ] User can submit text answers
-- [ ] Next question is shown
-- [ ] Session state is persisted
+- [ ] POST /api/interviews creates an interview with deterministic ID, persists to Cosmos
+- [ ] GET /api/interviews returns list of user's interviews with optional status filter (`inProgress`, `completed`, `all`)
+- [ ] GET /api/interviews/{id} retrieves interview state by ID with authenticated userId partition key
+- [ ] POST /api/interviews/{id}/answers saves answer, returns stubbed next question
+- [ ] POST /api/interviews/{id}/complete marks interview done, sets completedAt
+- [ ] /interviews page lists user interviews with resume/view links (supports status filtering)
+- [ ] /interviews/new page shows setup form (role/topic/seniority/type) → POST /api/interviews → navigates to active interview
+- [ ] /interviews/{id} page displays active interview (question, answer input, next/complete buttons)
+- [ ] All endpoints require invite-only authorization
+- [ ] Anonymous users receive 401, non-invited authenticated users receive 403
+- [ ] Integration test covers happy path: setup → answer 3 questions → complete
+- [ ] All existing tests continue to pass
+- [ ] Architecture documentation updated
 
 ---
 
