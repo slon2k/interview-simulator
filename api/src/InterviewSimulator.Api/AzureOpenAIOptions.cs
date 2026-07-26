@@ -11,6 +11,11 @@ public sealed class AzureOpenAIOptions
     public string DefaultDeploymentName { get; init; } = string.Empty;
 
     public string[] DeploymentNames { get; init; } = [];
+
+    /// <summary>
+    /// Optional API key for authentication. If not provided, managed identity (DefaultAzureCredential) is used.
+    /// </summary>
+    public string? ApiKey { get; init; }
 }
 
 public sealed class AzureOpenAIOptionsValidator : IValidateOptions<AzureOpenAIOptions>
