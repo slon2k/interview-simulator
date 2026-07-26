@@ -5,6 +5,7 @@ using InterviewSimulator.Api.Features.Identity.CurrentUser;
 using InterviewSimulator.Api.Infrastructure.Cosmos;
 using InterviewSimulator.Api.Infrastructure.Data;
 using InterviewSimulator.Api.Infrastructure.Identity;
+using InterviewSimulator.Api.Infrastructure.Interviews;
 
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Options;
@@ -38,8 +39,10 @@ public static class CosmosPersistence
             services.AddScoped<IUserAccessReader>(
                 sp => sp.GetRequiredService<DisabledIdentityUserStore>());
 
-            services.AddScoped<IRepository<CosmosUserDocument>, NullRepository<CosmosUserDocument>>(); 
-        
+            services.AddScoped<IRepository<CosmosUserDocument>, NullRepository<CosmosUserDocument>>();
+            services.AddScoped<IRepository<CosmosSessionDocument>, NullRepository<CosmosSessionDocument>>();
+            services.AddScoped<IRepository<CosmosTurnDocument>, NullRepository<CosmosTurnDocument>>();
+
             return builder;
         }
 
@@ -67,16 +70,27 @@ public static class CosmosPersistence
         });
 
         services.AddScoped<ICosmosDbInitializer, CosmosDbInitializer>();
-        services.AddScoped<IRepository<CosmosUserDocument>>(sp =>
-        {
-            var options = sp.GetRequiredService<IOptions<CosmosDbOptions>>().Value;
-            var client = sp.GetRequiredService<CosmosClient>();
-            return new CosmosRepository<CosmosUserDocument>(
-                            client.GetContainer(
-                                options.DatabaseName,
-                                options.UsersContainerName));
-        });
+
+        services.AddScoped<IRepository<CosmosUserDocument>>(sp => new CosmosRepository<CosmosUserDocument>(
+            sp.GetRequiredService<CosmosClient>()
+                .GetContainer(
+                cosmosOptions.DatabaseName,
+                cosmosOptions.UsersContainerName)));
+
+        services.AddScoped<IRepository<CosmosSessionDocument>>(sp => new CosmosRepository<CosmosSessionDocument>(
+            sp.GetRequiredService<CosmosClient>()
+                .GetContainer(
+                cosmosOptions.DatabaseName,
+                cosmosOptions.SessionsContainerName)));
+
+        services.AddScoped<IRepository<CosmosTurnDocument>>(sp => new CosmosRepository<CosmosTurnDocument>(
+            sp.GetRequiredService<CosmosClient>()
+                .GetContainer(
+                cosmosOptions.DatabaseName,
+                cosmosOptions.SessionsContainerName)));
+
         services.AddScoped<CosmosIdentityUserStore>();
+
         services.AddScoped<IUserProfileStore>(
             sp => sp.GetRequiredService<CosmosIdentityUserStore>());
 
