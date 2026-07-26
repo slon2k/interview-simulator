@@ -383,10 +383,12 @@ One container keeps the data model simple, reduces overhead, and makes user-scop
 
 Session documents may store denormalized summary metrics such as `overallScore`, average dimension scores, answered count, and completion status. This allows dashboard and history pages to query session documents without scanning every turn document.
 
+**ID Generation**: `session|{sessionId}` where `sessionId` is a GUID. Use `CosmosSessionDocument.ToCosmosId(Guid)` for consistent derivation.
+
 ```json
 {
-  "id": "session|session_123",
-  "sessionId": "session_123",
+  "id": "session|550e8400-e29b-41d4-a716-446655440000",
+  "sessionId": "550e8400e29b41d4a716446655440000",
   "userId": "github|123456789",
   "type": "session",
 
@@ -405,9 +407,9 @@ Session documents may store denormalized summary metrics such as `overallScore`,
   "summary": {
     "overallScore": 78,
     "dimensionScores": {
-        "clarity": 4.2,
-        "depth": 3.6,
-        "correctness": 4.4
+      "clarity": 4.2,
+      "depth": 3.6,
+      "correctness": 4.4
     },
     "highlights": [],
     "improvements": []
@@ -417,11 +419,13 @@ Session documents may store denormalized summary metrics such as `overallScore`,
 
 ### Turn Document
 
+**ID Generation**: `turn|{sessionId}|{turnNumber:D3}` where turn numbers are zero-padded to 3 digits for correct alphabetic ordering (1→`001`, 100→`100`, 999→`999`). Use `CosmosTurnDocument.ToCosmosId(Guid, int)` for consistent derivation.
+
 ```json
 {
-  "id": "turn|session_123|1",
+  "id": "turn|550e8400-e29b-41d4-a716-446655440000|001",
   "userId": "github|123456789",
-  "sessionId": "session_123",
+  "sessionId": "550e8400e29b41d4a716446655440000",
   "turnNumber": 1,
   "type": "turn",
 
@@ -451,23 +455,36 @@ Session documents may store denormalized summary metrics such as `overallScore`,
 }
 ```
 
-### Optional Profile Document
+### User Profile Document
+
+Stores authenticated user identity and access level. Created on first OAuth login, updated on subsequent logins.
 
 ```json
 {
-  "id": "profile",
+  "id": "github|123456789",
   "userId": "github|123456789",
-  "type": "profile",
-  "preferredRole": "frontend-engineer",
-  "preferredSeniority": "mid"
+  "type": "user",
+  "provider": "github",
+  "providerUserId": "123456789",
+  "githubLogin": "octocat",
+  "displayName": "The Octocat",
+  "avatarUrl": "https://avatars.githubusercontent.com/u/1?v=4",
+  "accessLevel": "guest",
+  "isDisabled": false,
+  "firstSeenAt": "2026-07-15T10:00:00Z",
+  "lastSeenAt": "2026-07-15T10:00:00Z",
+  "createdAt": "2026-07-15T10:00:00Z",
+  "updatedAt": "2026-07-15T10:00:00Z"
 }
 ```
 
 ### Query Patterns
 
 - Session list reads by `userId` and sorts by `createdAt`
-- Session detail reads by `userId` and `sessionId`
-- Dashboard summary aggregates a user’s sessions and turns
+- Session detail reads by `userId` and `sessionId` (use `CosmosSessionDocument.ToCosmosId()` to derive Cosmos ID)
+- Turn reads by `userId`, `sessionId`, and `turnNumber` (use `CosmosTurnDocument.ToCosmosId()` to derive Cosmos ID)
+- Dashboard summary aggregates a user's sessions and turns
+- User reads by `userId` to retrieve access level and profile data
 
 ---
 
