@@ -57,7 +57,7 @@ resource openAIAccount 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   properties: {
     customSubDomainName: accountName
     publicNetworkAccess: 'Enabled'
-    disableLocalAuth: true
+    disableLocalAuth: false
   }
 }
 
@@ -93,3 +93,4 @@ output openAIAccountId string = openAIAccount.id
 output openAIEndpoint string = openAIAccount.properties.endpoint
 output openAIDeploymentName string = effectiveDeploymentName
 output openAIDeploymentNames array = [for deployment in effectiveDeployments: string(deployment.name)]
+output openAIApiKey string = openAIAccount.listKeys().key1

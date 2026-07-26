@@ -5,6 +5,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddApplicationOptions();
 builder.AddApplicationDiagnostics();
+builder.AddAzureOpenAI();
 builder.AddCosmosPersistence();
 builder.AddIdentityServices();
 builder.AddApplicationAuthentication();
