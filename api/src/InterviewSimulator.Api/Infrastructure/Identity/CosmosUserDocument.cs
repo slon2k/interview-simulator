@@ -6,7 +6,7 @@ namespace InterviewSimulator.Api.Infrastructure.Identity;
 /// <summary>
 /// Represents a user document stored in the system, containing information about the user's identity, access level, and timestamps for tracking user activity.
 /// </summary>
-public sealed class CosmosUserDocument : ICosmosDocument, IUserCosmosDocument
+public sealed class CosmosUserDocument : IUserCosmosDocument
 {
     public string Id { get; init; } = string.Empty;
 

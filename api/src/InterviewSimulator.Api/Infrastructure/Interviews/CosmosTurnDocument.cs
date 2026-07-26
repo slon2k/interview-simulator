@@ -4,7 +4,7 @@ using InterviewSimulator.Api.Infrastructure.Data;
 
 namespace InterviewSimulator.Api.Infrastructure.Interviews;
 
-public sealed class CosmosTurnDocument : ICosmosDocument, IUserCosmosDocument
+public sealed class CosmosTurnDocument : IUserCosmosDocument
 {
     public string Id { get; init; } = string.Empty;
 
@@ -56,10 +56,12 @@ public sealed class CosmosTurnDocument : ICosmosDocument, IUserCosmosDocument
             throw new ArgumentOutOfRangeException(nameof(turnNumber), "Turn number must be greater than zero.");
         }
 
+        ArgumentNullException.ThrowIfNull(question, nameof(question));
+
         return new CosmosTurnDocument
         {
             Id = ToCosmosId(sessionId, turnNumber),
-            SessionId = sessionId.ToString("N", CultureInfo.InvariantCulture),
+            SessionId = FormatSessionId(sessionId),
             UserId = userId,
             TurnNumber = turnNumber,
             Question = question,
@@ -80,8 +82,12 @@ public sealed class CosmosTurnDocument : ICosmosDocument, IUserCosmosDocument
             throw new ArgumentOutOfRangeException(nameof(turnNumber), "Turn number must be greater than zero.");
         }
 
-        return $"turn|{sessionId}|{turnNumber:D3}";
+        return $"turn|{FormatSessionId(sessionId)}|{turnNumber:D3}";
     }
+
+    private static string FormatSessionId(Guid sessionId) => sessionId == Guid.Empty
+        ? throw new ArgumentException("Session ID cannot be empty.", nameof(sessionId))
+        : sessionId.ToString("D", CultureInfo.InvariantCulture);
 }
 
 public sealed class CosmosQuestionDocument
