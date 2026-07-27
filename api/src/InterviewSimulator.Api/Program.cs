@@ -3,12 +3,12 @@ using InterviewSimulator.Api.Startup;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.AddApplicationOptions();
-builder.AddApplicationDiagnostics();
-builder.AddAzureOpenAI();
-builder.AddCosmosPersistence();
+builder.AddSpeechServices();
+builder.AddDiagnosticsServices();
+builder.AddOpenAIServices();
+builder.AddPersistenceServices();
 builder.AddIdentityServices();
-builder.AddApplicationAuthentication();
+builder.AddAuthenticationServices();
 
 var app = builder.Build();
 
@@ -16,7 +16,7 @@ app.UseApplicationDiagnostics();
 app.UseAuthentication();
 app.UseUserProfilePersistence();
 app.UseAuthorization();
-app.MapApplicationEndpoints();
+app.AddWebServices();
 await app.InitializeCosmosPersistenceAsync();
 
 app.Run();

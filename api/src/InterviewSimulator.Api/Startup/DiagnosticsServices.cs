@@ -1,10 +1,10 @@
 namespace InterviewSimulator.Api.Startup;
 
-public static class Diagnostics
+public static class DiagnosticsServices
 {
     public const int DefaultSlowRequestThresholdMs = 500;
 
-    public static WebApplicationBuilder AddApplicationDiagnostics(this WebApplicationBuilder builder)
+    public static WebApplicationBuilder AddDiagnosticsServices(this WebApplicationBuilder builder)
     {
         builder.Services.AddOpenApi();
         builder.Services.AddHealthChecks();

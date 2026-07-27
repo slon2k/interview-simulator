@@ -9,9 +9,9 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace InterviewSimulator.Api.Startup;
 
-public static class Authentication
+public static class AuthenticationServices
 {
-    public static WebApplicationBuilder AddApplicationAuthentication(this WebApplicationBuilder builder)
+    public static WebApplicationBuilder AddAuthenticationServices(this WebApplicationBuilder builder)
     {
         builder.Services.AddAuthentication(options =>
         {

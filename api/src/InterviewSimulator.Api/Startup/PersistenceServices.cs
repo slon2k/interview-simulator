@@ -12,9 +12,9 @@ using Microsoft.Extensions.Options;
 
 namespace InterviewSimulator.Api.Startup;
 
-public static class CosmosPersistence
+public static class PersistenceServices
 {
-    public static WebApplicationBuilder AddCosmosPersistence(this WebApplicationBuilder builder)
+    public static WebApplicationBuilder AddPersistenceServices(this WebApplicationBuilder builder)
     {
         var services = builder.Services;
         var configuration = builder.Configuration;

@@ -15,8 +15,14 @@ public static class OpenAIServices
     /// 1. If ApiKey is configured in options, uses API key authentication
     /// 2. Otherwise, uses DefaultAzureCredential (managed identity)
     /// </summary>
-    public static WebApplicationBuilder AddAzureOpenAI(this WebApplicationBuilder builder)
+    public static WebApplicationBuilder AddOpenAIServices(this WebApplicationBuilder builder)
     {
+        builder.Services.AddOptions<AzureOpenAIOptions>()
+            .Bind(builder.Configuration.GetSection(AzureOpenAIOptions.SectionName))
+            .ValidateOnStart();
+
+        builder.Services.AddSingleton<IValidateOptions<AzureOpenAIOptions>, AzureOpenAIOptionsValidator>();
+
         builder.Services.AddSingleton(sp =>
         {
             var options = sp.GetRequiredService<IOptions<AzureOpenAIOptions>>().Value;

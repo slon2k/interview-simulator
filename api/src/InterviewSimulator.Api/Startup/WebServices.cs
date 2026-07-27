@@ -3,9 +3,9 @@ using InterviewSimulator.Api.Features.Identity;
 
 namespace InterviewSimulator.Api.Startup;
 
-public static class EndpointsMapping
+public static class WebServices
 {
-    public static WebApplication MapApplicationEndpoints(this WebApplication app)
+    public static WebApplication AddWebServices(this WebApplication app)
     {
         app.MapAuthenticationEndpoints();
         app.MapIdentityEndpoints();
