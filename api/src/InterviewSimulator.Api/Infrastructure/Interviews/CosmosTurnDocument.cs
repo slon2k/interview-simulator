@@ -1,5 +1,6 @@
 using System.Globalization;
 
+using InterviewSimulator.Api.Features.Interviews;
 using InterviewSimulator.Api.Infrastructure.Data;
 
 namespace InterviewSimulator.Api.Infrastructure.Interviews;
@@ -31,8 +32,6 @@ public sealed class CosmosTurnDocument : IUserCosmosDocument
     public DateTimeOffset UpdatedAt { get; set; }
 
     public DateTimeOffset? AnsweredAt { get; set; }
-
-    public DateTimeOffset? EvaluatedAt { get; set; }
 
     public static CosmosTurnDocument Create(
         Guid sessionId,
@@ -70,6 +69,55 @@ public sealed class CosmosTurnDocument : IUserCosmosDocument
         };
     }
 
+    public static CosmosTurnDocument FromDomain(InterviewTurn turn)
+    {
+        ArgumentNullException.ThrowIfNull(turn, nameof(turn));
+
+        return new CosmosTurnDocument
+        {
+            Id = ToCosmosId(turn.SessionId, turn.TurnNumber),
+            SessionId = FormatSessionId(turn.SessionId),
+            UserId = turn.UserId,
+            TurnNumber = turn.TurnNumber,
+            Question = new CosmosQuestionDocument
+            {
+                Text = turn.Question.Text,
+                Topic = turn.Question.Topic,
+            },
+            Answer = turn.Answer is not null
+                ? new CosmosAnswerDocument { Text = turn.Answer.Text }
+                : null,
+            Evaluation = turn.Evaluation is not null
+                ? new CosmosEvaluationDocument
+                {
+                    Score = turn.Evaluation.Score,
+                    Feedback = turn.Evaluation.Feedback,
+                }
+                : null,
+            CreatedAt = turn.CreatedAt,
+            UpdatedAt = turn.UpdatedAt,
+            AnsweredAt = turn.Answer?.AnsweredAt,
+        };
+    }
+
+    public InterviewTurn ToDomain()
+    {
+        return InterviewTurn.Restore(
+            state: new InterviewTurnState(
+                SessionId: Guid.Parse(SessionId, CultureInfo.InvariantCulture),
+                UserId: UserId,
+                TurnNumber: TurnNumber,
+                Question: new InterviewQuestion(Question.Text, Question.Topic),
+                Answer: Answer is not null
+                    ? new InterviewAnswer(Answer.Text, AnsweredAt ?? CreatedAt)
+                    : null,
+                Evaluation: Evaluation is not null
+                    ? new AnswerEvaluation(Evaluation.Score, Evaluation.Feedback)
+                    : null,
+                CreatedAt: CreatedAt,
+                UpdatedAt: UpdatedAt));
+    }
+
     public static string ToCosmosId(Guid sessionId, int turnNumber)
     {
         if (sessionId == Guid.Empty)
@@ -94,9 +142,7 @@ public sealed class CosmosQuestionDocument
 {
     public string Text { get; init; } = string.Empty;
 
-    public string? Category { get; init; }
-
-    public string? Difficulty { get; init; }
+    public string Topic { get; init; } = string.Empty;
 }
 
 public sealed class CosmosAnswerDocument
@@ -106,11 +152,9 @@ public sealed class CosmosAnswerDocument
 
 public sealed class CosmosEvaluationDocument
 {
-    public decimal? Score { get; init; }
+    public int Score { get; init; }
 
-    public string? Feedback { get; init; }
-
-    public string? SuggestedAnswer { get; init; }
+    public string Feedback { get; init; } = string.Empty;
 }
 
 public sealed class CosmosAiMetadataDocument

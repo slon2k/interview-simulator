@@ -42,7 +42,7 @@ public sealed class AuthWebApplicationFactory : WebApplicationFactory<Program>
         builder.ConfigureServices(services =>
         {
             // Replace the generic repository with a test stub that seeds access levels.
-            services.AddScoped<IRepository<CosmosUserDocument>>(_ => new TestUserRepository());
+            services.AddScoped<ICosmosRepository<CosmosUserDocument>>(_ => new TestUserRepository());
 
             // Replace identity stores with test implementations (Cosmos is disabled, so these are normally no-ops).
             services.AddScoped<IUserProfileStore>(_ => new TestUserProfileStore());
@@ -70,7 +70,7 @@ public sealed class AuthWebApplicationFactory : WebApplicationFactory<Program>
 /// In-memory repository stub that returns pre-seeded user documents for integration tests.
 /// github|100 → Member, github|200 → Admin, all others → null (guest/unknown).
 /// </summary>
-file sealed class TestUserRepository : IRepository<CosmosUserDocument>
+file sealed class TestUserRepository : ICosmosRepository<CosmosUserDocument>
 {
     private static readonly Dictionary<string, CosmosUserDocument> _users = new()
     {

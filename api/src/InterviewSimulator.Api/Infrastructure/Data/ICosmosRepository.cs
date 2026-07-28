@@ -1,6 +1,6 @@
 namespace InterviewSimulator.Api.Infrastructure.Data;
 
-public interface IRepository<TDocument>
+public interface ICosmosRepository<TDocument>
     where TDocument : ICosmosDocument
 {
     Task<TDocument?> GetByIdAsync(string id, string partitionKey, CancellationToken cancellationToken = default);

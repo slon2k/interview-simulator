@@ -2,6 +2,7 @@ using Azure.Identity;
 
 using InterviewSimulator.Api.Features.Identity.Access;
 using InterviewSimulator.Api.Features.Identity.CurrentUser;
+using InterviewSimulator.Api.Features.Interviews;
 using InterviewSimulator.Api.Infrastructure.Cosmos;
 using InterviewSimulator.Api.Infrastructure.Data;
 using InterviewSimulator.Api.Infrastructure.Identity;
@@ -39,9 +40,10 @@ public static class PersistenceServices
             services.AddScoped<IUserAccessReader>(
                 sp => sp.GetRequiredService<DisabledIdentityUserStore>());
 
-            services.AddScoped<IRepository<CosmosUserDocument>, NullRepository<CosmosUserDocument>>();
-            services.AddScoped<IRepository<CosmosSessionDocument>, NullRepository<CosmosSessionDocument>>();
-            services.AddScoped<IRepository<CosmosTurnDocument>, NullRepository<CosmosTurnDocument>>();
+            services.AddScoped<ICosmosRepository<CosmosUserDocument>, NullRepository<CosmosUserDocument>>();
+            services.AddScoped<ICosmosRepository<CosmosSessionDocument>, NullRepository<CosmosSessionDocument>>();
+            services.AddScoped<ICosmosRepository<CosmosTurnDocument>, NullRepository<CosmosTurnDocument>>();
+            services.AddScoped<IInterviewStore, DisabledInterviewStore>();
 
             return builder;
         }
@@ -71,21 +73,26 @@ public static class PersistenceServices
 
         services.AddScoped<ICosmosDbInitializer, CosmosDbInitializer>();
 
-        services.AddScoped<IRepository<CosmosUserDocument>>(sp => new CosmosRepository<CosmosUserDocument>(
+        services.AddScoped<ICosmosRepository<CosmosUserDocument>>(sp => new CosmosRepository<CosmosUserDocument>(
             sp.GetRequiredService<CosmosClient>()
                 .GetContainer(
                 cosmosOptions.DatabaseName,
                 cosmosOptions.UsersContainerName)));
 
-        services.AddScoped<IRepository<CosmosSessionDocument>>(sp => new CosmosRepository<CosmosSessionDocument>(
+        services.AddScoped<ICosmosRepository<CosmosSessionDocument>>(sp => new CosmosRepository<CosmosSessionDocument>(
             sp.GetRequiredService<CosmosClient>()
                 .GetContainer(
                 cosmosOptions.DatabaseName,
                 cosmosOptions.SessionsContainerName)));
 
-        services.AddScoped<IRepository<CosmosTurnDocument>>(sp => new CosmosRepository<CosmosTurnDocument>(
+        services.AddScoped<ICosmosRepository<CosmosTurnDocument>>(sp => new CosmosRepository<CosmosTurnDocument>(
             sp.GetRequiredService<CosmosClient>()
                 .GetContainer(
+                cosmosOptions.DatabaseName,
+                cosmosOptions.SessionsContainerName)));
+
+        services.AddScoped<IInterviewStore>(sp => new CosmosInterviewStore(sp.GetRequiredService<CosmosClient>()
+            .GetContainer(
                 cosmosOptions.DatabaseName,
                 cosmosOptions.SessionsContainerName)));
 
