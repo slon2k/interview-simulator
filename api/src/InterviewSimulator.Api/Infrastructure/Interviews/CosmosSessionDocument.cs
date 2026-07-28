@@ -41,40 +41,6 @@ public sealed class CosmosSessionDocument : IUserCosmosDocument
 
     public DateTimeOffset? CompletedAt { get; set; }
 
-    public static CosmosSessionDocument Create(
-        Guid sessionId,
-        string userId,
-        string role,
-        string seniority,
-        string focusArea,
-        string interviewType,
-        DateTimeOffset createdAt,
-        int questionCount,
-        string status,
-        int answeredCount)
-    {
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            throw new ArgumentException("User ID cannot be null or whitespace.", nameof(userId));
-        }
-
-        return new CosmosSessionDocument
-        {
-            Id = ToCosmosId(sessionId),
-            SessionId = FormatSessionId(sessionId),
-            UserId = userId,
-            TargetRole = role,
-            Seniority = seniority,
-            FocusArea = focusArea,
-            InterviewType = interviewType,
-            CreatedAt = createdAt,
-            UpdatedAt = createdAt,
-            QuestionCount = questionCount,
-            AnsweredCount = answeredCount,
-            Status = status,
-        };
-    }
-
     public static CosmosSessionDocument FromDomain(InterviewSession session)
     {
         ArgumentNullException.ThrowIfNull(session);
@@ -86,7 +52,7 @@ public sealed class CosmosSessionDocument : IUserCosmosDocument
             UserId = session.UserId,
             TargetRole = session.TargetRole,
             Seniority = session.Seniority.ToString(),
-            FocusArea = session.FocusArea.ToString(),
+            FocusArea = session.FocusArea,
             InterviewType = session.InterviewType.ToString(),
             CreatedAt = session.CreatedAt,
             UpdatedAt = session.UpdatedAt,

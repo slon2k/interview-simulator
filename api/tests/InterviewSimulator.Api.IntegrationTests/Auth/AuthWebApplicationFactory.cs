@@ -1,7 +1,7 @@
 using InterviewSimulator.Api.Features.Identity.Access;
 using InterviewSimulator.Api.Features.Identity.CurrentUser;
+using InterviewSimulator.Api.Features.Identity.Profile;
 using InterviewSimulator.Api.Infrastructure.Data;
-using InterviewSimulator.Api.Infrastructure.Identity;
 
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -41,9 +41,6 @@ public sealed class AuthWebApplicationFactory : WebApplicationFactory<Program>
 
         builder.ConfigureServices(services =>
         {
-            // Replace the generic repository with a test stub that seeds access levels.
-            services.AddScoped<ICosmosRepository<CosmosUserDocument>>(_ => new TestUserRepository());
-
             // Replace identity stores with test implementations (Cosmos is disabled, so these are normally no-ops).
             services.AddScoped<IUserProfileStore>(_ => new TestUserProfileStore());
             services.AddScoped<IUserAccessReader>(_ => new TestUserAccessReader());
@@ -64,28 +61,6 @@ public sealed class AuthWebApplicationFactory : WebApplicationFactory<Program>
             });
         });
     }
-}
-
-/// <summary>
-/// In-memory repository stub that returns pre-seeded user documents for integration tests.
-/// github|100 → Member, github|200 → Admin, all others → null (guest/unknown).
-/// </summary>
-file sealed class TestUserRepository : ICosmosRepository<CosmosUserDocument>
-{
-    private static readonly Dictionary<string, CosmosUserDocument> _users = new()
-    {
-        ["github|100"] = new CosmosUserDocument { Id = "github|100", UserId = "github|100", AccessLevel = UserAccessLevels.Member },
-        ["github|200"] = new CosmosUserDocument { Id = "github|200", UserId = "github|200", AccessLevel = UserAccessLevels.Admin },
-    };
-
-    public Task<CosmosUserDocument?> GetByIdAsync(string id, string partitionKey, CancellationToken cancellationToken = default)
-        => Task.FromResult(_users.GetValueOrDefault(id));
-
-    public Task<CosmosUserDocument> UpsertAsync(CosmosUserDocument document, string partitionKey, CancellationToken cancellationToken = default)
-        => Task.FromResult(document);
-
-    public Task DeleteAsync(string id, string partitionKey, CancellationToken cancellationToken = default)
-        => Task.CompletedTask;
 }
 
 /// <summary>

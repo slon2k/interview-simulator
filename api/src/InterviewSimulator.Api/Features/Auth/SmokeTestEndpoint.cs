@@ -1,6 +1,6 @@
 using System.Security.Claims;
 
-using InterviewSimulator.Api.Features.Identity.Access;
+using InterviewSimulator.Api.Features.Identity;
 using InterviewSimulator.Api.Features.Identity.Authorization;
 
 namespace InterviewSimulator.Api.Features.Auth;
@@ -17,9 +17,7 @@ public static class SmokeTestEndpoint
 
     private static IResult SmokeHandler(ClaimsPrincipal user)
     {
-        var userId =
-            user.FindFirstValue(AppClaimTypes.UserId)
-            ?? user.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userId = IdentityClaims.GetUserId(user);
 
         return Results.Ok(new
         {

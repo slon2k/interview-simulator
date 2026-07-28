@@ -1,10 +1,11 @@
 using InterviewSimulator.Api.Features.Identity.Access;
-using InterviewSimulator.Api.Features.Identity.CurrentUser;
+using InterviewSimulator.Api.Features.Identity.Profile;
 
 namespace InterviewSimulator.Api.Infrastructure.Identity;
 
 /// <summary>
-/// A disabled implementation of <see cref="IUserRepository"/> that always returns null for user lookups and upserts.
+/// No-op identity store used when Cosmos persistence is disabled.
+/// Profile writes are dropped and access lookups always return null.
 /// </summary>
 public sealed class DisabledIdentityUserStore : IUserProfileStore, IUserAccessReader
 {

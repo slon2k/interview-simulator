@@ -115,9 +115,7 @@ public sealed class InterviewSession
             throw new InvalidOperationException("Completed timestamp cannot be before started timestamp.");
         }
 
-        Status = InterviewStatus.Completed;
-        CompletedAt = completedAt;
-        UpdatedAt = completedAt;
+        MarkCompleted(completedAt);
     }
 
     public bool RecordAnswer(DateTimeOffset answeredAt)
@@ -143,16 +141,22 @@ public sealed class InterviewSession
         }
 
         AnsweredCount++;
-        UpdatedAt = answeredAt;
 
         if (AnsweredCount == QuestionCount)
         {
-            Status = InterviewStatus.Completed;
-            CompletedAt = answeredAt;
+            MarkCompleted(answeredAt);
             return true;
         }
 
+        UpdatedAt = answeredAt;
         return false;
+    }
+
+    private void MarkCompleted(DateTimeOffset answeredAt)
+    {
+        Status = InterviewStatus.Completed;
+        CompletedAt = answeredAt;
+        UpdatedAt = answeredAt;
     }
 
     public void Evaluate(Feedback feedback, DateTimeOffset updatedAt)

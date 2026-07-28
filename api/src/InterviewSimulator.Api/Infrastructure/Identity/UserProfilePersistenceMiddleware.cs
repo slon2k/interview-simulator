@@ -1,7 +1,5 @@
-using System.Security.Claims;
-
-using InterviewSimulator.Api.Features.Identity.Access;
-using InterviewSimulator.Api.Features.Identity.CurrentUser;
+using InterviewSimulator.Api.Features.Identity;
+using InterviewSimulator.Api.Features.Identity.Profile;
 
 namespace InterviewSimulator.Api.Infrastructure.Identity;
 
@@ -22,7 +20,7 @@ public sealed class UserProfilePersistenceMiddleware(RequestDelegate next, ILogg
         {
             try
             {
-                var profile = ExtractAuthenticatedUserProfile(context.User);
+                var profile = IdentityClaims.ToAuthenticatedUserProfile(context.User);
                 if (profile is not null)
                 {
                     await profileStore.UpsertAuthenticatedUserProfileAsync(profile, context.RequestAborted);
@@ -36,35 +34,6 @@ public sealed class UserProfilePersistenceMiddleware(RequestDelegate next, ILogg
         }
 
         await next(context);
-    }
-
-    /// <summary>
-    /// Extracts an AuthenticatedUserProfile from the current ClaimsPrincipal.
-    /// Returns null if required claims are missing.
-    /// </summary>
-    private static AuthenticatedUserProfile? ExtractAuthenticatedUserProfile(ClaimsPrincipal user)
-    {
-        var userId = user.FindFirstValue(AppClaimTypes.UserId)
-            ?? user.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            return null;
-        }
-
-        var provider = user.FindFirstValue(AppClaimTypes.IdentityProvider) ?? "unknown";
-        var providerUserId = user.FindFirstValue(AppClaimTypes.GitHubUserId);
-        var githubLogin = user.FindFirstValue(AppClaimTypes.GitHubLogin);
-        var displayName = user.FindFirstValue(ClaimTypes.Name);
-        var avatarUrl = user.FindFirstValue(AppClaimTypes.GitHubAvatarUrl);
-
-        return new AuthenticatedUserProfile(
-            UserId: userId,
-            Provider: provider,
-            ProviderUserId: providerUserId,
-            GithubLogin: githubLogin,
-            DisplayName: displayName,
-            AvatarUrl: avatarUrl);
     }
 }
 
