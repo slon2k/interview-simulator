@@ -21,8 +21,7 @@ public sealed class AccessControlService(IUserAccessReader userAccessReader, IOp
                 IsAdmin: false);
         }
 
-        var userId = user.FindFirstValue(AppClaimTypes.UserId)
-            ?? user.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userId = IdentityClaims.GetUserId(user);
 
         if (string.IsNullOrWhiteSpace(userId))
         {
@@ -56,11 +55,11 @@ public sealed class AccessControlService(IUserAccessReader userAccessReader, IOp
 
     private static bool IsAdmin(UserAccessSnapshot? userAccess)
     {
-        return userAccess?.IsDisabled != true && userAccess?.AccessLevel?.IsAdmin() == true;
+        return userAccess?.IsDisabled != true && UserAccessLevels.IsAdmin(userAccess?.AccessLevel);
     }
 
     private static bool IsInvited(UserAccessSnapshot? userAccess)
     {
-        return userAccess?.IsDisabled != true && userAccess?.AccessLevel?.IsMemberOrAdmin() == true;
+        return userAccess?.IsDisabled != true && UserAccessLevels.IsMemberOrAdmin(userAccess?.AccessLevel);
     }
 }

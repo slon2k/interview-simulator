@@ -1,4 +1,4 @@
-namespace InterviewSimulator.Api.Features.Identity.Access;
+namespace InterviewSimulator.Api.Features.Identity;
 
 public static class AppClaimTypes
 {

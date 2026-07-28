@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 
-using InterviewSimulator.Api.Features.Identity.Access;
+using InterviewSimulator.Api.Features.Identity;
 
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;

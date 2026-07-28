@@ -1,4 +1,4 @@
-namespace InterviewSimulator.Api.Features.Identity.CurrentUser;
+namespace InterviewSimulator.Api.Features.Identity.Profile;
 
 public interface IUserProfileStore
 {
