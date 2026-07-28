@@ -4,7 +4,7 @@ using InterviewSimulator.Api.Infrastructure.Data;
 
 namespace InterviewSimulator.Api.Infrastructure.Identity;
 
-public sealed class CosmosIdentityUserStore(IRepository<CosmosUserDocument> repository) : IUserProfileStore, IUserAccessReader
+public sealed class CosmosIdentityUserStore(ICosmosRepository<CosmosUserDocument> repository) : IUserProfileStore, IUserAccessReader
 {
     public async Task UpsertAuthenticatedUserProfileAsync(
         AuthenticatedUserProfile profile,

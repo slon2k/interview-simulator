@@ -1,5 +1,6 @@
 using System.Globalization;
 
+using InterviewSimulator.Api.Features.Interviews;
 using InterviewSimulator.Api.Infrastructure.Data;
 
 namespace InterviewSimulator.Api.Infrastructure.Interviews;
@@ -16,11 +17,11 @@ public sealed class CosmosSessionDocument : IUserCosmosDocument
 
     public int SchemaVersion { get; init; } = 1;
 
-    public string Role { get; init; } = string.Empty;
+    public string TargetRole { get; init; } = string.Empty;
 
     public string Seniority { get; init; } = string.Empty;
 
-    public string Topic { get; init; } = string.Empty;
+    public string FocusArea { get; init; } = string.Empty;
 
     public string InterviewType { get; init; } = string.Empty;
 
@@ -30,7 +31,7 @@ public sealed class CosmosSessionDocument : IUserCosmosDocument
 
     public int AnsweredCount { get; set; }
 
-    public CosmosSessionSummaryDocument? Summary { get; set; }
+    public CosmosSessionFeedbackDocument? Feedback { get; set; }
 
     public DateTimeOffset CreatedAt { get; init; }
 
@@ -45,7 +46,7 @@ public sealed class CosmosSessionDocument : IUserCosmosDocument
         string userId,
         string role,
         string seniority,
-        string topic,
+        string focusArea,
         string interviewType,
         DateTimeOffset createdAt,
         int questionCount,
@@ -62,9 +63,9 @@ public sealed class CosmosSessionDocument : IUserCosmosDocument
             Id = ToCosmosId(sessionId),
             SessionId = FormatSessionId(sessionId),
             UserId = userId,
-            Role = role,
+            TargetRole = role,
             Seniority = seniority,
-            Topic = topic,
+            FocusArea = focusArea,
             InterviewType = interviewType,
             CreatedAt = createdAt,
             UpdatedAt = createdAt,
@@ -74,6 +75,56 @@ public sealed class CosmosSessionDocument : IUserCosmosDocument
         };
     }
 
+    public static CosmosSessionDocument FromDomain(InterviewSession session)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+
+        return new CosmosSessionDocument
+        {
+            Id = ToCosmosId(session.Id),
+            SessionId = FormatSessionId(session.Id),
+            UserId = session.UserId,
+            TargetRole = session.TargetRole,
+            Seniority = session.Seniority.ToString(),
+            FocusArea = session.FocusArea.ToString(),
+            InterviewType = session.InterviewType.ToString(),
+            CreatedAt = session.CreatedAt,
+            UpdatedAt = session.UpdatedAt,
+            StartedAt = session.StartedAt,
+            CompletedAt = session.CompletedAt,
+            QuestionCount = session.QuestionCount,
+            AnsweredCount = session.AnsweredCount,
+            Status = session.Status.ToString(),
+            Feedback = session.Feedback is not null
+                ? new CosmosSessionFeedbackDocument
+                {
+                    TotalScore = session.Feedback.TotalScore,
+                    Summary = session.Feedback.Summary
+                }
+                : null
+        };
+    }
+
+    public InterviewSession ToDomain() => InterviewSession.Restore(new InterviewSessionState(
+        Id: Guid.Parse(SessionId),
+        UserId: UserId,
+        TargetRole: TargetRole,
+        Seniority: Enum.Parse<SeniorityLevel>(Seniority),
+        FocusArea: FocusArea,
+        InterviewType: Enum.Parse<InterviewType>(InterviewType),
+        Status: Enum.Parse<InterviewStatus>(Status),
+        QuestionCount: QuestionCount,
+        AnsweredCount: AnsweredCount,
+        Feedback: Feedback is not null
+            ? new Feedback(
+                TotalScore: Feedback.TotalScore,
+                Summary: Feedback.Summary)
+            : null,
+        CreatedAt: CreatedAt,
+        UpdatedAt: UpdatedAt,
+        StartedAt: StartedAt,
+        CompletedAt: CompletedAt));
+
     public static string ToCosmosId(Guid sessionId) => $"session|{FormatSessionId(sessionId)}";
 
     private static string FormatSessionId(Guid sessionId) => sessionId == Guid.Empty
@@ -81,13 +132,9 @@ public sealed class CosmosSessionDocument : IUserCosmosDocument
         : sessionId.ToString("D", CultureInfo.InvariantCulture);
 }
 
-public sealed class CosmosSessionSummaryDocument
+public sealed class CosmosSessionFeedbackDocument
 {
-    public decimal? OverallScore { get; set; }
+    public int TotalScore { get; set; }
 
-    public string? Recommendation { get; set; }
-
-    public string? Strengths { get; set; }
-
-    public string? Weaknesses { get; set; }
+    public string? Summary { get; set; }
 }

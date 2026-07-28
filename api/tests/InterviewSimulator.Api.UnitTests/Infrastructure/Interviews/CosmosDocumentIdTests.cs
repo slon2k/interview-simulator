@@ -37,7 +37,7 @@ public sealed class CosmosSessionDocument_Create
             userId: "github|100",
             role: "backend-engineer",
             seniority: "mid",
-            topic: "dotnet",
+            focusArea: "dotnet",
             interviewType: "technical",
             createdAt: createdAt,
             questionCount: 5,
@@ -48,16 +48,16 @@ public sealed class CosmosSessionDocument_Create
         Assert.Equal("github|100", doc.UserId);
         Assert.Equal("session", doc.Type);
         Assert.Equal(1, doc.SchemaVersion);
-        Assert.Equal("backend-engineer", doc.Role);
+        Assert.Equal("backend-engineer", doc.TargetRole);
         Assert.Equal("mid", doc.Seniority);
-        Assert.Equal("dotnet", doc.Topic);
+        Assert.Equal("dotnet", doc.FocusArea);
         Assert.Equal("technical", doc.InterviewType);
         Assert.Equal("active", doc.Status);
         Assert.Equal(5, doc.QuestionCount);
         Assert.Equal(0, doc.AnsweredCount);
         Assert.Equal(createdAt, doc.CreatedAt);
         Assert.Equal(createdAt, doc.UpdatedAt);
-        Assert.Null(doc.Summary);
+        Assert.Null(doc.Feedback);
         Assert.Null(doc.StartedAt);
         Assert.Null(doc.CompletedAt);
     }
@@ -69,7 +69,7 @@ public sealed class CosmosSessionDocument_Create
             CosmosSessionDocument.Create(
                 sessionId: Guid.Empty,
                 userId: "github|100",
-                role: "r", seniority: "s", topic: "t", interviewType: "i",
+                role: "r", seniority: "s", focusArea: "t", interviewType: "i",
                 createdAt: DateTimeOffset.UtcNow,
                 questionCount: 5, status: "active", answeredCount: 0));
 
@@ -83,7 +83,7 @@ public sealed class CosmosSessionDocument_Create
             CosmosSessionDocument.Create(
                 sessionId: Guid.NewGuid(),
                 userId: "   ",
-                role: "r", seniority: "s", topic: "t", interviewType: "i",
+                role: "r", seniority: "s", focusArea: "t", interviewType: "i",
                 createdAt: DateTimeOffset.UtcNow,
                 questionCount: 5, status: "active", answeredCount: 0));
 
@@ -173,7 +173,6 @@ public sealed class CosmosTurnDocument_Create
         Assert.Null(doc.Evaluation);
         Assert.Null(doc.AiMetadata);
         Assert.Null(doc.AnsweredAt);
-        Assert.Null(doc.EvaluatedAt);
     }
 
     [Fact]

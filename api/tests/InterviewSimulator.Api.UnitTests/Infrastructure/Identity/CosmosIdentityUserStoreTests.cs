@@ -187,7 +187,7 @@ public sealed class CosmosIdentityUserStore_GetAccessByUserId
 /// <summary>
 /// In-memory repository stub for unit testing CosmosIdentityUserStore.
 /// </summary>
-file sealed class InMemoryUserRepository : IRepository<CosmosUserDocument>
+file sealed class InMemoryUserRepository : ICosmosRepository<CosmosUserDocument>
 {
     private readonly Dictionary<string, CosmosUserDocument> _store = [];
 
