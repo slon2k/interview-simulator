@@ -33,42 +33,6 @@ public sealed class CosmosTurnDocument : IUserCosmosDocument
 
     public DateTimeOffset? AnsweredAt { get; set; }
 
-    public static CosmosTurnDocument Create(
-        Guid sessionId,
-        string userId,
-        int turnNumber,
-        CosmosQuestionDocument question,
-        DateTimeOffset createdAt)
-    {
-        if (sessionId == Guid.Empty)
-        {
-            throw new ArgumentException("Session ID cannot be empty.", nameof(sessionId));
-        }
-
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            throw new ArgumentException("User ID cannot be null or whitespace.", nameof(userId));
-        }
-
-        if (turnNumber <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(turnNumber), "Turn number must be greater than zero.");
-        }
-
-        ArgumentNullException.ThrowIfNull(question, nameof(question));
-
-        return new CosmosTurnDocument
-        {
-            Id = ToCosmosId(sessionId, turnNumber),
-            SessionId = FormatSessionId(sessionId),
-            UserId = userId,
-            TurnNumber = turnNumber,
-            Question = question,
-            CreatedAt = createdAt,
-            UpdatedAt = createdAt,
-        };
-    }
-
     public static CosmosTurnDocument FromDomain(InterviewTurn turn)
     {
         ArgumentNullException.ThrowIfNull(turn, nameof(turn));
