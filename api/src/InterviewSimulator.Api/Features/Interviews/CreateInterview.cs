@@ -1,5 +1,8 @@
 using System.Security.Claims;
 
+using FluentValidation;
+
+using InterviewSimulator.Api.Features.Common;
 using InterviewSimulator.Api.Features.Identity;
 
 namespace InterviewSimulator.Api.Features.Interviews;
@@ -8,13 +11,14 @@ public static class CreateInterview
 {
     public static IEndpointRouteBuilder MapCreateInterview(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapPost("/", CreateInterviewHandler)
+        endpoints.MapPost("/", Handler)
+            .AddEndpointFilter<ValidationFilter<Request>>()
             .WithName("CreateInterview");
 
         return endpoints;
     }
 
-    private static async Task<IResult> CreateInterviewHandler(
+    private static async Task<IResult> Handler(
         Request request,
         IInterviewStore store,
         IQuestionGenerator questionGenerator,
@@ -28,19 +32,14 @@ public static class CreateInterview
             return Results.Unauthorized();
         }
 
-        if (Enum.TryParse<SeniorityLevel>(request.SeniorityLevel, ignoreCase: true, out var parsedSeniority) is false)
-        {
-            return Results.BadRequest(new { error = $"Invalid seniority level: {request.SeniorityLevel}" });
-        }
-
-        if (Enum.TryParse<InterviewType>(request.InterviewType, ignoreCase: true, out var parsedType) is false)
+        if (!Enum.TryParse<InterviewType>(request.InterviewType, ignoreCase: true, out var parsedType))
         {
             return Results.BadRequest(new { error = $"Invalid interview type: {request.InterviewType}" });
         }
 
-        if (request.QuestionCount <= 0)
+        if (!Enum.TryParse<SeniorityLevel>(request.SeniorityLevel, ignoreCase: true, out var parsedSeniority))
         {
-            return Results.BadRequest(new { error = "Question count must be greater than zero." });
+            return Results.BadRequest(new { error = $"Invalid seniority level: {request.SeniorityLevel}" });
         }
 
         var question = await questionGenerator.GenerateQuestionAsync(
@@ -105,9 +104,9 @@ public static class CreateInterview
         string SeniorityLevel,
         int QuestionCount,
         DateTimeOffset CreatedAt,
-        ResponseQuestion CurrentQuestion);
+        Question CurrentQuestion);
 
-    public record ResponseQuestion(
+    public record Question(
         string Text,
         string Topic);
 
@@ -125,8 +124,29 @@ public static class CreateInterview
             SeniorityLevel: session.Seniority.ToString(),
             QuestionCount: session.QuestionCount,
             CreatedAt: session.CreatedAt,
-            CurrentQuestion: new ResponseQuestion(
+            CurrentQuestion: new Question(
                 Text: firstTurn.Question.Text,
                 Topic: firstTurn.Question.Topic));
+    }
+
+    public class Validator : AbstractValidator<Request>
+    {
+        public Validator()
+        {
+            RuleFor(x => x.TargetRole).NotEmpty().WithMessage("Target role is required.");
+            RuleFor(x => x.FocusArea).NotEmpty().WithMessage("Focus area is required.");
+
+            RuleFor(x => x.InterviewType)
+                .NotEmpty().WithMessage("Interview type is required.")
+                .Must(value => Enum.TryParse<InterviewType>(value, ignoreCase: true, out _))
+                .WithMessage(value => $"Invalid interview type: {value.InterviewType}");
+
+            RuleFor(x => x.SeniorityLevel)
+                .NotEmpty().WithMessage("Seniority level is required.")
+                .Must(value => Enum.TryParse<SeniorityLevel>(value, ignoreCase: true, out _))
+                .WithMessage(value => $"Invalid seniority level: {value.SeniorityLevel}");
+
+            RuleFor(x => x.QuestionCount).GreaterThan(0).WithMessage("Question count must be greater than zero.");
+        }
     }
 }

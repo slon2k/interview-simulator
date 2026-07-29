@@ -1,5 +1,8 @@
 using System.Security.Claims;
 
+using FluentValidation;
+
+using InterviewSimulator.Api.Features.Common;
 using InterviewSimulator.Api.Features.Identity;
 
 namespace InterviewSimulator.Api.Features.Interviews;
@@ -11,6 +14,7 @@ public static class SubmitAnswer
     public static IEndpointRouteBuilder MapSubmitAnswer(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapPost("/{sessionId:guid}/answers", SubmitAnswerHandler)
+            .AddEndpointFilter<ValidationFilter<Request>>()
             .WithName("SubmitAnswer");
 
         return endpoints;
@@ -77,11 +81,11 @@ public static class SubmitAnswer
                 FocusArea: session.FocusArea,
                 TurnNumber: nextTurnNumber,
                 QuestionCount: session.QuestionCount,
-                PreviousTurns: previousTurns.Select(turn => new PreviousInterviewTurn(
+                PreviousTurns: [.. previousTurns.Select(turn => new PreviousInterviewTurn(
                     TurnNumber: turn.TurnNumber,
                     QuestionText: turn.Question.Text,
                     QuestionTopic: turn.Question.Topic,
-                    AnswerText: turn.Answer?.Text ?? string.Empty)).ToList(),
+                    AnswerText: turn.Answer?.Text ?? string.Empty))],
                 InterviewType: session.InterviewType);
 
             var nextQuestion = await questionGenerator.GenerateQuestionAsync(
@@ -110,5 +114,19 @@ public static class SubmitAnswer
             cancellationToken: cancellationToken);
 
         return Results.Ok();
+    }
+
+    public class Validator : AbstractValidator<Request>
+    {
+        public Validator()
+        {
+            RuleFor(x => x.TurnNumber)
+                .GreaterThan(0)
+                .WithMessage("Turn number must be greater than 0.");
+
+            RuleFor(x => x.Answer)
+                .NotEmpty()
+                .WithMessage("Answer cannot be empty.");
+        }
     }
 }
