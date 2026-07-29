@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 
 using InterviewSimulator.Api.Features.Interviews;
@@ -156,9 +157,40 @@ public sealed class CosmosInterviewStore(Container container) : IInterviewStore
         return sessions;
     }
 
-    public Task<IReadOnlyList<InterviewTurn>> ListTurnsAsync(string userId, Guid sessionId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<InterviewTurn>> ListTurnsAsync(
+        string userId,
+        Guid sessionId,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var query = new QueryDefinition(
+            """
+            SELECT *
+            FROM c
+            WHERE c.type = @type
+            AND c.sessionId = @sessionId
+            ORDER BY c.turnNumber ASC
+            """)
+            .WithParameter("@type", "turn")
+            .WithParameter("@sessionId", sessionId.ToString("D", CultureInfo.InvariantCulture));
+
+        var options = new QueryRequestOptions
+        {
+            PartitionKey = new PartitionKey(userId)
+        };
+
+        using var iterator = container.GetItemQueryIterator<CosmosTurnDocument>(
+            query,
+            requestOptions: options);
+
+        var turns = new List<InterviewTurn>();
+
+        while (iterator.HasMoreResults)
+        {
+            var page = await iterator.ReadNextAsync(cancellationToken);
+            turns.AddRange(page.Select(document => document.ToDomain()));
+        }
+
+        return turns;
     }
 
     public async Task SaveAnswerSubmissionAsync(
