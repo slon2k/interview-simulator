@@ -35,7 +35,7 @@ public static class GetInterview
             return Results.NotFound();
         }
 
-        ResponseQuestion? currentQuestion = null;
+        Question? currentQuestion = null;
 
         if (interview.Status == InterviewStatus.Active)
         {
@@ -48,19 +48,19 @@ public static class GetInterview
             if (currentTurn is not null)
             {
                 var question = currentTurn.Question;
-                currentQuestion = new ResponseQuestion(
+                currentQuestion = new Question(
                     Text: question.Text,
                     Topic: question.Topic);
             }
         }
 
         var feedback = interview.Feedback is not null
-            ? new ResponseFeedback(
+            ? new Feedback(
                 Score: interview.Feedback.TotalScore,
                 Summary: interview.Feedback.Summary)
             : null;
 
-        return Results.Ok(new ResponseInterview(
+        return Results.Ok(new Response(
             Id: interview.Id,
             UserId: interview.UserId,
             Status: interview.Status.ToString(),
@@ -76,7 +76,7 @@ public static class GetInterview
             CurrentQuestion: currentQuestion));
     }
 
-    public record ResponseInterview(
+    public record Response(
         Guid Id,
         string UserId,
         string Status,
@@ -88,14 +88,14 @@ public static class GetInterview
         int AnsweredCount,
         DateTimeOffset CreatedAt,
         DateTimeOffset? CompletedAt,
-        ResponseFeedback? Feedback,
-        ResponseQuestion? CurrentQuestion);
+        Feedback? Feedback,
+        Question? CurrentQuestion);
 
-    public record ResponseQuestion(
+    public record Question(
         string Text,
         string Topic);
 
-    public record ResponseFeedback(
+    public record Feedback(
         int Score,
         string? Summary);
 }

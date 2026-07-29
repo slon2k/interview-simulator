@@ -1,5 +1,7 @@
 using System.Security.Claims;
 
+using FluentValidation;
+
 using InterviewSimulator.Api.Features.Identity;
 
 namespace InterviewSimulator.Api.Features.Interviews;
@@ -16,7 +18,7 @@ public static class GetInterviews
     }
 
     private static async Task<IResult> Handler(
-        string? status,
+        [AsParameters] Request request,
         IInterviewStore interviewStore,
         ClaimsPrincipal user,
         CancellationToken cancellationToken)
@@ -26,19 +28,20 @@ public static class GetInterviews
             return Results.Unauthorized();
         }
 
-        if (!TryParseStatus(status, out var parsedStatus, out var errorMessage))
-        {
-            return Results.BadRequest(new { error = errorMessage });
-        }
+        InterviewStatus? status = string.IsNullOrWhiteSpace(request.Status) is false
+            ? Enum.Parse<InterviewStatus>(request.Status, ignoreCase: true)
+            : null;
 
         var interviews = await interviewStore.ListSessionsAsync(
             userId: userId,
-            status: parsedStatus,
+            status: status,
             limit: DefaultLimit,
             cancellationToken: cancellationToken);
 
         return Results.Ok(interviews.Select(MapToResponse));
     }
+
+    public record Request(string? Status);
 
     public record Response(
         Guid Id,
@@ -71,32 +74,20 @@ public static class GetInterviews
             TotalScore: session.Feedback?.TotalScore);
     }
 
-    private static bool TryParseStatus(
-        string? rawStatus,
-        out InterviewStatus? status,
-        out string? errorMessage)
+    public class Validator : AbstractValidator<Request>
     {
-        status = null;
-        errorMessage = null;
-
-        if (string.IsNullOrWhiteSpace(rawStatus))
+        public Validator()
         {
-            return true;
+            RuleFor(x => x.Status)
+                .IsEnumName(typeof(AllowedStatus), caseSensitive: false)
+                .WithMessage("Invalid status filter. Allowed values: active, completed.")
+                .When(x => !string.IsNullOrWhiteSpace(x.Status));
         }
 
-        if (!Enum.TryParse<InterviewStatus>(rawStatus, ignoreCase: true, out var parsed))
+        private enum AllowedStatus
         {
-            errorMessage = "Invalid status filter. Allowed values: active, completed.";
-            return false;
+            Active,
+            Completed
         }
-
-        if (parsed is not InterviewStatus.Active and not InterviewStatus.Completed)
-        {
-            errorMessage = "Invalid status filter. Allowed values: active, completed.";
-            return false;
-        }
-
-        status = parsed;
-        return true;
     }
 }
