@@ -8,11 +8,11 @@ public static class CompleteInterview
 {
     public static void MapCompleteInterview(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapPost("/{interviewId:guid}/complete", CompleteInterviewHandler)
-        .WithName("CompleteInterview");
+        endpoints.MapPost("/{interviewId:guid}/complete", Handler)
+            .WithName("CompleteInterview");
     }
 
-    private static async Task<IResult> CompleteInterviewHandler(
+    private static async Task<IResult> Handler(
         Guid interviewId,
         IInterviewStore store,
         ClaimsPrincipal user,

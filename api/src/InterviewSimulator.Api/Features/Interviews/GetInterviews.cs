@@ -9,13 +9,13 @@ public static class GetInterviews
     public const int DefaultLimit = 100;
     public static IEndpointRouteBuilder MapGetInterviews(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet("/", GetInterviewsHandler)
+        endpoints.MapGet("/", Handler)
             .WithName("GetInterviews");
 
         return endpoints;
     }
 
-    private static async Task<IResult> GetInterviewsHandler(
+    private static async Task<IResult> Handler(
         string? status,
         IInterviewStore interviewStore,
         ClaimsPrincipal user,
@@ -40,7 +40,7 @@ public static class GetInterviews
         return Results.Ok(interviews.Select(MapToResponse));
     }
 
-    public record ResponseInterview(
+    public record Response(
         Guid Id,
         string UserId,
         string Status,
@@ -54,9 +54,9 @@ public static class GetInterviews
         DateTimeOffset? CompletedAt,
         int? TotalScore);
 
-    private static ResponseInterview MapToResponse(InterviewSession session)
+    private static Response MapToResponse(InterviewSession session)
     {
-        return new ResponseInterview(
+        return new Response(
             Id: session.Id,
             UserId: session.UserId,
             Status: session.Status.ToString(),
