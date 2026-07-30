@@ -71,6 +71,7 @@ public static class GetInterview
             QuestionCount: interview.QuestionCount,
             AnsweredCount: interview.AnsweredCount,
             CreatedAt: interview.CreatedAt,
+            StartedAt: interview.StartedAt,
             CompletedAt: interview.CompletedAt,
             Feedback: feedback,
             CurrentQuestion: currentQuestion));
@@ -87,6 +88,7 @@ public static class GetInterview
         int QuestionCount,
         int AnsweredCount,
         DateTimeOffset CreatedAt,
+        DateTimeOffset? StartedAt,
         DateTimeOffset? CompletedAt,
         Feedback? Feedback,
         Question? CurrentQuestion);

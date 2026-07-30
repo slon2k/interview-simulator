@@ -4,7 +4,7 @@ public interface IInterviewStore
 {
     Task<IReadOnlyList<InterviewSession>> ListSessionsAsync(
         string userId,
-        InterviewStatus? status,
+        IReadOnlyList<InterviewStatus>? statuses,
         int limit,
         CancellationToken cancellationToken = default);
 
@@ -24,18 +24,22 @@ public interface IInterviewStore
         Guid sessionId,
         CancellationToken cancellationToken = default);
 
-    Task CreateInterviewAsync(
+    Task CreateSessionAsync(
         InterviewSession session,
-        InterviewTurn firstTurn,
         CancellationToken cancellationToken = default);
 
-    Task SaveAnswerSubmissionAsync(
+    Task CreateTurnAsync(
         InterviewSession session,
-        InterviewTurn answeredTurn,
-        InterviewTurn? nextTurn,
+        InterviewTurn turn,
         CancellationToken cancellationToken = default);
 
-    Task SaveSessionAsync(
+    Task UpdateTurnAsync(
+        InterviewSession session,
+        InterviewTurn currentTurn,
+        InterviewTurn? nextTurn = null,
+        CancellationToken cancellationToken = default);
+
+    Task UpdateSessionAsync(
         InterviewSession session,
         CancellationToken cancellationToken = default);
 }

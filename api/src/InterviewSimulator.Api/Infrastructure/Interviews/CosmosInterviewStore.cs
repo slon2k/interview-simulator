@@ -9,41 +9,49 @@ namespace InterviewSimulator.Api.Infrastructure.Interviews;
 
 public sealed class CosmosInterviewStore(Container container) : IInterviewStore
 {
-
-    public async Task CreateInterviewAsync(
+    public async Task CreateSessionAsync(
         InterviewSession session,
-        InterviewTurn firstTurn,
         CancellationToken cancellationToken = default)
     {
-        if (firstTurn.SessionId != session.Id)
+        var sessionDocument = CosmosSessionDocument.FromDomain(session);
+        var partitionKey = new PartitionKey(session.UserId);
+
+        var response = await container.CreateItemAsync(
+            sessionDocument,
+            partitionKey,
+            cancellationToken: cancellationToken);
+
+        if (response.StatusCode != HttpStatusCode.Created)
         {
-            throw new InvalidOperationException("First turn must belong to the session.");
+            throw new InvalidOperationException(
+                $"Failed to create interview. Status code: {response.StatusCode}");
+        }
+    }
+
+    public async Task CreateTurnAsync(
+        InterviewSession session,
+        InterviewTurn turn,
+        CancellationToken cancellationToken = default)
+    {
+        if (turn.SessionId != session.Id)
+        {
+            throw new InvalidOperationException("Turn must belong to the session.");
         }
 
-        if (firstTurn.UserId != session.UserId)
+        if (turn.UserId != session.UserId)
         {
-            throw new InvalidOperationException("First turn user id must match session user id.");
-        }
-
-        if (firstTurn.TurnNumber != 1)
-        {
-            throw new InvalidOperationException("First turn number must be 1.");
-        }
-
-        if (firstTurn.IsAnswered)
-        {
-            throw new InvalidOperationException("First turn must not be answered.");
+            throw new InvalidOperationException("Turn user id must match session user id.");
         }
 
         var sessionDocument = CosmosSessionDocument.FromDomain(session);
-        var firstTurnDocument = CosmosTurnDocument.FromDomain(firstTurn);
+        var turnDocument = CosmosTurnDocument.FromDomain(turn);
 
         var partitionKey = new PartitionKey(session.UserId);
 
         using var response = await container
             .CreateTransactionalBatch(partitionKey)
-            .CreateItem(sessionDocument)
-            .CreateItem(firstTurnDocument)
+            .ReplaceItem(sessionDocument.Id, sessionDocument)
+            .CreateItem(turnDocument)
             .ExecuteAsync(cancellationToken);
 
         if (!response.IsSuccessStatusCode)
@@ -100,11 +108,11 @@ public sealed class CosmosInterviewStore(Container container) : IInterviewStore
 
     public async Task<IReadOnlyList<InterviewSession>> ListSessionsAsync(
         string userId,
-        InterviewStatus? status,
+        IReadOnlyList<InterviewStatus>? statuses,
         int limit,
         CancellationToken cancellationToken = default)
     {
-        var sql = status is null
+        var sql = statuses is null || statuses.Count == 0
             ? """
             SELECT *
             FROM c
@@ -115,16 +123,16 @@ public sealed class CosmosInterviewStore(Container container) : IInterviewStore
             SELECT *
             FROM c
             WHERE c.type = @type
-            AND c.status = @status
+            AND ARRAY_CONTAINS(@statuses, c.status)
             ORDER BY c.updatedAt DESC
             """;
 
         var query = new QueryDefinition(sql)
             .WithParameter("@type", "session");
 
-        if (status is not null)
+        if (statuses is not null && statuses.Count > 0)
         {
-            query = query.WithParameter("@status", status.ToString());
+            query = query.WithParameter("@statuses", statuses.Select(s => s.ToString()).ToArray());
         }
 
         var options = new QueryRequestOptions
@@ -193,25 +201,20 @@ public sealed class CosmosInterviewStore(Container container) : IInterviewStore
         return turns;
     }
 
-    public async Task SaveAnswerSubmissionAsync(
+    public async Task UpdateTurnAsync(
         InterviewSession session,
-        InterviewTurn answeredTurn,
+        InterviewTurn currentTurn,
         InterviewTurn? nextTurn,
         CancellationToken cancellationToken = default)
     {
-        if (answeredTurn.SessionId != session.Id)
+        if (currentTurn.SessionId != session.Id)
         {
             throw new InvalidOperationException("Answered turn must belong to the session.");
         }
 
-        if (answeredTurn.UserId != session.UserId)
+        if (currentTurn.UserId != session.UserId)
         {
             throw new InvalidOperationException("Answered turn user id must match session user id.");
-        }
-
-        if (!answeredTurn.IsAnswered)
-        {
-            throw new InvalidOperationException("Answered turn must have an answer.");
         }
 
         if (nextTurn is not null)
@@ -226,7 +229,7 @@ public sealed class CosmosInterviewStore(Container container) : IInterviewStore
                 throw new InvalidOperationException("Next turn user id must match session user id.");
             }
 
-            if (nextTurn.TurnNumber != answeredTurn.TurnNumber + 1)
+            if (nextTurn.TurnNumber != currentTurn.TurnNumber + 1)
             {
                 throw new InvalidOperationException("Next turn number must follow answered turn number.");
             }
@@ -238,13 +241,13 @@ public sealed class CosmosInterviewStore(Container container) : IInterviewStore
         }
 
         var sessionDocument = CosmosSessionDocument.FromDomain(session);
-        var answeredTurnDocument = CosmosTurnDocument.FromDomain(answeredTurn);
+        var currentTurnDocument = CosmosTurnDocument.FromDomain(currentTurn);
 
         var partitionKey = new PartitionKey(session.UserId);
 
         var batch = container
             .CreateTransactionalBatch(partitionKey)
-            .ReplaceItem(answeredTurnDocument.Id, answeredTurnDocument)
+            .ReplaceItem(currentTurnDocument.Id, currentTurnDocument)
             .ReplaceItem(sessionDocument.Id, sessionDocument);
 
         if (nextTurn is not null)
@@ -262,7 +265,7 @@ public sealed class CosmosInterviewStore(Container container) : IInterviewStore
         }
     }
 
-    public async Task SaveSessionAsync(
+    public async Task UpdateSessionAsync(
         InterviewSession session,
         CancellationToken cancellationToken = default)
     {

@@ -13,6 +13,7 @@ public static class InterviewEndpoints
         group.MapGetInterview();
         group.MapGetInterviews();
         group.MapCreateInterview();
+        group.MapStartInterview();
         group.MapSubmitAnswer();
         group.MapCompleteInterview();
 
