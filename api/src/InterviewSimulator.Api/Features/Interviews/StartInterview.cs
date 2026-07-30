@@ -69,7 +69,7 @@ public static class StartInterview
                 topic: question.Topic),
             createdAt: timeProvider.GetUtcNow());
 
-        await store.CreateTurnAsync(session, turn, cancellationToken);
+        await store.StartInterviewAsync(session, turn, cancellationToken);
 
         return Results.Ok(MapToResponse(session, turn));
     }

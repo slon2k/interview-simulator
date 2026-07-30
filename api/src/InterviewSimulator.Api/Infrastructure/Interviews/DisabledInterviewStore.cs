@@ -29,7 +29,7 @@ public class DisabledInterviewStore : IInterviewStore
         return Task.FromResult<IReadOnlyList<InterviewTurn>>(Array.Empty<InterviewTurn>());
     }
 
-    public Task UpdateTurnAsync(InterviewSession session, InterviewTurn currentTurn, InterviewTurn? nextTurn, CancellationToken cancellationToken = default)
+    public Task SaveAnswerAsync(InterviewSession session, InterviewTurn answeredTurn, InterviewTurn? nextTurn, CancellationToken cancellationToken = default)
     {
         return Task.CompletedTask;
     }
@@ -44,7 +44,7 @@ public class DisabledInterviewStore : IInterviewStore
         return Task.CompletedTask;
     }
 
-    public Task CreateTurnAsync(InterviewSession session, InterviewTurn turn, CancellationToken cancellationToken = default)
+    public Task StartInterviewAsync(InterviewSession session, InterviewTurn firstTurn, CancellationToken cancellationToken = default)
     {
         return Task.CompletedTask;
     }
