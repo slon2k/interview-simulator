@@ -55,19 +55,8 @@ public static class SubmitAnswer
         }
         var now = timeProvider.GetUtcNow();
 
-        try
-        {
-            session.RecordAnswer(now);
-            currentTurn.RecordAnswer(request.Answer, now);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Error.Conflict("Interviews.SubmitAnswer.InvalidOperation", ex.Message).ToProblemResult();
-        }
-        catch (ArgumentException ex)
-        {
-            return Error.Conflict("Interviews.SubmitAnswer.InvalidArgument", ex.Message).ToProblemResult();
-        }
+        session.RecordAnswer(now);
+        currentTurn.RecordAnswer(request.Answer, now);
 
         InterviewTurn? nextTurn = null;
 

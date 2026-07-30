@@ -392,7 +392,7 @@ public sealed class InterviewSession_Evaluate
     }
 
     [Fact]
-    public void Evaluate_OnActiveSession_ThrowsInvalidOperationException()
+    public void Evaluate_OnActiveSession_ThrowsDomainConflictException()
     {
         var createdAt = DateTimeOffset.UtcNow;
         var session = InterviewSession.Create(
@@ -407,10 +407,10 @@ public sealed class InterviewSession_Evaluate
         session.Start(createdAt.AddSeconds(1));
 
         var feedback = new Feedback(TotalScore: 85, Summary: "Good performance");
-        var ex = Assert.Throws<InvalidOperationException>(() =>
+        var ex = Assert.Throws<DomainConflictException>(() =>
             session.Evaluate(feedback, createdAt.AddSeconds(2)));
 
-        Assert.Contains("not completed", ex.Message);
+        Assert.Equal(InterviewSession.Errors.SessionNotCompletedForEvaluation.Code, ex.Code);
     }
 
     [Fact]

@@ -1,3 +1,5 @@
+using InterviewSimulator.Api.Features.Common;
+
 namespace InterviewSimulator.Api.Features.Interviews;
 
 public sealed class InterviewTurn
@@ -31,7 +33,7 @@ public sealed class InterviewTurn
 
         if (IsAnswered)
         {
-            throw new InvalidOperationException("Cannot record answer for a turn that has already been answered.");
+            throw new DomainConflictException(Errors.TurnAlreadyAnswered);
         }
 
         if (answeredAt < CreatedAt)
@@ -50,7 +52,7 @@ public sealed class InterviewTurn
 
         if (!IsAnswered)
         {
-            throw new InvalidOperationException("Cannot evaluate an unanswered turn.");
+            throw new DomainConflictException(Errors.CannotEvaluateUnansweredTurn);
         }
 
         if (Answer is not null && updatedAt < Answer.AnsweredAt)
@@ -65,7 +67,7 @@ public sealed class InterviewTurn
 
         if (IsEvaluated)
         {
-            throw new InvalidOperationException("Cannot evaluate a turn that has already been evaluated.");
+            throw new DomainConflictException(Errors.TurnAlreadyEvaluated);
         }
 
         Evaluation = evaluation;
@@ -171,6 +173,13 @@ public sealed class InterviewTurn
         {
             throw new ArgumentException("Answer timestamp cannot be before created timestamp.", nameof(state));
         }
+    }
+
+    public static class Errors
+    {
+        public static DomainError TurnAlreadyAnswered => new("Interviews.InterviewTurn.TurnAlreadyAnswered", "Cannot record answer for a turn that has already been answered.");
+        public static DomainError CannotEvaluateUnansweredTurn => new("Interviews.InterviewTurn.CannotEvaluateUnansweredTurn", "Cannot evaluate an unanswered turn.");
+        public static DomainError TurnAlreadyEvaluated => new("Interviews.InterviewTurn.TurnAlreadyEvaluated", "Cannot evaluate a turn that has already been evaluated.");
     }
 }
 

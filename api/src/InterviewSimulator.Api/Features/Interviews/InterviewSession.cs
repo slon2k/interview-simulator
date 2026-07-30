@@ -165,7 +165,7 @@ public sealed class InterviewSession
     {
         if (Status != InterviewStatus.Completed)
         {
-            throw new InvalidOperationException("Cannot record feedback for an interview session that is not completed.");
+            throw new DomainConflictException(Errors.SessionNotCompletedForEvaluation);
         }
 
         if (updatedAt < CreatedAt)
@@ -345,6 +345,7 @@ public sealed class InterviewSession
         public static DomainError CompletedBeforeStartedAt => new("Interviews.InterviewSession.CompletedBeforeStartedAt", "Completed timestamp cannot be before started timestamp.");
         public static DomainError AnsweredBeyondQuestionCount => new("Interviews.InterviewSession.AnsweredBeyondQuestionCount", "Cannot answer beyond the total question count.");
         public static DomainError AnsweredBeforeStartedAt => new("Interviews.InterviewSession.AnsweredBeforeStartedAt", "Answered timestamp cannot be before started timestamp.");
+        public static DomainError SessionNotCompletedForEvaluation => new("Interviews.InterviewSession.SessionNotCompletedForEvaluation", "Cannot record feedback for an interview session that is not completed.");
     }
 }
 

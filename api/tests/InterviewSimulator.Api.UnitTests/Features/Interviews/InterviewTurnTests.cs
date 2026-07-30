@@ -1,4 +1,5 @@
 using InterviewSimulator.Api.Features.Interviews;
+using InterviewSimulator.Api.Features.Common;
 
 namespace InterviewSimulator.Api.UnitTests.Features.Interviews;
 
@@ -144,7 +145,7 @@ public sealed class InterviewTurn_RecordAnswer
     }
 
     [Fact]
-    public void RecordAnswer_WhenAlreadyAnswered_ThrowsInvalidOperationException()
+    public void RecordAnswer_WhenAlreadyAnswered_ThrowsDomainConflictException()
     {
         var createdAt = DateTimeOffset.UtcNow;
         var turn = InterviewTurn.Create(
@@ -156,10 +157,10 @@ public sealed class InterviewTurn_RecordAnswer
 
         turn.RecordAnswer("First answer", createdAt.AddSeconds(5));
 
-        var ex = Assert.Throws<InvalidOperationException>(() =>
+        var ex = Assert.Throws<DomainConflictException>(() =>
             turn.RecordAnswer("Second answer", createdAt.AddSeconds(10)));
 
-        Assert.Contains("already been answered", ex.Message);
+        Assert.Equal(InterviewTurn.Errors.TurnAlreadyAnswered.Code, ex.Code);
     }
 
     [Fact]
@@ -227,7 +228,7 @@ public sealed class InterviewTurn_Evaluate
     }
 
     [Fact]
-    public void Evaluate_OnUnansweredTurn_ThrowsInvalidOperationException()
+    public void Evaluate_OnUnansweredTurn_ThrowsDomainConflictException()
     {
         var createdAt = DateTimeOffset.UtcNow;
         var turn = InterviewTurn.Create(
@@ -238,14 +239,14 @@ public sealed class InterviewTurn_Evaluate
             createdAt: createdAt);
 
         var evaluation = new AnswerEvaluation(score: 75, feedback: "Good!");
-        var ex = Assert.Throws<InvalidOperationException>(() =>
+        var ex = Assert.Throws<DomainConflictException>(() =>
             turn.Evaluate(evaluation, createdAt.AddSeconds(5)));
 
-        Assert.Contains("Cannot evaluate an unanswered turn", ex.Message);
+        Assert.Equal(InterviewTurn.Errors.CannotEvaluateUnansweredTurn.Code, ex.Code);
     }
 
     [Fact]
-    public void Evaluate_WhenAlreadyEvaluated_ThrowsInvalidOperationException()
+    public void Evaluate_WhenAlreadyEvaluated_ThrowsDomainConflictException()
     {
         var createdAt = DateTimeOffset.UtcNow;
         var turn = InterviewTurn.Create(
@@ -258,10 +259,10 @@ public sealed class InterviewTurn_Evaluate
         turn.RecordAnswer("Answer", createdAt.AddSeconds(5));
         turn.Evaluate(new AnswerEvaluation(score: 75, feedback: "Good!"), createdAt.AddSeconds(10));
 
-        var ex = Assert.Throws<InvalidOperationException>(() =>
+        var ex = Assert.Throws<DomainConflictException>(() =>
             turn.Evaluate(new AnswerEvaluation(score: 80, feedback: "Better!"), createdAt.AddSeconds(15)));
 
-        Assert.Contains("already been evaluated", ex.Message);
+        Assert.Equal(InterviewTurn.Errors.TurnAlreadyEvaluated.Code, ex.Code);
     }
 
     [Fact]
