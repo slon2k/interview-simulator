@@ -237,10 +237,10 @@ public sealed class GetInterviewsStatusFilterTests(AuthWebApplicationFactory fac
         public Task CreateSessionAsync(InterviewSession session, CancellationToken cancellationToken = default)
             => Task.CompletedTask;
 
-        public Task CreateTurnAsync(InterviewSession session, InterviewTurn turn, CancellationToken cancellationToken = default)
+        public Task StartInterviewAsync(InterviewSession session, InterviewTurn turn, CancellationToken cancellationToken = default)
             => Task.CompletedTask;
 
-        public Task UpdateTurnAsync(InterviewSession session, InterviewTurn currentTurn, InterviewTurn? nextTurn = null, CancellationToken cancellationToken = default)
+        public Task SaveAnswerAsync(InterviewSession session, InterviewTurn currentTurn, InterviewTurn? nextTurn = null, CancellationToken cancellationToken = default)
             => Task.CompletedTask;
 
         public Task UpdateSessionAsync(InterviewSession session, CancellationToken cancellationToken = default)

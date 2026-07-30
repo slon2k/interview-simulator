@@ -28,23 +28,23 @@ public sealed class CosmosInterviewStore(Container container) : IInterviewStore
         }
     }
 
-    public async Task CreateTurnAsync(
+    public async Task StartInterviewAsync(
         InterviewSession session,
-        InterviewTurn turn,
+        InterviewTurn firstTurn,
         CancellationToken cancellationToken = default)
     {
-        if (turn.SessionId != session.Id)
+        if (firstTurn.SessionId != session.Id)
         {
             throw new InvalidOperationException("Turn must belong to the session.");
         }
 
-        if (turn.UserId != session.UserId)
+        if (firstTurn.UserId != session.UserId)
         {
             throw new InvalidOperationException("Turn user id must match session user id.");
         }
 
         var sessionDocument = CosmosSessionDocument.FromDomain(session);
-        var turnDocument = CosmosTurnDocument.FromDomain(turn);
+        var turnDocument = CosmosTurnDocument.FromDomain(firstTurn);
 
         var partitionKey = new PartitionKey(session.UserId);
 
@@ -201,18 +201,18 @@ public sealed class CosmosInterviewStore(Container container) : IInterviewStore
         return turns;
     }
 
-    public async Task UpdateTurnAsync(
+    public async Task SaveAnswerAsync(
         InterviewSession session,
-        InterviewTurn currentTurn,
+        InterviewTurn answeredTurn,
         InterviewTurn? nextTurn,
         CancellationToken cancellationToken = default)
     {
-        if (currentTurn.SessionId != session.Id)
+        if (answeredTurn.SessionId != session.Id)
         {
             throw new InvalidOperationException("Answered turn must belong to the session.");
         }
 
-        if (currentTurn.UserId != session.UserId)
+        if (answeredTurn.UserId != session.UserId)
         {
             throw new InvalidOperationException("Answered turn user id must match session user id.");
         }
@@ -228,20 +228,10 @@ public sealed class CosmosInterviewStore(Container container) : IInterviewStore
             {
                 throw new InvalidOperationException("Next turn user id must match session user id.");
             }
-
-            if (nextTurn.TurnNumber != currentTurn.TurnNumber + 1)
-            {
-                throw new InvalidOperationException("Next turn number must follow answered turn number.");
-            }
-
-            if (nextTurn.IsAnswered)
-            {
-                throw new InvalidOperationException("Next turn must not be answered.");
-            }
         }
 
         var sessionDocument = CosmosSessionDocument.FromDomain(session);
-        var currentTurnDocument = CosmosTurnDocument.FromDomain(currentTurn);
+        var currentTurnDocument = CosmosTurnDocument.FromDomain(answeredTurn);
 
         var partitionKey = new PartitionKey(session.UserId);
 

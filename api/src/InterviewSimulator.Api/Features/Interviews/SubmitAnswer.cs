@@ -107,9 +107,9 @@ public static class SubmitAnswer
                 createdAt: now);
         }
 
-        await store.UpdateTurnAsync(
+        await store.SaveAnswerAsync(
             session: session,
-            currentTurn: currentTurn,
+            answeredTurn: currentTurn,
             nextTurn: nextTurn,
             cancellationToken: cancellationToken);
 

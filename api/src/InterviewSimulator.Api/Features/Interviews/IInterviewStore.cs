@@ -28,14 +28,14 @@ public interface IInterviewStore
         InterviewSession session,
         CancellationToken cancellationToken = default);
 
-    Task CreateTurnAsync(
+    Task StartInterviewAsync(
         InterviewSession session,
-        InterviewTurn turn,
+        InterviewTurn firstTurn,
         CancellationToken cancellationToken = default);
 
-    Task UpdateTurnAsync(
+    Task SaveAnswerAsync(
         InterviewSession session,
-        InterviewTurn currentTurn,
+        InterviewTurn answeredTurn,
         InterviewTurn? nextTurn = null,
         CancellationToken cancellationToken = default);
 
