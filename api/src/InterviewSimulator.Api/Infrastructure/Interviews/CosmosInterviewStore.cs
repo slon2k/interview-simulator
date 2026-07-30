@@ -108,11 +108,11 @@ public sealed class CosmosInterviewStore(Container container) : IInterviewStore
 
     public async Task<IReadOnlyList<InterviewSession>> ListSessionsAsync(
         string userId,
-        InterviewStatus? status,
+        IReadOnlyList<InterviewStatus>? statuses,
         int limit,
         CancellationToken cancellationToken = default)
     {
-        var sql = status is null
+        var sql = statuses is null || statuses.Count == 0
             ? """
             SELECT *
             FROM c
@@ -123,16 +123,16 @@ public sealed class CosmosInterviewStore(Container container) : IInterviewStore
             SELECT *
             FROM c
             WHERE c.type = @type
-            AND c.status = @status
+            AND ARRAY_CONTAINS(@statuses, c.status)
             ORDER BY c.updatedAt DESC
             """;
 
         var query = new QueryDefinition(sql)
             .WithParameter("@type", "session");
 
-        if (status is not null)
+        if (statuses is not null && statuses.Count > 0)
         {
-            query = query.WithParameter("@status", status.ToString());
+            query = query.WithParameter("@statuses", statuses.Select(s => s.ToString()).ToArray());
         }
 
         var options = new QueryRequestOptions

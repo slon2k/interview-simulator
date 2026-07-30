@@ -24,7 +24,53 @@ public sealed class GetInterviewsStatusFilterTests(AuthWebApplicationFactory fac
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         var json = await ReadJsonAsync(response);
+        Assert.Equal(3, json.RootElement.GetArrayLength());
+    }
+
+    [Fact]
+    public async Task GetInterviews_WithMultipleStatuses_ReturnsUnionOfMatchingInterviews()
+    {
+        var sessions = CreateSessionsForFiltering();
+        using var client = CreateClientWithStore(sessions);
+
+        using var request = CreateAuthenticatedGetRequest("/api/interviews?status=active&status=completed", "github|100", "invited-user");
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var json = await ReadJsonAsync(response);
         Assert.Equal(2, json.RootElement.GetArrayLength());
+
+        var statuses = json.RootElement
+            .EnumerateArray()
+            .Select(item => item.GetProperty("status").GetString())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        Assert.Contains("Active", statuses);
+        Assert.Contains("Completed", statuses);
+    }
+
+    [Fact]
+    public async Task GetInterviews_WithMultipleStatuses_IncludingCreated_ReturnsCreatedAndActiveInterviews()
+    {
+        var sessions = CreateSessionsForFiltering();
+        using var client = CreateClientWithStore(sessions);
+
+        using var request = CreateAuthenticatedGetRequest("/api/interviews?status=created&status=active", "github|100", "invited-user");
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var json = await ReadJsonAsync(response);
+        Assert.Equal(2, json.RootElement.GetArrayLength());
+
+        var statuses = json.RootElement
+            .EnumerateArray()
+            .Select(item => item.GetProperty("status").GetString())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        Assert.Contains("Created", statuses);
+        Assert.Contains("Active", statuses);
     }
 
     [Fact]
@@ -35,7 +81,6 @@ public sealed class GetInterviewsStatusFilterTests(AuthWebApplicationFactory fac
 
         using var request = CreateAuthenticatedGetRequest("/api/interviews?status=active", "github|100", "invited-user");
         var response = await client.SendAsync(request);
-
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         var json = await ReadJsonAsync(response);
@@ -71,7 +116,13 @@ public sealed class GetInterviewsStatusFilterTests(AuthWebApplicationFactory fac
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
         var json = await ReadJsonAsync(response);
-        Assert.Equal("Invalid status filter. Allowed values: created, active, completed.", json.RootElement.GetProperty("errors").GetProperty("Status")[0].GetString());
+        var errors = json.RootElement.GetProperty("errors");
+        var actualMessage = errors.EnumerateObject()
+            .SelectMany(p => p.Value.EnumerateArray())
+            .Select(v => v.GetString())
+            .FirstOrDefault(v => !string.IsNullOrWhiteSpace(v));
+
+        Assert.Equal("Invalid status filter. Allowed values: created, active, completed.", actualMessage);
     }
 
     private HttpClient CreateClientWithStore(IReadOnlyList<InterviewSession> sessions)
@@ -89,6 +140,15 @@ public sealed class GetInterviewsStatusFilterTests(AuthWebApplicationFactory fac
     private static IReadOnlyList<InterviewSession> CreateSessionsForFiltering()
     {
         var createdAt = DateTimeOffset.UtcNow.AddHours(-2);
+
+        var created = InterviewSession.Create(
+            userId: "github|100",
+            targetRole: "Software Engineer",
+            focusArea: "dotnet",
+            seniority: SeniorityLevel.Middle,
+            interviewType: InterviewType.Technical,
+            createdAt: createdAt,
+            questionCount: 5);
 
         var active = InterviewSession.Create(
             userId: "github|100",
@@ -121,7 +181,7 @@ public sealed class GetInterviewsStatusFilterTests(AuthWebApplicationFactory fac
             questionCount: 5);
         anotherUser.Start(createdAt.AddMinutes(1));
 
-        return [active, completed, anotherUser];
+        return [created, active, completed, anotherUser];
     }
 
     private static HttpRequestMessage CreateAuthenticatedGetRequest(
@@ -150,7 +210,7 @@ public sealed class GetInterviewsStatusFilterTests(AuthWebApplicationFactory fac
     {
         public Task<IReadOnlyList<InterviewSession>> ListSessionsAsync(
             string userId,
-            InterviewStatus? status,
+            IReadOnlyList<InterviewStatus>? statuses,
             int limit,
             CancellationToken cancellationToken = default)
         {
@@ -158,7 +218,7 @@ public sealed class GetInterviewsStatusFilterTests(AuthWebApplicationFactory fac
 
             var query = sessions
                 .Where(s => s.UserId == userId)
-                .Where(s => status is null || s.Status == status)
+                .Where(s => statuses is null || statuses.Count == 0 || statuses.Contains(s.Status))
                 .Take(limit)
                 .ToArray();
 

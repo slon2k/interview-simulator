@@ -4,7 +4,7 @@ public interface IInterviewStore
 {
     Task<IReadOnlyList<InterviewSession>> ListSessionsAsync(
         string userId,
-        InterviewStatus? status,
+        IReadOnlyList<InterviewStatus>? statuses,
         int limit,
         CancellationToken cancellationToken = default);
 

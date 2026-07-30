@@ -5,6 +5,8 @@ using FluentValidation;
 using InterviewSimulator.Api.Features.Common;
 using InterviewSimulator.Api.Features.Identity;
 
+using Microsoft.AspNetCore.Mvc;
+
 namespace InterviewSimulator.Api.Features.Interviews;
 
 public static class GetInterviews
@@ -30,20 +32,24 @@ public static class GetInterviews
             return Results.Unauthorized();
         }
 
-        InterviewStatus? status = string.IsNullOrWhiteSpace(request.Status) is false
-            ? Enum.Parse<InterviewStatus>(request.Status, ignoreCase: true)
+        IReadOnlyList<InterviewStatus>? statuses = request.Status is { Length: > 0 }
+            ? request.Status.Select(s => Enum.Parse<InterviewStatus>(s, ignoreCase: true)).ToList()
             : null;
 
         var interviews = await interviewStore.ListSessionsAsync(
             userId: userId,
-            status: status,
+            statuses: statuses,
             limit: DefaultLimit,
             cancellationToken: cancellationToken);
 
         return Results.Ok(interviews.Select(MapToResponse));
     }
 
-    public record Request(string? Status);
+    public class Request
+    {
+        [FromQuery(Name = "status")]
+        public string[]? Status { get; init; }
+    }
 
     public record Response(
         Guid Id,
@@ -82,10 +88,10 @@ public static class GetInterviews
     {
         public Validator()
         {
-            RuleFor(x => x.Status)
+            RuleForEach(x => x.Status)
                 .IsEnumName(typeof(InterviewStatus), caseSensitive: false)
                 .WithMessage("Invalid status filter. Allowed values: created, active, completed.")
-                .When(x => !string.IsNullOrWhiteSpace(x.Status));
+                .When(x => x.Status is { Length: > 0 });
         }
     }
 }

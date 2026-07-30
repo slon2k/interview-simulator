@@ -19,7 +19,7 @@ public class DisabledInterviewStore : IInterviewStore
         return Task.FromResult<InterviewTurn?>(null);
     }
 
-    public Task<IReadOnlyList<InterviewSession>> ListSessionsAsync(string userId, InterviewStatus? status, int limit, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyList<InterviewSession>> ListSessionsAsync(string userId, IReadOnlyList<InterviewStatus>? statuses, int limit, CancellationToken cancellationToken = default)
     {
         return Task.FromResult<IReadOnlyList<InterviewSession>>(Array.Empty<InterviewSession>());
     }
