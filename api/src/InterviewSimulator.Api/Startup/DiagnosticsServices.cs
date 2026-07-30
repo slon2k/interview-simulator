@@ -1,3 +1,5 @@
+using InterviewSimulator.Api.Features.Common;
+
 namespace InterviewSimulator.Api.Startup;
 
 public static class DiagnosticsServices
@@ -8,6 +10,7 @@ public static class DiagnosticsServices
     {
         builder.Services.AddOpenApi();
         builder.Services.AddHealthChecks();
+        builder.Services.AddExceptionHandler<DomainExceptionHandler>();
         builder.Services.AddProblemDetails(options =>
         {
             options.CustomizeProblemDetails = context =>

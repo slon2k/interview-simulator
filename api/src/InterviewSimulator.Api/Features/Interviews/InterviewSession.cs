@@ -1,3 +1,5 @@
+using InterviewSimulator.Api.Features.Common;
+
 namespace InterviewSimulator.Api.Features.Interviews;
 
 public sealed class InterviewSession
@@ -85,7 +87,7 @@ public sealed class InterviewSession
     {
         if (Status != InterviewStatus.Created)
         {
-            throw new InvalidOperationException("Cannot start an interview session that is not in the 'created' state.");
+            throw new DomainConflictException(Errors.SessionNotCreated);
         }
 
         if (startedAt < CreatedAt)
@@ -102,17 +104,17 @@ public sealed class InterviewSession
     {
         if (Status != InterviewStatus.Active)
         {
-            throw new InvalidOperationException("Cannot complete an interview session that is not in the 'active' state.");
+            throw new DomainConflictException(Errors.SessionNotActive);
         }
 
         if (StartedAt is null)
         {
-            throw new InvalidOperationException("Active interview must have a started timestamp.");
+            throw new DomainConflictException(Errors.ActiveInterviewMissingStartedAt);
         }
 
         if (completedAt < StartedAt.Value)
         {
-            throw new InvalidOperationException("Completed timestamp cannot be before started timestamp.");
+            throw new DomainConflictException(Errors.CompletedBeforeStartedAt);
         }
 
         MarkCompleted(completedAt);
@@ -122,22 +124,22 @@ public sealed class InterviewSession
     {
         if (Status != InterviewStatus.Active)
         {
-            throw new InvalidOperationException("Cannot answer an interview session that is not active.");
+            throw new DomainConflictException(Errors.SessionNotActive);
         }
 
         if (StartedAt is null)
         {
-            throw new InvalidOperationException("Active interview must have a started timestamp.");
+            throw new DomainConflictException(Errors.ActiveInterviewMissingStartedAt);
         }
 
         if (AnsweredCount >= QuestionCount)
         {
-            throw new InvalidOperationException("Cannot answer beyond the total question count.");
+            throw new DomainConflictException(Errors.AnsweredBeyondQuestionCount);
         }
 
         if (answeredAt < StartedAt.Value)
         {
-            throw new InvalidOperationException("Answered timestamp cannot be before started timestamp.");
+            throw new DomainConflictException(Errors.AnsweredBeforeStartedAt);
         }
 
         AnsweredCount++;
@@ -152,11 +154,11 @@ public sealed class InterviewSession
         return false;
     }
 
-    private void MarkCompleted(DateTimeOffset answeredAt)
+    private void MarkCompleted(DateTimeOffset completedAt)
     {
         Status = InterviewStatus.Completed;
-        CompletedAt = answeredAt;
-        UpdatedAt = answeredAt;
+        CompletedAt = completedAt;
+        UpdatedAt = completedAt;
     }
 
     public void Evaluate(Feedback feedback, DateTimeOffset updatedAt)
@@ -334,6 +336,16 @@ public sealed class InterviewSession
             throw new InvalidOperationException("Persisted completed timestamp cannot be before started timestamp.");
         }
     }
+
+    public static class Errors
+    {
+        public static DomainError SessionNotActive => new("Interviews.InterviewSession.SessionNotActive", "Interview session is not active.");
+        public static DomainError SessionNotCreated => new("Interviews.InterviewSession.SessionNotCreated", "Interview session is not in a created state.");
+        public static DomainError ActiveInterviewMissingStartedAt => new("Interviews.InterviewSession.ActiveInterviewMissingStartedAt", "Active interview must have a started timestamp.");
+        public static DomainError CompletedBeforeStartedAt => new("Interviews.InterviewSession.CompletedBeforeStartedAt", "Completed timestamp cannot be before started timestamp.");
+        public static DomainError AnsweredBeyondQuestionCount => new("Interviews.InterviewSession.AnsweredBeyondQuestionCount", "Cannot answer beyond the total question count.");
+        public static DomainError AnsweredBeforeStartedAt => new("Interviews.InterviewSession.AnsweredBeforeStartedAt", "Answered timestamp cannot be before started timestamp.");
+    }
 }
 
 public record Feedback(
@@ -376,3 +388,4 @@ public sealed record InterviewSessionState(
     int QuestionCount,
     int AnsweredCount,
     Feedback? Feedback);
+

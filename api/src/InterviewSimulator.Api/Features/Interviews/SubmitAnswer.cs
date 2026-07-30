@@ -31,27 +31,27 @@ public static class SubmitAnswer
     {
         if (IdentityClaims.GetUserId(user) is not string userId)
         {
-            return Results.Unauthorized();
+            return Unauthorized.ToProblemResult();
         }
 
         if (await store.GetSessionAsync(userId, sessionId, cancellationToken) is not InterviewSession session)
         {
-            return Results.NotFound();
+            return SessionNotFound.ToProblemResult();
         }
 
         if (session.Status != InterviewStatus.Active)
         {
-            return Results.Conflict(new { error = "Interview session is not active." });
+            return SessionNotActive.ToProblemResult();
         }
 
         if (request.TurnNumber != session.AnsweredCount + 1)
         {
-            return Results.Conflict(new { error = "Invalid turn number." });
+            return InvalidTurnNumber.ToProblemResult();
         }
 
         if (await store.GetTurnAsync(userId, sessionId, request.TurnNumber, cancellationToken) is not InterviewTurn currentTurn)
         {
-            return Results.NotFound();
+            return TurnNotFound.ToProblemResult();
         }
         var now = timeProvider.GetUtcNow();
 
@@ -62,11 +62,11 @@ public static class SubmitAnswer
         }
         catch (InvalidOperationException ex)
         {
-            return Results.Conflict(new { error = ex.Message });
+            return Error.Conflict("Interviews.SubmitAnswer.InvalidOperation", ex.Message).ToProblemResult();
         }
         catch (ArgumentException ex)
         {
-            return Results.Conflict(new { error = ex.Message });
+            return Error.Conflict("Interviews.SubmitAnswer.InvalidArgument", ex.Message).ToProblemResult();
         }
 
         InterviewTurn? nextTurn = null;
@@ -94,7 +94,7 @@ public static class SubmitAnswer
 
             if (nextQuestion is null)
             {
-                return Results.InternalServerError(new { error = "Failed to generate next question." });
+                return NextQuestionGenerationFailed.ToProblemResult();
             }
 
             nextTurn = InterviewTurn.Create(
@@ -177,4 +177,11 @@ public static class SubmitAnswer
                 .WithMessage("Answer cannot be empty.");
         }
     }
+
+    public static Error Unauthorized => Error.Unauthorized("Interviews.SubmitAnswer.Unauthorized", "Authentication is required.");
+    public static Error SessionNotFound => Error.NotFound("Interviews.SubmitAnswer.SessionNotFound", "Interview session not found.");
+    public static Error SessionNotActive => Error.Conflict("Interviews.SubmitAnswer.SessionNotActive", "Interview session is not active.");
+    public static Error InvalidTurnNumber => Error.Conflict("Interviews.SubmitAnswer.InvalidTurnNumber", "Invalid turn number.");
+    public static Error TurnNotFound => Error.NotFound("Interviews.SubmitAnswer.TurnNotFound", "Interview turn not found.");
+    public static Error NextQuestionGenerationFailed => Error.Unexpected("Interviews.SubmitAnswer.NextQuestionGenerationFailed", "Failed to generate next question.");
 }

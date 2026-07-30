@@ -1,5 +1,6 @@
 using System.Security.Claims;
 
+using InterviewSimulator.Api.Features.Common;
 using InterviewSimulator.Api.Features.Identity;
 
 namespace InterviewSimulator.Api.Features.Interviews;
@@ -22,7 +23,7 @@ public static class GetInterview
     {
         if (IdentityClaims.GetUserId(user) is not string userId)
         {
-            return Results.Unauthorized();
+            return Unauthorized.ToProblemResult();
         }
 
         var interview = await store.GetSessionAsync(
@@ -32,7 +33,7 @@ public static class GetInterview
 
         if (interview is null)
         {
-            return Results.NotFound();
+            return InterviewNotFound.ToProblemResult();
         }
 
         Question? currentQuestion = null;
@@ -100,4 +101,7 @@ public static class GetInterview
     public record Feedback(
         int Score,
         string? Summary);
+
+    public static Error InterviewNotFound => Error.NotFound("Interviews.GetInterview.SessionNotFound", "Interview session not found.");
+    public static Error Unauthorized => Error.Unauthorized("Interviews.GetInterview.Unauthorized", "Authentication is required.");
 }

@@ -1,5 +1,6 @@
 using System.Security.Claims;
 
+using InterviewSimulator.Api.Features.Common;
 using InterviewSimulator.Api.Features.Identity;
 
 namespace InterviewSimulator.Api.Features.Interviews;
@@ -22,7 +23,7 @@ public static class CompleteInterview
     {
         if (IdentityClaims.GetUserId(user) is not string userId)
         {
-            return Results.Unauthorized();
+            return Unauthorized.ToProblemResult();
         }
 
         var interview = await store.GetSessionAsync(
@@ -32,12 +33,12 @@ public static class CompleteInterview
 
         if (interview is null)
         {
-            return Results.NotFound();
+            return SessionNotFound.ToProblemResult();
         }
 
         if (interview.Status != InterviewStatus.Active)
         {
-            return Results.Conflict(new { error = "Interview session is not active." });
+            return SessionNotActive.ToProblemResult();
         }
 
         interview.Complete(timeProvider.GetUtcNow());
@@ -46,4 +47,8 @@ public static class CompleteInterview
 
         return Results.NoContent();
     }
+
+    public static Error SessionNotActive => Error.Conflict("Interviews.CompleteInterview.SessionNotActive", "Interview session is not active.");
+    public static Error SessionNotFound => Error.NotFound("Interviews.CompleteInterview.SessionNotFound", "Interview session not found.");
+    public static Error Unauthorized => Error.Unauthorized("Interviews.CompleteInterview.Unauthorized", "Authentication is required.");
 }

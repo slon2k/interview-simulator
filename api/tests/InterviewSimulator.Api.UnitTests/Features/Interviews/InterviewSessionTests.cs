@@ -1,4 +1,5 @@
 using InterviewSimulator.Api.Features.Interviews;
+using InterviewSimulator.Api.Features.Common;
 
 namespace InterviewSimulator.Api.UnitTests.Features.Interviews;
 
@@ -140,7 +141,7 @@ public sealed class InterviewSession_Start
     }
 
     [Fact]
-    public void Start_FromActiveStatus_ThrowsInvalidOperationException()
+    public void Start_FromActiveStatus_ThrowsDomainConflictException()
     {
         var createdAt = DateTimeOffset.UtcNow;
         var session = InterviewSession.Create(
@@ -154,10 +155,10 @@ public sealed class InterviewSession_Start
 
         session.Start(createdAt.AddSeconds(1));
 
-        var ex = Assert.Throws<InvalidOperationException>(() =>
+        var ex = Assert.Throws<DomainConflictException>(() =>
             session.Start(createdAt.AddSeconds(2)));
 
-        Assert.Contains("not in the 'created' state", ex.Message);
+        Assert.Equal(InterviewSession.Errors.SessionNotCreated.Code, ex.Code);
     }
 
     [Fact]
@@ -229,7 +230,7 @@ public sealed class InterviewSession_RecordAnswer
     }
 
     [Fact]
-    public void RecordAnswer_WhenNotActive_ThrowsInvalidOperationException()
+    public void RecordAnswer_WhenNotActive_ThrowsDomainConflictException()
     {
         var createdAt = DateTimeOffset.UtcNow;
         var session = InterviewSession.Create(
@@ -241,14 +242,14 @@ public sealed class InterviewSession_RecordAnswer
             createdAt: createdAt,
             questionCount: 1);
 
-        var ex = Assert.Throws<InvalidOperationException>(() =>
+        var ex = Assert.Throws<DomainConflictException>(() =>
             session.RecordAnswer(createdAt.AddSeconds(1)));
 
-        Assert.Contains("not active", ex.Message);
+        Assert.Equal(InterviewSession.Errors.SessionNotActive.Code, ex.Code);
     }
 
     [Fact]
-    public void RecordAnswer_BeyondQuestionCount_ThrowsInvalidOperationException()
+    public void RecordAnswer_BeyondQuestionCount_ThrowsDomainConflictException()
     {
         var createdAt = DateTimeOffset.UtcNow;
         var session = InterviewSession.Create(
@@ -265,16 +266,16 @@ public sealed class InterviewSession_RecordAnswer
 
         // Session auto-completes when all answers are recorded,
         // so it's no longer active and throws "not active" error
-        var ex = Assert.Throws<InvalidOperationException>(() =>
+        var ex = Assert.Throws<DomainConflictException>(() =>
             session.RecordAnswer(createdAt.AddSeconds(3)));
 
         // After last answer, session auto-completes and is no longer active
         Assert.Equal(InterviewStatus.Completed, session.Status);
-        Assert.Contains("not active", ex.Message);
+        Assert.Equal(InterviewSession.Errors.SessionNotActive.Code, ex.Code);
     }
 
     [Fact]
-    public void RecordAnswer_BeforeStarted_ThrowsInvalidOperationException()
+    public void RecordAnswer_BeforeStarted_ThrowsDomainConflictException()
     {
         var createdAt = DateTimeOffset.UtcNow;
         var session = InterviewSession.Create(
@@ -288,10 +289,10 @@ public sealed class InterviewSession_RecordAnswer
 
         session.Start(createdAt.AddSeconds(1));
 
-        var ex = Assert.Throws<InvalidOperationException>(() =>
+        var ex = Assert.Throws<DomainConflictException>(() =>
             session.RecordAnswer(createdAt));
 
-        Assert.Contains("cannot be before started", ex.Message);
+        Assert.Equal(InterviewSession.Errors.AnsweredBeforeStartedAt.Code, ex.Code);
     }
 }
 
@@ -321,7 +322,7 @@ public sealed class InterviewSession_Complete
     }
 
     [Fact]
-    public void Complete_FromCreatedStatus_ThrowsInvalidOperationException()
+    public void Complete_FromCreatedStatus_ThrowsDomainConflictException()
     {
         var createdAt = DateTimeOffset.UtcNow;
         var session = InterviewSession.Create(
@@ -333,14 +334,14 @@ public sealed class InterviewSession_Complete
             createdAt: createdAt,
             questionCount: 1);
 
-        var ex = Assert.Throws<InvalidOperationException>(() =>
+        var ex = Assert.Throws<DomainConflictException>(() =>
             session.Complete(createdAt.AddSeconds(1)));
 
-        Assert.Contains("not in the 'active' state", ex.Message);
+        Assert.Equal(InterviewSession.Errors.SessionNotActive.Code, ex.Code);
     }
 
     [Fact]
-    public void Complete_WithTimestampBeforeStarted_ThrowsInvalidOperationException()
+    public void Complete_WithTimestampBeforeStarted_ThrowsDomainConflictException()
     {
         var createdAt = DateTimeOffset.UtcNow;
         var startedAt = createdAt.AddSeconds(1);
@@ -355,10 +356,10 @@ public sealed class InterviewSession_Complete
 
         session.Start(startedAt);
 
-        var ex = Assert.Throws<InvalidOperationException>(() =>
+        var ex = Assert.Throws<DomainConflictException>(() =>
             session.Complete(startedAt.AddSeconds(-1)));
 
-        Assert.Contains("cannot be before started", ex.Message);
+        Assert.Equal(InterviewSession.Errors.CompletedBeforeStartedAt.Code, ex.Code);
     }
 }
 
