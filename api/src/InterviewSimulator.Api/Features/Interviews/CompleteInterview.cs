@@ -42,7 +42,7 @@ public static class CompleteInterview
 
         interview.Complete(timeProvider.GetUtcNow());
 
-        await store.SaveSessionAsync(interview, cancellationToken);
+        await store.UpdateSessionAsync(interview, cancellationToken);
 
         return Results.NoContent();
     }

@@ -56,6 +56,7 @@ public static class GetInterviews
         int QuestionCount,
         int AnsweredCount,
         DateTimeOffset CreatedAt,
+        DateTimeOffset? StartedAt,
         DateTimeOffset? CompletedAt,
         int? TotalScore);
 
@@ -72,6 +73,7 @@ public static class GetInterviews
             QuestionCount: session.QuestionCount,
             AnsweredCount: session.AnsweredCount,
             CreatedAt: session.CreatedAt,
+            StartedAt: session.StartedAt,
             CompletedAt: session.CompletedAt,
             TotalScore: session.Feedback?.TotalScore);
     }
@@ -81,15 +83,9 @@ public static class GetInterviews
         public Validator()
         {
             RuleFor(x => x.Status)
-                .IsEnumName(typeof(AllowedStatus), caseSensitive: false)
-                .WithMessage("Invalid status filter. Allowed values: active, completed.")
+                .IsEnumName(typeof(InterviewStatus), caseSensitive: false)
+                .WithMessage("Invalid status filter. Allowed values: created, active, completed.")
                 .When(x => !string.IsNullOrWhiteSpace(x.Status));
-        }
-
-        private enum AllowedStatus
-        {
-            Active,
-            Completed
         }
     }
 }

@@ -107,9 +107,9 @@ public static class SubmitAnswer
                 createdAt: now);
         }
 
-        await store.SaveAnswerSubmissionAsync(
+        await store.UpdateTurnAsync(
             session: session,
-            answeredTurn: currentTurn,
+            currentTurn: currentTurn,
             nextTurn: nextTurn,
             cancellationToken: cancellationToken);
 
@@ -127,6 +127,7 @@ public static class SubmitAnswer
         QuestionCount: session.QuestionCount,
         AnsweredCount: session.AnsweredCount,
         CreatedAt: session.CreatedAt,
+        StartedAt: session.StartedAt,
         CompletedAt: session.CompletedAt,
         Feedback: session.Feedback is not null
             ? new Feedback(
@@ -150,6 +151,7 @@ public static class SubmitAnswer
         int QuestionCount,
         int AnsweredCount,
         DateTimeOffset CreatedAt,
+        DateTimeOffset? StartedAt,
         DateTimeOffset? CompletedAt,
         Feedback? Feedback,
         Question? CurrentQuestion);

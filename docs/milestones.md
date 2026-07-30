@@ -46,7 +46,7 @@ Acceptance Criteria:
 
 ## 03 - Cosmos DB persistence
 
-**Status: 03a & 03b ✅ Complete, 03c In Progress**
+### Status: 03a & 03b Complete, 03c In Progress
 
 Delivered Cosmos DB in layers: infrastructure and runtime configuration (03a/03b), now adding session/turn document models (03c).
 

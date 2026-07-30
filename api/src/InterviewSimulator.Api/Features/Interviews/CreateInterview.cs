@@ -21,7 +21,6 @@ public static class CreateInterview
     private static async Task<IResult> Handler(
         Request request,
         IInterviewStore store,
-        IQuestionGenerator questionGenerator,
         ClaimsPrincipal user,
         TimeProvider timeProvider,
         CancellationToken cancellationToken
@@ -35,22 +34,6 @@ public static class CreateInterview
         var interviewType = Enum.Parse<InterviewType>(request.InterviewType, ignoreCase: true);
         var seniorityLevel = Enum.Parse<SeniorityLevel>(request.SeniorityLevel, ignoreCase: true);
 
-        var question = await questionGenerator.GenerateQuestionAsync(
-            new GenerateQuestionRequest(
-                TargetRole: request.TargetRole,
-                FocusArea: request.FocusArea,
-                InterviewType: interviewType,
-                Seniority: seniorityLevel,
-                TurnNumber: 1,
-                QuestionCount: request.QuestionCount,
-                PreviousTurns: []),
-            cancellationToken);
-
-        if (question is null)
-        {
-            return Results.InternalServerError(new { error = "Failed to generate question." });
-        }
-
         var now = timeProvider.GetUtcNow();
 
         var interviewSession = InterviewSession.Create(
@@ -62,22 +45,11 @@ public static class CreateInterview
             questionCount: request.QuestionCount,
             createdAt: now);
 
-        var firstTurn = InterviewTurn.Create(
-            sessionId: interviewSession.Id,
-            userId: userId,
-            turnNumber: 1,
-            question: new InterviewQuestion(
-                text: question.Text,
-                topic: question.Topic),
-            createdAt: now);
-
-        interviewSession.Start(now);
-
-        await store.CreateInterviewAsync(interviewSession, firstTurn, cancellationToken);
+        await store.CreateSessionAsync(interviewSession, cancellationToken);
 
         return Results.Created(
             $"/api/interviews/{interviewSession.Id}",
-            MapToResponse(interviewSession, firstTurn));
+            MapToResponse(interviewSession));
     }
 
     public record Request(
@@ -96,18 +68,10 @@ public static class CreateInterview
         string InterviewType,
         string SeniorityLevel,
         int QuestionCount,
-        DateTimeOffset CreatedAt,
-        Question CurrentQuestion);
-
-    public record Question(
-        string Text,
-        string Topic);
+        DateTimeOffset CreatedAt);
 
     private static Response MapToResponse(
-        InterviewSession session,
-        InterviewTurn firstTurn)
-    {
-        return new Response(
+        InterviewSession session) => new(
             Id: session.Id,
             UserId: session.UserId,
             Status: session.Status.ToString(),
@@ -116,11 +80,7 @@ public static class CreateInterview
             InterviewType: session.InterviewType.ToString(),
             SeniorityLevel: session.Seniority.ToString(),
             QuestionCount: session.QuestionCount,
-            CreatedAt: session.CreatedAt,
-            CurrentQuestion: new Question(
-                Text: firstTurn.Question.Text,
-                Topic: firstTurn.Question.Topic));
-    }
+            CreatedAt: session.CreatedAt);
 
     public class Validator : AbstractValidator<Request>
     {

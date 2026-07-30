@@ -71,7 +71,7 @@ public sealed class GetInterviewsStatusFilterTests(AuthWebApplicationFactory fac
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
         var json = await ReadJsonAsync(response);
-        Assert.Equal("Invalid status filter. Allowed values: active, completed.", json.RootElement.GetProperty("errors").GetProperty("Status")[0].GetString());
+        Assert.Equal("Invalid status filter. Allowed values: created, active, completed.", json.RootElement.GetProperty("errors").GetProperty("Status")[0].GetString());
     }
 
     private HttpClient CreateClientWithStore(IReadOnlyList<InterviewSession> sessions)
@@ -174,13 +174,16 @@ public sealed class GetInterviewsStatusFilterTests(AuthWebApplicationFactory fac
         public Task<IReadOnlyList<InterviewTurn>> ListTurnsAsync(string userId, Guid sessionId, CancellationToken cancellationToken = default)
             => Task.FromResult<IReadOnlyList<InterviewTurn>>(Array.Empty<InterviewTurn>());
 
-        public Task CreateInterviewAsync(InterviewSession session, InterviewTurn firstTurn, CancellationToken cancellationToken = default)
+        public Task CreateSessionAsync(InterviewSession session, CancellationToken cancellationToken = default)
             => Task.CompletedTask;
 
-        public Task SaveAnswerSubmissionAsync(InterviewSession session, InterviewTurn answeredTurn, InterviewTurn? nextTurn, CancellationToken cancellationToken = default)
+        public Task CreateTurnAsync(InterviewSession session, InterviewTurn turn, CancellationToken cancellationToken = default)
             => Task.CompletedTask;
 
-        public Task SaveSessionAsync(InterviewSession session, CancellationToken cancellationToken = default)
+        public Task UpdateTurnAsync(InterviewSession session, InterviewTurn currentTurn, InterviewTurn? nextTurn = null, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+
+        public Task UpdateSessionAsync(InterviewSession session, CancellationToken cancellationToken = default)
             => Task.CompletedTask;
     }
 }
