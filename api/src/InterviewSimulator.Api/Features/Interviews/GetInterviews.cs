@@ -2,6 +2,7 @@ using System.Security.Claims;
 
 using FluentValidation;
 
+using InterviewSimulator.Api.Features.Common;
 using InterviewSimulator.Api.Features.Identity;
 
 namespace InterviewSimulator.Api.Features.Interviews;
@@ -11,7 +12,8 @@ public static class GetInterviews
     public const int DefaultLimit = 100;
     public static IEndpointRouteBuilder MapGetInterviews(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet("/", Handler)
+          endpoints.MapGet("/", Handler)
+            .AddEndpointFilter<ValidationFilter<Request>>()
             .WithName("GetInterviews");
 
         return endpoints;
