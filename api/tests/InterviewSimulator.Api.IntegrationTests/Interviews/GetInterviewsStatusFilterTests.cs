@@ -65,13 +65,13 @@ public sealed class GetInterviewsStatusFilterTests(AuthWebApplicationFactory fac
         var sessions = CreateSessionsForFiltering();
         using var client = CreateClientWithStore(sessions);
 
-        using var request = CreateAuthenticatedGetRequest("/api/interviews?status=created", "github|100", "invited-user");
+        using var request = CreateAuthenticatedGetRequest("/api/interviews?status=invalid", "github|100", "invited-user");
         var response = await client.SendAsync(request);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
         var json = await ReadJsonAsync(response);
-        Assert.Equal("Invalid status filter. Allowed values: active, completed.", json.RootElement.GetProperty("error").GetString());
+        Assert.Equal("Invalid status filter. Allowed values: active, completed.", json.RootElement.GetProperty("errors").GetProperty("Status")[0].GetString());
     }
 
     private HttpClient CreateClientWithStore(IReadOnlyList<InterviewSession> sessions)

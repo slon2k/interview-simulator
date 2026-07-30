@@ -32,22 +32,15 @@ public static class CreateInterview
             return Results.Unauthorized();
         }
 
-        if (!Enum.TryParse<InterviewType>(request.InterviewType, ignoreCase: true, out var parsedType))
-        {
-            return Results.BadRequest(new { error = $"Invalid interview type: {request.InterviewType}" });
-        }
-
-        if (!Enum.TryParse<SeniorityLevel>(request.SeniorityLevel, ignoreCase: true, out var parsedSeniority))
-        {
-            return Results.BadRequest(new { error = $"Invalid seniority level: {request.SeniorityLevel}" });
-        }
+        var interviewType = Enum.Parse<InterviewType>(request.InterviewType, ignoreCase: true);
+        var seniorityLevel = Enum.Parse<SeniorityLevel>(request.SeniorityLevel, ignoreCase: true);
 
         var question = await questionGenerator.GenerateQuestionAsync(
             new GenerateQuestionRequest(
                 TargetRole: request.TargetRole,
                 FocusArea: request.FocusArea,
-                InterviewType: parsedType,
-                Seniority: parsedSeniority,
+                InterviewType: interviewType,
+                Seniority: seniorityLevel,
                 TurnNumber: 1,
                 QuestionCount: request.QuestionCount,
                 PreviousTurns: []),
@@ -64,8 +57,8 @@ public static class CreateInterview
             userId: userId,
             targetRole: request.TargetRole,
             focusArea: request.FocusArea,
-            seniority: parsedSeniority,
-            interviewType: parsedType,
+            seniority: seniorityLevel,
+            interviewType: interviewType,
             questionCount: request.QuestionCount,
             createdAt: now);
 
@@ -138,12 +131,12 @@ public static class CreateInterview
 
             RuleFor(x => x.InterviewType)
                 .NotEmpty().WithMessage("Interview type is required.")
-                .Must(value => Enum.TryParse<InterviewType>(value, ignoreCase: true, out _))
+                .IsEnumName(typeof(InterviewType), caseSensitive: false)
                 .WithMessage(value => $"Invalid interview type: {value.InterviewType}");
 
             RuleFor(x => x.SeniorityLevel)
                 .NotEmpty().WithMessage("Seniority level is required.")
-                .Must(value => Enum.TryParse<SeniorityLevel>(value, ignoreCase: true, out _))
+                .IsEnumName(typeof(SeniorityLevel), caseSensitive: false)
                 .WithMessage(value => $"Invalid seniority level: {value.SeniorityLevel}");
 
             RuleFor(x => x.QuestionCount).GreaterThan(0).WithMessage("Question count must be greater than zero.");

@@ -113,8 +113,54 @@ public static class SubmitAnswer
             nextTurn: nextTurn,
             cancellationToken: cancellationToken);
 
-        return Results.Ok();
+        return Results.Ok(MapToResponse(session, nextTurn));
     }
+
+    private static Response MapToResponse(InterviewSession session, InterviewTurn? nextTurn) => new(
+        Id: session.Id,
+        UserId: session.UserId,
+        Status: session.Status.ToString(),
+        TargetRole: session.TargetRole,
+        FocusArea: session.FocusArea,
+        InterviewType: session.InterviewType.ToString(),
+        SeniorityLevel: session.Seniority.ToString(),
+        QuestionCount: session.QuestionCount,
+        AnsweredCount: session.AnsweredCount,
+        CreatedAt: session.CreatedAt,
+        CompletedAt: session.CompletedAt,
+        Feedback: session.Feedback is not null
+            ? new Feedback(
+                Score: session.Feedback.TotalScore,
+                Summary: session.Feedback.Summary)
+            : null,
+        CurrentQuestion: nextTurn is not null
+            ? new Question(
+                Text: nextTurn.Question.Text,
+                Topic: nextTurn.Question.Topic)
+            : null);
+
+    public record Response(
+        Guid Id,
+        string UserId,
+        string Status,
+        string TargetRole,
+        string FocusArea,
+        string InterviewType,
+        string SeniorityLevel,
+        int QuestionCount,
+        int AnsweredCount,
+        DateTimeOffset CreatedAt,
+        DateTimeOffset? CompletedAt,
+        Feedback? Feedback,
+        Question? CurrentQuestion);
+
+    public record Question(
+        string Text,
+        string Topic);
+
+    public record Feedback(
+        int Score,
+        string? Summary);
 
     public class Validator : AbstractValidator<Request>
     {
