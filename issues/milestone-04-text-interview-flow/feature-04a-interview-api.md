@@ -9,7 +9,7 @@ Status: Planned
 
 Implement the backend API for the core text-based interview flow.
 
-This feature covers creating an interview, listing interviews, retrieving interview state, submitting answers, generating stubbed next questions, and completing an interview.
+This feature covers creating an interview, explicitly starting it, listing interviews, retrieving interview state, submitting answers, generating stubbed next questions, and completing an interview.
 
 Questions are hardcoded/stubbed in M04. Real AI question generation and answer evaluation are planned for M05.
 
@@ -30,6 +30,7 @@ Users should be able to start an interview, answer questions, resume an active i
 
 - Add interview API endpoints:
   - `POST /api/interviews`
+  - `POST /api/interviews/{id}/start`
   - `GET /api/interviews`
   - `GET /api/interviews/{id}`
   - `POST /api/interviews/{id}/answers`
@@ -37,6 +38,7 @@ Users should be able to start an interview, answer questions, resume an active i
 - Add request/response DTOs for interview API
 - Add hardcoded/stubbed question generation for M04
 - Add interview state handling for:
+  - created interviews
   - active interviews
   - completed interviews
   - current question
@@ -46,8 +48,10 @@ Users should be able to start an interview, answer questions, resume an active i
   - `CosmosSessionDocument`
   - `CosmosTurnDocument`
 - Support listing current user’s interviews with optional status filter:
+  - `created`
   - `active`
   - `completed`
+  - multi-status query (for example repeated `status` query parameters)
 - Ensure all interview operations are scoped to the authenticated user
 - Ensure all endpoints require invited-user authorization
 - Add unit tests for question generation and interview state transitions
@@ -76,11 +80,15 @@ Users should be able to start an interview, answer questions, resume an active i
   - `topic`
   - `interviewType`
   - `questionCount`
-- [ ] `POST /api/interviews` creates a new persisted interview session with `status=active`
-- [ ] `POST /api/interviews` creates the first persisted turn with a stubbed question
-- [ ] `POST /api/interviews` returns the created interview state and first/current question
+- [ ] `POST /api/interviews` creates a new persisted interview session with `status=created`
+- [ ] `POST /api/interviews` does not create the first turn yet
+- [ ] `POST /api/interviews` returns the created interview state
+- [ ] `POST /api/interviews/{id}/start` transitions interview state from `created` to `active`
+- [ ] `POST /api/interviews/{id}/start` creates the first persisted turn with a stubbed question
+- [ ] `POST /api/interviews/{id}/start` returns active interview state and first/current question
 - [ ] `GET /api/interviews` returns the current user’s interview summaries
-- [ ] `GET /api/interviews` supports optional `?status=active|completed` filtering
+- [ ] `GET /api/interviews` supports status filtering for `created`, `active`, and `completed`
+- [ ] `GET /api/interviews` supports multi-status filtering
 - [ ] `GET /api/interviews/{id}` returns current interview state needed to resume the interview
 - [ ] `GET /api/interviews/{id}` includes the current question/current turn for active interviews
 - [ ] `GET /api/interviews/{id}` does not return full turn/answer history in M04
@@ -106,6 +114,7 @@ Users should be able to start an interview, answer questions, resume an active i
 - [ ] Anonymous users receive `401`
 - [ ] Authenticated non-invited users receive `403`
 - [ ] Invited users can create/list/retrieve/answer/complete their own interviews
+- [ ] Invited users can start their own created interviews
 - [ ] Unit tests cover question generator behavior
 - [ ] Unit tests cover interview state transitions
 - [ ] Integration tests cover endpoint happy path
@@ -118,7 +127,7 @@ Users should be able to start an interview, answer questions, resume an active i
 
 - [ ] Define interview API request/response DTOs
 - [ ] Add hardcoded question generator
-- [ ] Add interview state constants: `active`, `completed`
+- [ ] Add interview state constants: `created`, `active`, `completed`
 - [ ] Add interview service/state handling
 - [ ] Add persistence access for listing sessions and loading session turns
 - [ ] Add unit tests for state transitions
@@ -126,6 +135,7 @@ Users should be able to start an interview, answer questions, resume an active i
 ### [ ] Interview API endpoint implementation
 
 - [ ] Implement `POST /api/interviews`
+- [ ] Implement `POST /api/interviews/{id}/start`
 - [ ] Implement `GET /api/interviews`
 - [ ] Implement `GET /api/interviews/{id}`
 - [ ] Implement `POST /api/interviews/{id}/answers`
@@ -140,12 +150,15 @@ Users should be able to start an interview, answer questions, resume an active i
 ## Verification
 
 - [ ] `POST /api/interviews` creates a persisted session document
-- [ ] `POST /api/interviews` creates turn 1 with a stubbed question
+- [ ] `POST /api/interviews` creates session in `created` status without creating turn 1
+- [ ] `POST /api/interviews/{id}/start` creates turn 1 with a stubbed question and moves status to `active`
 - [ ] Created session document uses id format `session|{guid:D}`
 - [ ] Created turn document uses id format `turn|{guid:D}|001`
 - [ ] `GET /api/interviews` returns only the current user’s interviews
+- [ ] `GET /api/interviews?status=created` returns only created interviews
 - [ ] `GET /api/interviews?status=active` returns only active interviews
 - [ ] `GET /api/interviews?status=completed` returns only completed interviews
+- [ ] `GET /api/interviews?status=created&status=active` returns interviews matching any selected status
 - [ ] `GET /api/interviews/{id}` returns the persisted current question for active interviews without generating new turns
 - [ ] `GET /api/interviews/{id}` does not return full turn/answer history in M04
 - [ ] `POST /api/interviews/{id}/answers` saves the submitted answer
@@ -189,6 +202,7 @@ Public API uses interview terminology:
 
 ```http
 POST /api/interviews
+POST /api/interviews/{id}/start
 GET  /api/interviews
 GET  /api/interviews/{id}
 POST /api/interviews/{id}/answers
@@ -205,6 +219,7 @@ CosmosTurnDocument
 M04 statuses:
 
 ```text
+created
 active
 completed
 ```

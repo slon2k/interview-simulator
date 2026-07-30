@@ -77,13 +77,14 @@ Build the core text-based interview experience with stub question generation. M0
 
 Acceptance Criteria:
 
-- [ ] POST /api/interviews creates an interview in `active` status with deterministic ID, persists to Cosmos
-- [ ] GET /api/interviews returns list of user's interviews with optional status filter (`active`, `completed`)
+- [ ] POST /api/interviews creates an interview in `created` status with deterministic ID, persists to Cosmos
+- [ ] POST /api/interviews/{id}/start transitions interview to `active` and creates first turn with stubbed question
+- [ ] GET /api/interviews returns list of user's interviews with status filter (`created`, `active`, `completed`) and multi-status support
 - [ ] GET /api/interviews/{id} retrieves interview state by ID with authenticated userId partition key
 - [ ] POST /api/interviews/{id}/answers saves answer, returns stubbed next question
 - [ ] POST /api/interviews/{id}/complete marks interview `completed`, sets completedAt
 - [ ] /interviews page lists user interviews with resume/view links (supports status filtering)
-- [ ] /interviews/new page shows setup form (role/topic/seniority/type) → POST /api/interviews → navigates to active interview
+- [ ] /interviews/new page shows setup form (role/topic/seniority/type) → POST /api/interviews → start flow → active interview
 - [ ] /interviews/{id} page displays active interview (question, answer input, next/complete buttons)
 - [ ] All endpoints require invite-only authorization
 - [ ] Anonymous users receive 401, non-invited authenticated users receive 403

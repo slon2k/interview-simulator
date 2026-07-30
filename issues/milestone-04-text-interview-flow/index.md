@@ -25,8 +25,9 @@ This milestone proves the full session lifecycle works without introducing AI co
   - `/interviews/new` — setup form
   - `/interviews/{id}` — active interview
 - **API**:
-  - `POST /api/interviews` — create (starts in `active` status)
-  - `GET /api/interviews` — list (with optional `?status=active|completed` filter)
+  - `POST /api/interviews` — create (starts in `created` status)
+  - `POST /api/interviews/{id}/start` — start interview and generate first question
+  - `GET /api/interviews` — list (supports `created`, `active`, `completed` and multi-status filtering)
   - `GET /api/interviews/{id}` — retrieve
   - `POST /api/interviews/{id}/answers` — submit answer
   - `POST /api/interviews/{id}/complete` — finish
@@ -43,9 +44,11 @@ This milestone proves the full session lifecycle works without introducing AI co
 
 Placeholder question generator returns a simple hardcoded question per topic. No OpenAI calls, no prompt versioning, no evaluation. Fully testable without external services.
 
-**Query Support (TBD)**: M04 needs to filter interviews by status and retrieve turns. Two approaches:
+**Query Support (Decision)**: M04 query support is implemented in the interview store layer (concrete Cosmos store), not via a generic repository abstraction.
 
-1. Extend generic `IRepository<T>` with query methods (e.g., `QueryAsync()`)
-2. Add query methods to concrete implementations (e.g., `CosmosSessionDocumentRepository.GetByUserIdAndStatusAsync()`)
+For `GET /api/interviews`, status filtering supports:
 
-Decision deferred to implementation phase.
+1. Single value: `?status=created`
+2. Multi-value: `?status=created&status=active`
+
+Invalid status values return `400` validation errors.
