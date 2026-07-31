@@ -32,6 +32,8 @@ public sealed class InterviewSession
 
     public Feedback? Feedback { get; private set; }
 
+    public string? ConcurrencyToken { get; private set; }
+
     private InterviewSession()
     {
     }
@@ -80,6 +82,7 @@ public sealed class InterviewSession
             UpdatedAt = createdAt,
             QuestionCount = questionCount,
             AnsweredCount = 0,
+            ConcurrencyToken = null,
         };
     }
 
@@ -206,7 +209,8 @@ public sealed class InterviewSession
             CompletedAt = state.CompletedAt,
             QuestionCount = state.QuestionCount,
             AnsweredCount = state.AnsweredCount,
-            Feedback = state.Feedback
+            Feedback = state.Feedback,
+            ConcurrencyToken = state.ConcurrencyToken
         };
     }
 
@@ -224,7 +228,8 @@ public sealed class InterviewSession
         CompletedAt: CompletedAt,
         QuestionCount: QuestionCount,
         AnsweredCount: AnsweredCount,
-        Feedback: Feedback);
+        Feedback: Feedback,
+        ConcurrencyToken: ConcurrencyToken);
 
     private static void ValidateRestoredState(InterviewSessionState state)
     {
@@ -388,5 +393,6 @@ public sealed record InterviewSessionState(
     DateTimeOffset? CompletedAt,
     int QuestionCount,
     int AnsweredCount,
-    Feedback? Feedback);
+    Feedback? Feedback,
+    string? ConcurrencyToken = null);
 

@@ -52,12 +52,19 @@ public sealed class CosmosInterviewStore(Container container) : IInterviewStore
         {
             var sessionDocument = CosmosSessionDocument.FromDomain(session);
             var turnDocument = CosmosTurnDocument.FromDomain(firstTurn);
+            var sessionEtag = GetRequiredConcurrencyToken(session.ConcurrencyToken, nameof(session));
 
             var partitionKey = new PartitionKey(session.UserId);
 
             using var response = await container
                 .CreateTransactionalBatch(partitionKey)
-                .ReplaceItem(sessionDocument.Id, sessionDocument)
+                .ReplaceItem(
+                    sessionDocument.Id,
+                    sessionDocument,
+                    new TransactionalBatchItemRequestOptions
+                    {
+                        IfMatchEtag = sessionEtag
+                    })
                 .CreateItem(turnDocument)
                 .ExecuteAsync(cancellationToken);
 
@@ -272,13 +279,27 @@ public sealed class CosmosInterviewStore(Container container) : IInterviewStore
         {
             var sessionDocument = CosmosSessionDocument.FromDomain(session);
             var currentTurnDocument = CosmosTurnDocument.FromDomain(answeredTurn);
+            var sessionEtag = GetRequiredConcurrencyToken(session.ConcurrencyToken, nameof(session));
+            var answeredTurnEtag = GetRequiredConcurrencyToken(answeredTurn.ConcurrencyToken, nameof(answeredTurn));
 
             var partitionKey = new PartitionKey(session.UserId);
 
             var batch = container
                 .CreateTransactionalBatch(partitionKey)
-                .ReplaceItem(currentTurnDocument.Id, currentTurnDocument)
-                .ReplaceItem(sessionDocument.Id, sessionDocument);
+                .ReplaceItem(
+                    currentTurnDocument.Id,
+                    currentTurnDocument,
+                    new TransactionalBatchItemRequestOptions
+                    {
+                        IfMatchEtag = answeredTurnEtag
+                    })
+                .ReplaceItem(
+                    sessionDocument.Id,
+                    sessionDocument,
+                    new TransactionalBatchItemRequestOptions
+                    {
+                        IfMatchEtag = sessionEtag
+                    });
 
             if (nextTurn is not null)
             {
@@ -319,6 +340,10 @@ public sealed class CosmosInterviewStore(Container container) : IInterviewStore
                 sessionDocument,
                 sessionDocument.Id,
                 partitionKey,
+                requestOptions: new ItemRequestOptions
+                {
+                    IfMatchEtag = GetRequiredConcurrencyToken(session.ConcurrencyToken, nameof(session))
+                },
                 cancellationToken: cancellationToken);
         }
         catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
@@ -333,5 +358,18 @@ public sealed class CosmosInterviewStore(Container container) : IInterviewStore
         {
             throw CosmosFailureTranslator.ToException(ex, "Interviews", "UpdateSession");
         }
+    }
+
+    private static string GetRequiredConcurrencyToken(string? concurrencyToken, string parameterName)
+    {
+        if (string.IsNullOrWhiteSpace(concurrencyToken))
+        {
+            throw new InfrastructureUnexpectedException(
+                Error.Unexpected(
+                    "Infrastructure.Cosmos.Interviews.MissingConcurrencyToken",
+                    $"Interview persistence requires a concurrency token for {parameterName}."));
+        }
+
+        return concurrencyToken;
     }
 }

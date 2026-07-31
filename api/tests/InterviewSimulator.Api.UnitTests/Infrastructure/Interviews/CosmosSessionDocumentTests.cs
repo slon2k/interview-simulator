@@ -6,6 +6,57 @@ namespace InterviewSimulator.Api.UnitTests.Infrastructure.Interviews;
 public sealed class CosmosSessionDocument_Mapping
 {
     [Fact]
+    public void FromDomain_WithConcurrencyToken_MapsEtag()
+    {
+        var session = InterviewSession.Restore(new InterviewSessionState(
+            Id: Guid.NewGuid(),
+            UserId: "user123",
+            Status: InterviewStatus.Created,
+            TargetRole: "Software Engineer",
+            FocusArea: "Backend",
+            Seniority: SeniorityLevel.Middle,
+            InterviewType: InterviewType.Technical,
+            CreatedAt: DateTimeOffset.UtcNow,
+            UpdatedAt: DateTimeOffset.UtcNow,
+            StartedAt: null,
+            CompletedAt: null,
+            QuestionCount: 5,
+            AnsweredCount: 0,
+            Feedback: null,
+            ConcurrencyToken: "etag-session-1"));
+
+        var doc = CosmosSessionDocument.FromDomain(session);
+
+        Assert.Equal("etag-session-1", doc.ETag);
+    }
+
+    [Fact]
+    public void ToDomain_WithEtag_MapsConcurrencyToken()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var doc = new CosmosSessionDocument
+        {
+            Id = $"session|{Guid.NewGuid()}",
+            UserId = "user123",
+            SessionId = Guid.NewGuid().ToString(),
+            Status = "Created",
+            TargetRole = "Software Engineer",
+            FocusArea = "Backend",
+            Seniority = "Middle",
+            InterviewType = "Technical",
+            CreatedAt = now,
+            UpdatedAt = now,
+            QuestionCount = 5,
+            AnsweredCount = 0,
+            ETag = "etag-session-2"
+        };
+
+        var session = doc.ToDomain();
+
+        Assert.Equal("etag-session-2", session.ConcurrencyToken);
+    }
+
+    [Fact]
     public void FromDomain_WithCompleteSession_MapsAllFields()
     {
         var sessionId = Guid.NewGuid();

@@ -419,6 +419,14 @@ Codes are part of the public API contract and must remain stable after release.
 
 Message text may evolve for clarity, but code values should not be renamed.
 
+## Logging Severity Guidance
+
+Use these default levels at the API boundary:
+
+- `Information`: expected domain exceptions caused by normal user behavior (validation failures, common business-rule conflicts, and not found outcomes from stale client state or user input)
+- `Warning`: domain exceptions that are unusual in normal flows and may indicate misuse, abuse, or client defects
+- `Error`: operational failures (infrastructure exceptions, unhandled exceptions, dependency outages)
+
 ## Scope
 
 Included:

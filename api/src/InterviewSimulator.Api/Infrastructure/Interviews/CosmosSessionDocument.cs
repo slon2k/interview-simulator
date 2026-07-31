@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json.Serialization;
 
 using InterviewSimulator.Api.Features.Interviews;
 using InterviewSimulator.Api.Infrastructure.Data;
@@ -41,6 +42,9 @@ public sealed class CosmosSessionDocument : IUserCosmosDocument
 
     public DateTimeOffset? CompletedAt { get; set; }
 
+    [JsonPropertyName("_etag")]
+    public string? ETag { get; set; }
+
     public static CosmosSessionDocument FromDomain(InterviewSession session)
     {
         ArgumentNullException.ThrowIfNull(session);
@@ -61,6 +65,7 @@ public sealed class CosmosSessionDocument : IUserCosmosDocument
             QuestionCount = session.QuestionCount,
             AnsweredCount = session.AnsweredCount,
             Status = session.Status.ToString(),
+            ETag = session.ConcurrencyToken,
             Feedback = session.Feedback is not null
                 ? new CosmosSessionFeedbackDocument
                 {
@@ -89,7 +94,8 @@ public sealed class CosmosSessionDocument : IUserCosmosDocument
         CreatedAt: CreatedAt,
         UpdatedAt: UpdatedAt,
         StartedAt: StartedAt,
-        CompletedAt: CompletedAt));
+        CompletedAt: CompletedAt,
+        ConcurrencyToken: ETag));
 
     public static string ToCosmosId(Guid sessionId) => $"session|{FormatSessionId(sessionId)}";
 

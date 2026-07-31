@@ -6,6 +6,53 @@ namespace InterviewSimulator.Api.UnitTests.Infrastructure.Interviews;
 public sealed class CosmosTurnDocument_Mapping
 {
     [Fact]
+    public void FromDomain_WithConcurrencyToken_MapsEtag()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var turn = InterviewTurn.Restore(new InterviewTurnState(
+            SessionId: Guid.NewGuid(),
+            UserId: "user123",
+            TurnNumber: 1,
+            Question: new InterviewQuestion("Question", "topic"),
+            Answer: null,
+            Evaluation: null,
+            CreatedAt: now,
+            UpdatedAt: now,
+            ConcurrencyToken: "etag-turn-1"));
+
+        var doc = CosmosTurnDocument.FromDomain(turn);
+
+        Assert.Equal("etag-turn-1", doc.ETag);
+    }
+
+    [Fact]
+    public void ToDomain_WithEtag_MapsConcurrencyToken()
+    {
+        var sessionId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        var doc = new CosmosTurnDocument
+        {
+            Id = $"turn|{sessionId}|001",
+            UserId = "user123",
+            SessionId = sessionId.ToString(),
+            TurnNumber = 1,
+            Question = new CosmosQuestionDocument
+            {
+                Text = "Question",
+                Topic = "topic"
+            },
+            CreatedAt = now,
+            UpdatedAt = now,
+            ETag = "etag-turn-2"
+        };
+
+        var turn = doc.ToDomain();
+
+        Assert.Equal("etag-turn-2", turn.ConcurrencyToken);
+    }
+
+    [Fact]
     public void FromDomain_WithCompleteTurn_MapsAllFields()
     {
         var sessionId = Guid.NewGuid();
