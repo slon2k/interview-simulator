@@ -2,6 +2,7 @@ using Microsoft.Azure.Cosmos;
 
 using InterviewSimulator.Api.Features.Identity.Access;
 using InterviewSimulator.Api.Features.Identity.Profile;
+using InterviewSimulator.Api.Infrastructure.Data;
 
 using System.Net;
 
@@ -13,9 +14,16 @@ public sealed class CosmosIdentityUserStore(Container container) : IUserProfileS
         AuthenticatedUserProfile profile,
         CancellationToken cancellationToken = default)
     {
-        var existingUser = await GetUserByIdAsync(profile.UserId, cancellationToken);
-        var userDocument = UserDocumentMapper.CreateOrUpdate(existingUser, profile, DateTimeOffset.UtcNow);
-        await container.UpsertItemAsync(userDocument, new PartitionKey(profile.UserId), cancellationToken: cancellationToken);
+        try
+        {
+            var existingUser = await GetUserByIdAsync(profile.UserId, cancellationToken);
+            var userDocument = UserDocumentMapper.CreateOrUpdate(existingUser, profile, DateTimeOffset.UtcNow);
+            await container.UpsertItemAsync(userDocument, new PartitionKey(profile.UserId), cancellationToken: cancellationToken);
+        }
+        catch (CosmosException ex)
+        {
+            throw CosmosFailureTranslator.ToException(ex, "UserProfiles", "UpsertProfile");
+        }
     }
 
     private async Task<CosmosUserDocument?> GetUserByIdAsync(string userId, CancellationToken cancellationToken)
@@ -28,6 +36,10 @@ public sealed class CosmosIdentityUserStore(Container container) : IUserProfileS
         catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
             return null;
+        }
+        catch (CosmosException ex)
+        {
+            throw CosmosFailureTranslator.ToException(ex, "UserProfiles", "GetProfile");
         }
     }
 

@@ -1,7 +1,9 @@
 using System.Globalization;
 using System.Net;
 
+using InterviewSimulator.Api.Features.Common;
 using InterviewSimulator.Api.Features.Interviews;
+using InterviewSimulator.Api.Infrastructure.Data;
 
 using Microsoft.Azure.Cosmos;
 
@@ -13,18 +15,21 @@ public sealed class CosmosInterviewStore(Container container) : IInterviewStore
         InterviewSession session,
         CancellationToken cancellationToken = default)
     {
-        var sessionDocument = CosmosSessionDocument.FromDomain(session);
-        var partitionKey = new PartitionKey(session.UserId);
-
-        var response = await container.CreateItemAsync(
-            sessionDocument,
-            partitionKey,
-            cancellationToken: cancellationToken);
-
-        if (response.StatusCode != HttpStatusCode.Created)
+        try
         {
-            throw new InvalidOperationException(
-                $"Failed to create interview. Status code: {response.StatusCode}");
+            var sessionDocument = CosmosSessionDocument.FromDomain(session);
+            var partitionKey = new PartitionKey(session.UserId);
+
+            var response = await container.CreateItemAsync(
+                sessionDocument,
+                partitionKey,
+                cancellationToken: cancellationToken);
+
+            CosmosFailureTranslator.ThrowIfFailure(response.StatusCode, "Interviews", "CreateSession");
+        }
+        catch (CosmosException ex)
+        {
+            throw CosmosFailureTranslator.ToException(ex, "Interviews", "CreateSession");
         }
     }
 
@@ -43,21 +48,32 @@ public sealed class CosmosInterviewStore(Container container) : IInterviewStore
             throw new InvalidOperationException("Turn user id must match session user id.");
         }
 
-        var sessionDocument = CosmosSessionDocument.FromDomain(session);
-        var turnDocument = CosmosTurnDocument.FromDomain(firstTurn);
-
-        var partitionKey = new PartitionKey(session.UserId);
-
-        using var response = await container
-            .CreateTransactionalBatch(partitionKey)
-            .ReplaceItem(sessionDocument.Id, sessionDocument)
-            .CreateItem(turnDocument)
-            .ExecuteAsync(cancellationToken);
-
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            throw new InvalidOperationException(
-                $"Failed to create interview. Status code: {response.StatusCode}");
+            var sessionDocument = CosmosSessionDocument.FromDomain(session);
+            var turnDocument = CosmosTurnDocument.FromDomain(firstTurn);
+
+            var partitionKey = new PartitionKey(session.UserId);
+
+            using var response = await container
+                .CreateTransactionalBatch(partitionKey)
+                .ReplaceItem(sessionDocument.Id, sessionDocument)
+                .CreateItem(turnDocument)
+                .ExecuteAsync(cancellationToken);
+
+            CosmosFailureTranslator.ThrowIfFailure(
+                response,
+                "Interviews",
+                "StartInterview",
+                treatNotFoundAsConflict: true);
+        }
+        catch (CosmosException ex)
+        {
+            throw CosmosFailureTranslator.ToException(
+                ex,
+                "Interviews",
+                "StartInterview",
+                treatNotFoundAsConflict: true);
         }
     }
 
@@ -81,6 +97,10 @@ public sealed class CosmosInterviewStore(Container container) : IInterviewStore
         {
             return null;
         }
+        catch (CosmosException ex)
+        {
+            throw CosmosFailureTranslator.ToException(ex, "Interviews", "GetSession");
+        }
     }
 
     public async Task<InterviewTurn?> GetTurnAsync(
@@ -103,6 +123,10 @@ public sealed class CosmosInterviewStore(Container container) : IInterviewStore
         catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
             return null;
+        }
+        catch (CosmosException ex)
+        {
+            throw CosmosFailureTranslator.ToException(ex, "Interviews", "GetTurn");
         }
     }
 
@@ -141,28 +165,35 @@ public sealed class CosmosInterviewStore(Container container) : IInterviewStore
             MaxItemCount = limit
         };
 
-        using var iterator = container.GetItemQueryIterator<CosmosSessionDocument>(
-            query,
-            requestOptions: options);
-
-        var sessions = new List<InterviewSession>();
-
-        while (iterator.HasMoreResults && sessions.Count < limit)
+        try
         {
-            var page = await iterator.ReadNextAsync(cancellationToken);
+            using var iterator = container.GetItemQueryIterator<CosmosSessionDocument>(
+                query,
+                requestOptions: options);
 
-            foreach (var document in page)
+            var sessions = new List<InterviewSession>();
+
+            while (iterator.HasMoreResults && sessions.Count < limit)
             {
-                sessions.Add(document.ToDomain());
+                var page = await iterator.ReadNextAsync(cancellationToken);
 
-                if (sessions.Count >= limit)
+                foreach (var document in page)
                 {
-                    break;
+                    sessions.Add(document.ToDomain());
+
+                    if (sessions.Count >= limit)
+                    {
+                        break;
+                    }
                 }
             }
-        }
 
-        return sessions;
+            return sessions;
+        }
+        catch (CosmosException ex)
+        {
+            throw CosmosFailureTranslator.ToException(ex, "Interviews", "ListSessions");
+        }
     }
 
     public async Task<IReadOnlyList<InterviewTurn>> ListTurnsAsync(
@@ -186,19 +217,26 @@ public sealed class CosmosInterviewStore(Container container) : IInterviewStore
             PartitionKey = new PartitionKey(userId)
         };
 
-        using var iterator = container.GetItemQueryIterator<CosmosTurnDocument>(
-            query,
-            requestOptions: options);
-
-        var turns = new List<InterviewTurn>();
-
-        while (iterator.HasMoreResults)
+        try
         {
-            var page = await iterator.ReadNextAsync(cancellationToken);
-            turns.AddRange(page.Select(document => document.ToDomain()));
-        }
+            using var iterator = container.GetItemQueryIterator<CosmosTurnDocument>(
+                query,
+                requestOptions: options);
 
-        return turns;
+            var turns = new List<InterviewTurn>();
+
+            while (iterator.HasMoreResults)
+            {
+                var page = await iterator.ReadNextAsync(cancellationToken);
+                turns.AddRange(page.Select(document => document.ToDomain()));
+            }
+
+            return turns;
+        }
+        catch (CosmosException ex)
+        {
+            throw CosmosFailureTranslator.ToException(ex, "Interviews", "ListTurns");
+        }
     }
 
     public async Task SaveAnswerAsync(
@@ -230,28 +268,39 @@ public sealed class CosmosInterviewStore(Container container) : IInterviewStore
             }
         }
 
-        var sessionDocument = CosmosSessionDocument.FromDomain(session);
-        var currentTurnDocument = CosmosTurnDocument.FromDomain(answeredTurn);
-
-        var partitionKey = new PartitionKey(session.UserId);
-
-        var batch = container
-            .CreateTransactionalBatch(partitionKey)
-            .ReplaceItem(currentTurnDocument.Id, currentTurnDocument)
-            .ReplaceItem(sessionDocument.Id, sessionDocument);
-
-        if (nextTurn is not null)
+        try
         {
-            var nextTurnDocument = CosmosTurnDocument.FromDomain(nextTurn);
-            batch = batch.CreateItem(nextTurnDocument);
+            var sessionDocument = CosmosSessionDocument.FromDomain(session);
+            var currentTurnDocument = CosmosTurnDocument.FromDomain(answeredTurn);
+
+            var partitionKey = new PartitionKey(session.UserId);
+
+            var batch = container
+                .CreateTransactionalBatch(partitionKey)
+                .ReplaceItem(currentTurnDocument.Id, currentTurnDocument)
+                .ReplaceItem(sessionDocument.Id, sessionDocument);
+
+            if (nextTurn is not null)
+            {
+                var nextTurnDocument = CosmosTurnDocument.FromDomain(nextTurn);
+                batch = batch.CreateItem(nextTurnDocument);
+            }
+
+            using var response = await batch.ExecuteAsync(cancellationToken);
+
+            CosmosFailureTranslator.ThrowIfFailure(
+                response,
+                "Interviews",
+                "SaveAnswer",
+                treatNotFoundAsConflict: true);
         }
-
-        using var response = await batch.ExecuteAsync(cancellationToken);
-
-        if (!response.IsSuccessStatusCode)
+        catch (CosmosException ex)
         {
-            throw new InvalidOperationException(
-                $"Failed to save answer submission. Status code: {response.StatusCode}");
+            throw CosmosFailureTranslator.ToException(
+                ex,
+                "Interviews",
+                "SaveAnswer",
+                treatNotFoundAsConflict: true);
         }
     }
 
@@ -274,8 +323,15 @@ public sealed class CosmosInterviewStore(Container container) : IInterviewStore
         }
         catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
-            throw new InvalidOperationException(
-                $"Interview session with ID {session.Id} not found.", ex);
+            throw CosmosFailureTranslator.ToException(
+                ex,
+                "Interviews",
+                "UpdateSession",
+                treatNotFoundAsConflict: true);
+        }
+        catch (CosmosException ex)
+        {
+            throw CosmosFailureTranslator.ToException(ex, "Interviews", "UpdateSession");
         }
     }
 }

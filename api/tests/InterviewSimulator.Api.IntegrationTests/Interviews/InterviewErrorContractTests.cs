@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 
+using InterviewSimulator.Api.Features.Common;
 using InterviewSimulator.Api.Features.Interviews;
 using InterviewSimulator.Api.IntegrationTests.Auth;
 
@@ -89,6 +90,26 @@ public sealed class InterviewErrorContractTests(AuthWebApplicationFactory factor
         Assert.Equal("Conflict", root.GetProperty("title").GetString());
         Assert.Equal((int)HttpStatusCode.Conflict, root.GetProperty("status").GetInt32());
         Assert.Equal("Interviews.InterviewTurn.TurnAlreadyAnswered", root.GetProperty("code").GetString());
+        Assert.False(string.IsNullOrWhiteSpace(root.GetProperty("traceId").GetString()));
+    }
+
+    [Fact]
+    public async Task GetInterview_WhenStoreUnavailable_ReturnsServiceUnavailableProblemDetailsWithCodeAndTraceId()
+    {
+        using var client = CreateClientWithStore(new UnavailableInterviewStore());
+        var sessionId = Guid.NewGuid();
+
+        using var request = CreateAuthenticatedRequest(HttpMethod.Get, $"/api/interviews/{sessionId}", "github|100", "invited-user");
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+
+        using var json = await ReadJsonAsync(response);
+        var root = json.RootElement;
+
+        Assert.Equal("Service unavailable", root.GetProperty("title").GetString());
+        Assert.Equal((int)HttpStatusCode.ServiceUnavailable, root.GetProperty("status").GetInt32());
+        Assert.Equal("Infrastructure.Cosmos.Interviews.GetSession.Unavailable", root.GetProperty("code").GetString());
         Assert.False(string.IsNullOrWhiteSpace(root.GetProperty("traceId").GetString()));
     }
 
@@ -212,6 +233,36 @@ public sealed class InterviewErrorContractTests(AuthWebApplicationFactory factor
 
         public Task<IReadOnlyList<InterviewTurn>> ListTurnsAsync(string userId, Guid sessionId, CancellationToken cancellationToken = default)
             => Task.FromResult<IReadOnlyList<InterviewTurn>>([turn]);
+
+        public Task CreateSessionAsync(InterviewSession session, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+
+        public Task StartInterviewAsync(InterviewSession session, InterviewTurn firstTurn, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+
+        public Task SaveAnswerAsync(InterviewSession session, InterviewTurn answeredTurn, InterviewTurn? nextTurn = null, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+
+        public Task UpdateSessionAsync(InterviewSession session, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+    }
+
+    private sealed class UnavailableInterviewStore : IInterviewStore
+    {
+        public Task<IReadOnlyList<InterviewSession>> ListSessionsAsync(string userId, IReadOnlyList<InterviewStatus>? statuses, int limit, CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<InterviewSession>>(Array.Empty<InterviewSession>());
+
+        public Task<InterviewSession?> GetSessionAsync(string userId, Guid sessionId, CancellationToken cancellationToken = default)
+            => Task.FromException<InterviewSession?>(new InfrastructureUnavailableException(
+                Error.Unavailable(
+                    "Infrastructure.Cosmos.Interviews.GetSession.Unavailable",
+                    "Interview persistence is temporarily unavailable.")));
+
+        public Task<InterviewTurn?> GetTurnAsync(string userId, Guid sessionId, int turnNumber, CancellationToken cancellationToken = default)
+            => Task.FromResult<InterviewTurn?>(null);
+
+        public Task<IReadOnlyList<InterviewTurn>> ListTurnsAsync(string userId, Guid sessionId, CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<InterviewTurn>>(Array.Empty<InterviewTurn>());
 
         public Task CreateSessionAsync(InterviewSession session, CancellationToken cancellationToken = default)
             => Task.CompletedTask;

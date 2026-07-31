@@ -383,19 +383,23 @@ Use RFC 7807 ProblemDetails as the canonical transport envelope for all API 4xx 
 
 Keep domain exceptions in domain logic and map them at the API boundary only.
 
+Translate infrastructure-specific failures, such as Cosmos DB SDK errors, at the repository boundary into stable infrastructure exception types before they reach the API pipeline.
+
 Standardize API error metadata through ProblemDetails extensions:
 
 - `code`: stable machine-readable error code
 - `traceId`: request correlation identifier
 - `details`: validation detail entries when applicable
 
-Add a centralized exception mapping path in the ASP.NET Core pipeline for DomainException types.
+Add a centralized exception mapping path in the ASP.NET Core pipeline for DomainException and InfrastructureException types.
 
 ## Exception to Status Mapping
 
 - `DomainRuleViolationException` -> `400 Bad Request` and `ErrorType.Validation`
 - `DomainConflictException` -> `409 Conflict` and `ErrorType.Conflict`
 - `DomainNotFoundException` -> `404 Not Found` and `ErrorType.NotFound`
+- Repository-translated infrastructure concurrency failures -> `409 Conflict` and `ErrorType.Concurrency`
+- Repository-translated infrastructure transient dependency failures -> `503 Service Unavailable` and `ErrorType.Unavailable`
 - Authentication failures -> `401 Unauthorized` and `ErrorType.Unauthorized`
 - Authorization failures -> `403 Forbidden` and `ErrorType.Forbidden`
 - Concurrency conflicts -> `409 Conflict` and `ErrorType.Concurrency`
@@ -420,6 +424,7 @@ Message text may evolve for clarity, but code values should not be renamed.
 Included:
 
 - ASP.NET Core API domain and endpoint error mapping in the current backend project
+- Repository-level translation of infrastructure SDK failures into API-safe exception types
 - Validation and business-rule failure standardization
 
 Excluded:
@@ -429,10 +434,11 @@ Excluded:
 
 ## Migration Strategy
 
-1. Add centralized DomainException to ProblemDetails mapping in the diagnostics pipeline.
+1. Add centralized DomainException and InfrastructureException to ProblemDetails mapping in the diagnostics pipeline.
 2. Replace endpoint ad hoc error payloads with shared mapping output.
 3. Align remaining business-rule InvalidOperationException usage to DomainException taxonomy where appropriate.
-4. Add tests for mapping correctness and payload shape consistency.
+4. Translate repository infrastructure failures into stable infrastructure exceptions.
+5. Add tests for mapping correctness and payload shape consistency.
 
 ## Consequences
 
