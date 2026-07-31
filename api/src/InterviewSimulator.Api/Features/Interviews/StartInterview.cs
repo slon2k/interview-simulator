@@ -1,5 +1,6 @@
 using System.Security.Claims;
 
+using InterviewSimulator.Api.Features.Common;
 using InterviewSimulator.Api.Features.Identity;
 
 namespace InterviewSimulator.Api.Features.Interviews;
@@ -22,7 +23,7 @@ public static class StartInterview
     {
         if (IdentityClaims.GetUserId(user) is not string userId)
         {
-            return Results.Unauthorized();
+            return Errors.Unauthorized.ToProblemResult();
         }
 
         var session = await store.GetSessionAsync(
@@ -32,12 +33,12 @@ public static class StartInterview
 
         if (session is null)
         {
-            return Results.NotFound();
+            return Errors.SessionNotFound.ToProblemResult();
         }
 
         if (session.Status != InterviewStatus.Created)
         {
-            return Results.Conflict(new { error = "Interview session is not in a created state." });
+            return Errors.SessionNotCreated.ToProblemResult();
         }
 
         session.Start(timeProvider.GetUtcNow());
@@ -57,7 +58,7 @@ public static class StartInterview
 
         if (question is null)
         {
-            return Results.InternalServerError(new { error = "Failed to generate next question." });
+            return Errors.NextQuestionGenerationFailed.ToProblemResult();
         }
 
         var turn = InterviewTurn.Create(
@@ -109,4 +110,12 @@ public static class StartInterview
         CurrentQuestion: new Question(
             Text: turn.Question.Text,
             Topic: turn.Question.Topic));
+    
+    public static class Errors
+    {
+        public static Error Unauthorized => Error.Unauthorized("Interviews.StartInterview.Unauthorized", "Authentication is required.");
+        public static Error SessionNotFound => Error.NotFound("Interviews.StartInterview.SessionNotFound", "Interview session not found.");
+        public static Error SessionNotCreated => Error.Conflict("Interviews.StartInterview.SessionNotCreated", "Interview session is not in a created state.");
+        public static Error NextQuestionGenerationFailed => Error.Unexpected("Interviews.StartInterview.NextQuestionGenerationFailed", "Failed to generate next question.");
+    }
 }

@@ -135,6 +135,14 @@ Responsibilities:
 
 API endpoints are exposed under `/api/*`.
 
+Error handling is standardized through RFC 7807 ProblemDetails for API 4xx and 5xx responses.
+
+Domain and business-rule exceptions are mapped at the API boundary, not in domain models.
+
+Infrastructure failures are translated at repository boundaries into stable application exceptions before they reach the API pipeline.
+
+For the canonical mapping rules, status code table, and error code conventions, see [ADR 0009 in docs/decisions.md](decisions.md).
+
 ### Cosmos DB
 
 Cosmos DB stores user interview data.

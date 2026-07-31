@@ -1,0 +1,61 @@
+namespace InterviewSimulator.Api.Features.Common;
+
+public abstract class DomainException : Exception
+{
+    public string Code { get; }
+
+    protected DomainException(string code, string message) : base(message)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(code);
+        ArgumentException.ThrowIfNullOrWhiteSpace(message);
+
+        Code = code;
+    }
+
+    protected DomainException(DomainError error) : base(error.Message)
+    {
+        Code = error.Code;
+    }
+}
+
+public sealed class DomainRuleViolationException(DomainError error) : DomainException(error)
+{
+}
+
+public sealed class DomainConflictException(DomainError error) : DomainException(error)
+{
+}
+
+public sealed class DomainNotFoundException(DomainError error) : DomainException(error)
+{
+}
+
+public abstract class InfrastructureException : Exception
+{
+    public string Code { get; }
+    public ErrorType Type { get; }
+
+    protected InfrastructureException(Error error, Exception? innerException = null)
+        : base(error.Message, innerException)
+    {
+        ArgumentNullException.ThrowIfNull(error);
+
+        Code = error.Code;
+        Type = error.Type;
+    }
+}
+
+public sealed class InfrastructureConflictException(Error error, Exception? innerException = null)
+    : InfrastructureException(error, innerException)
+{
+}
+
+public sealed class InfrastructureUnavailableException(Error error, Exception? innerException = null)
+    : InfrastructureException(error, innerException)
+{
+}
+
+public sealed class InfrastructureUnexpectedException(Error error, Exception? innerException = null)
+    : InfrastructureException(error, innerException)
+{
+}

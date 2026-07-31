@@ -29,7 +29,7 @@ public static class GetInterviews
     {
         if (IdentityClaims.GetUserId(user) is not string userId)
         {
-            return Results.Unauthorized();
+            return Errors.Unauthorized.ToProblemResult();
         }
 
         IReadOnlyList<InterviewStatus>? statuses = request.Status is { Length: > 0 }
@@ -93,5 +93,10 @@ public static class GetInterviews
                 .WithMessage("Invalid status filter. Allowed values: created, active, completed.")
                 .When(x => x.Status is { Length: > 0 });
         }
+    }
+
+    public static class Errors
+    {
+        public static Error Unauthorized => Error.Unauthorized("Interviews.GetInterviews.Unauthorized", "Authentication is required.");
     }
 }

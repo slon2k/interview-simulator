@@ -18,6 +18,7 @@ Each decision captures context, selected option, consequences, and alternatives 
 | ADR 0006 | Deterministic Cosmos IDs and Partitioning Strategy | Accepted |
 | ADR 0007 | IaC and CI/CD Baseline from Phase 1                | Accepted |
 | ADR 0008 | Config-Based Invite Allowlist for MVP              | Accepted |
+| ADR 0009 | Error Handling and ProblemDetails Standardization  | Accepted |
 
 ---
 
@@ -359,3 +360,101 @@ github|{githubUserId}
 - Cosmos-backed invite registry
 - GitHub org or team membership checks
 - Admin UI for invite management
+
+---
+
+## ADR 0009: Error Handling and ProblemDetails Standardization
+
+## Status
+
+Accepted
+
+## Context
+
+Error responses had started diverging across endpoint-local result payloads, validation outputs, and unhandled exception paths.
+
+Domain exception primitives were introduced, but without a centralized exception mapping path the API could still return inconsistent error shapes and status behavior.
+
+The project needs a stable machine-readable error contract before additional feature delivery to avoid client-facing drift.
+
+## Decision
+
+Use RFC 7807 ProblemDetails as the canonical transport envelope for all API 4xx and 5xx responses.
+
+Keep domain exceptions in domain logic and map them at the API boundary only.
+
+Translate infrastructure-specific failures, such as Cosmos DB SDK errors, at the repository boundary into stable infrastructure exception types before they reach the API pipeline.
+
+Standardize API error metadata through ProblemDetails extensions:
+
+- `code`: stable machine-readable error code
+- `traceId`: request correlation identifier
+- `details`: validation detail entries when applicable
+
+Add a centralized exception mapping path in the ASP.NET Core pipeline for DomainException and InfrastructureException types.
+
+## Exception to Status Mapping
+
+- `DomainRuleViolationException` -> `400 Bad Request` and `ErrorType.Validation`
+- `DomainConflictException` -> `409 Conflict` and `ErrorType.Conflict`
+- `DomainNotFoundException` -> `404 Not Found` and `ErrorType.NotFound`
+- Repository-translated infrastructure concurrency failures -> `409 Conflict` and `ErrorType.Concurrency`
+- Repository-translated infrastructure transient dependency failures -> `503 Service Unavailable` and `ErrorType.Unavailable`
+- Authentication failures -> `401 Unauthorized` and `ErrorType.Unauthorized`
+- Authorization failures -> `403 Forbidden` and `ErrorType.Forbidden`
+- Concurrency conflicts -> `409 Conflict` and `ErrorType.Concurrency`
+- Rate limit breaches -> `429 Too Many Requests` and `ErrorType.RateLimit`
+- Upstream dependency unavailable -> `503 Service Unavailable` and `ErrorType.Unavailable`
+- Unmapped exceptions -> `500 Internal Server Error` and `ErrorType.Unexpected`
+
+## Error Code Conventions
+
+Use stable dotted namespace-style codes:
+
+```text
+Feature.Aggregate.RuleName
+```
+
+Codes are part of the public API contract and must remain stable after release.
+
+Message text may evolve for clarity, but code values should not be renamed.
+
+## Scope
+
+Included:
+
+- ASP.NET Core API domain and endpoint error mapping in the current backend project
+- Repository-level translation of infrastructure SDK failures into API-safe exception types
+- Validation and business-rule failure standardization
+
+Excluded:
+
+- Frontend localization policy for server-provided error messages
+- Cross-service distributed error taxonomy outside this API boundary
+
+## Migration Strategy
+
+1. Add centralized DomainException and InfrastructureException to ProblemDetails mapping in the diagnostics pipeline.
+2. Replace endpoint ad hoc error payloads with shared mapping output.
+3. Align remaining business-rule InvalidOperationException usage to DomainException taxonomy where appropriate.
+4. Translate repository infrastructure failures into stable infrastructure exceptions.
+5. Add tests for mapping correctness and payload shape consistency.
+
+## Consequences
+
+### Benefits
+
+- Consistent client-visible error contract
+- Better operability through stable codes and trace correlation
+- Reduced per-endpoint duplication and decision churn
+
+### Trade-offs
+
+- Migration touches handlers and related tests
+- Requires discipline to keep domain exceptions transport-agnostic
+
+## Alternatives Considered
+
+- Keep endpoint-local ad hoc payload conventions
+- Use a custom error envelope instead of ProblemDetails
+- Introduce a shared-kernel project now for all error contracts
