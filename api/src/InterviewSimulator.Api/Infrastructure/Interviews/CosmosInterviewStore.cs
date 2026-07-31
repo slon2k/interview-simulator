@@ -364,8 +364,8 @@ public sealed class CosmosInterviewStore(Container container) : IInterviewStore
     {
         if (string.IsNullOrWhiteSpace(concurrencyToken))
         {
-            throw new InfrastructureConflictException(
-                Error.Concurrency(
+            throw new InfrastructureUnexpectedException(
+                Error.Unexpected(
                     "Infrastructure.Cosmos.Interviews.MissingConcurrencyToken",
                     $"Interview persistence requires a concurrency token for {parameterName}."));
         }
