@@ -23,7 +23,7 @@ public static class GetInterview
     {
         if (IdentityClaims.GetUserId(user) is not string userId)
         {
-            return Unauthorized.ToProblemResult();
+            return Errors.Unauthorized.ToProblemResult();
         }
 
         var interview = await store.GetSessionAsync(
@@ -33,7 +33,7 @@ public static class GetInterview
 
         if (interview is null)
         {
-            return InterviewNotFound.ToProblemResult();
+            return Errors.SessionNotFound.ToProblemResult();
         }
 
         Question? currentQuestion = null;
@@ -102,6 +102,9 @@ public static class GetInterview
         int Score,
         string? Summary);
 
-    public static Error InterviewNotFound => Error.NotFound("Interviews.GetInterview.SessionNotFound", "Interview session not found.");
-    public static Error Unauthorized => Error.Unauthorized("Interviews.GetInterview.Unauthorized", "Authentication is required.");
+    public static class Errors
+    {
+        public static Error SessionNotFound => Error.NotFound("Interviews.GetInterview.SessionNotFound", "Interview session not found.");
+        public static Error Unauthorized => Error.Unauthorized("Interviews.GetInterview.Unauthorized", "Authentication is required.");
+    }
 }

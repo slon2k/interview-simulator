@@ -31,27 +31,27 @@ public static class SubmitAnswer
     {
         if (IdentityClaims.GetUserId(user) is not string userId)
         {
-            return Unauthorized.ToProblemResult();
+            return Errors.Unauthorized.ToProblemResult();
         }
 
         if (await store.GetSessionAsync(userId, sessionId, cancellationToken) is not InterviewSession session)
         {
-            return SessionNotFound.ToProblemResult();
+            return Errors.SessionNotFound.ToProblemResult();
         }
 
         if (session.Status != InterviewStatus.Active)
         {
-            return SessionNotActive.ToProblemResult();
+            return Errors.SessionNotActive.ToProblemResult();
         }
 
         if (request.TurnNumber != session.AnsweredCount + 1)
         {
-            return InvalidTurnNumber.ToProblemResult();
+            return Errors.InvalidTurnNumber.ToProblemResult();
         }
 
         if (await store.GetTurnAsync(userId, sessionId, request.TurnNumber, cancellationToken) is not InterviewTurn currentTurn)
         {
-            return TurnNotFound.ToProblemResult();
+            return Errors.TurnNotFound.ToProblemResult();
         }
         var now = timeProvider.GetUtcNow();
 
@@ -83,7 +83,7 @@ public static class SubmitAnswer
 
             if (nextQuestion is null)
             {
-                return NextQuestionGenerationFailed.ToProblemResult();
+                return Errors.NextQuestionGenerationFailed.ToProblemResult();
             }
 
             nextTurn = InterviewTurn.Create(
@@ -167,10 +167,13 @@ public static class SubmitAnswer
         }
     }
 
-    public static Error Unauthorized => Error.Unauthorized("Interviews.SubmitAnswer.Unauthorized", "Authentication is required.");
-    public static Error SessionNotFound => Error.NotFound("Interviews.SubmitAnswer.SessionNotFound", "Interview session not found.");
-    public static Error SessionNotActive => Error.Conflict("Interviews.SubmitAnswer.SessionNotActive", "Interview session is not active.");
-    public static Error InvalidTurnNumber => Error.Conflict("Interviews.SubmitAnswer.InvalidTurnNumber", "Invalid turn number.");
-    public static Error TurnNotFound => Error.NotFound("Interviews.SubmitAnswer.TurnNotFound", "Interview turn not found.");
-    public static Error NextQuestionGenerationFailed => Error.Unexpected("Interviews.SubmitAnswer.NextQuestionGenerationFailed", "Failed to generate next question.");
+    public static class Errors
+    {
+        public static Error Unauthorized => Error.Unauthorized("Interviews.SubmitAnswer.Unauthorized", "Authentication is required.");
+        public static Error SessionNotFound => Error.NotFound("Interviews.SubmitAnswer.SessionNotFound", "Interview session not found.");
+        public static Error SessionNotActive => Error.Conflict("Interviews.SubmitAnswer.SessionNotActive", "Interview session is not active.");
+        public static Error InvalidTurnNumber => Error.Conflict("Interviews.SubmitAnswer.InvalidTurnNumber", "Invalid turn number.");
+        public static Error TurnNotFound => Error.NotFound("Interviews.SubmitAnswer.TurnNotFound", "Interview turn not found.");
+        public static Error NextQuestionGenerationFailed => Error.Unexpected("Interviews.SubmitAnswer.NextQuestionGenerationFailed", "Failed to generate next question.");
+    }
 }

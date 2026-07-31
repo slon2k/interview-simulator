@@ -35,6 +35,9 @@ public record Error
         DomainNotFoundException => new(ErrorType.NotFound, exception.Code, exception.Message),
         _ => new(ErrorType.Unexpected, exception.Code, exception.Message)
     };
+
+    public static Error FromInfrastructureException(InfrastructureException exception)
+        => new(exception.Type, exception.Code, exception.Message);
 }
 
 public enum ErrorType

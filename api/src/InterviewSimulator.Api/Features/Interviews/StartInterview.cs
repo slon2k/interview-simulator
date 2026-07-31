@@ -23,7 +23,7 @@ public static class StartInterview
     {
         if (IdentityClaims.GetUserId(user) is not string userId)
         {
-            return Unauthorized.ToProblemResult();
+            return Errors.Unauthorized.ToProblemResult();
         }
 
         var session = await store.GetSessionAsync(
@@ -33,12 +33,12 @@ public static class StartInterview
 
         if (session is null)
         {
-            return SessionNotFound.ToProblemResult();
+            return Errors.SessionNotFound.ToProblemResult();
         }
 
         if (session.Status != InterviewStatus.Created)
         {
-            return SessionNotCreated.ToProblemResult();
+            return Errors.SessionNotCreated.ToProblemResult();
         }
 
         session.Start(timeProvider.GetUtcNow());
@@ -58,7 +58,7 @@ public static class StartInterview
 
         if (question is null)
         {
-            return NextQuestionGenerationFailed.ToProblemResult();
+            return Errors.NextQuestionGenerationFailed.ToProblemResult();
         }
 
         var turn = InterviewTurn.Create(
@@ -110,9 +110,12 @@ public static class StartInterview
         CurrentQuestion: new Question(
             Text: turn.Question.Text,
             Topic: turn.Question.Topic));
-
-    public static Error Unauthorized => Error.Unauthorized("Interviews.StartInterview.Unauthorized", "Authentication is required.");
-    public static Error SessionNotFound => Error.NotFound("Interviews.StartInterview.SessionNotFound", "Interview session not found.");
-    public static Error SessionNotCreated => Error.Conflict("Interviews.StartInterview.SessionNotCreated", "Interview session is not in a created state.");
-    public static Error NextQuestionGenerationFailed => Error.Unexpected("Interviews.StartInterview.NextQuestionGenerationFailed", "Failed to generate next question.");
+    
+    public static class Errors
+    {
+        public static Error Unauthorized => Error.Unauthorized("Interviews.StartInterview.Unauthorized", "Authentication is required.");
+        public static Error SessionNotFound => Error.NotFound("Interviews.StartInterview.SessionNotFound", "Interview session not found.");
+        public static Error SessionNotCreated => Error.Conflict("Interviews.StartInterview.SessionNotCreated", "Interview session is not in a created state.");
+        public static Error NextQuestionGenerationFailed => Error.Unexpected("Interviews.StartInterview.NextQuestionGenerationFailed", "Failed to generate next question.");
+    }
 }

@@ -28,7 +28,7 @@ public static class CreateInterview
     {
         if (IdentityClaims.GetUserId(user) is not string userId)
         {
-            return Unauthorized.ToProblemResult();
+            return Errors.Unauthorized.ToProblemResult();
         }
 
         var interviewType = Enum.Parse<InterviewType>(request.InterviewType, ignoreCase: true);
@@ -103,5 +103,8 @@ public static class CreateInterview
         }
     }
 
-    public static Error Unauthorized => Error.Unauthorized("Interviews.CreateInterview.Unauthorized", "Authentication is required.");
+    public static class Errors
+    {
+        public static Error Unauthorized => Error.Unauthorized("Interviews.CreateInterview.Unauthorized", "Authentication is required.");
+    }
 }

@@ -23,7 +23,7 @@ public static class CompleteInterview
     {
         if (IdentityClaims.GetUserId(user) is not string userId)
         {
-            return Unauthorized.ToProblemResult();
+            return Errors.Unauthorized.ToProblemResult();
         }
 
         var interview = await store.GetSessionAsync(
@@ -33,12 +33,12 @@ public static class CompleteInterview
 
         if (interview is null)
         {
-            return SessionNotFound.ToProblemResult();
+            return Errors.SessionNotFound.ToProblemResult();
         }
 
         if (interview.Status != InterviewStatus.Active)
         {
-            return SessionNotActive.ToProblemResult();
+            return Errors.SessionNotActive.ToProblemResult();
         }
 
         interview.Complete(timeProvider.GetUtcNow());
@@ -48,7 +48,10 @@ public static class CompleteInterview
         return Results.NoContent();
     }
 
-    public static Error SessionNotActive => Error.Conflict("Interviews.CompleteInterview.SessionNotActive", "Interview session is not active.");
-    public static Error SessionNotFound => Error.NotFound("Interviews.CompleteInterview.SessionNotFound", "Interview session not found.");
-    public static Error Unauthorized => Error.Unauthorized("Interviews.CompleteInterview.Unauthorized", "Authentication is required.");
+    public static class Errors
+    {
+        public static Error SessionNotActive => Error.Conflict("Interviews.CompleteInterview.SessionNotActive", "Interview session is not active.");
+        public static Error SessionNotFound => Error.NotFound("Interviews.CompleteInterview.SessionNotFound", "Interview session not found.");
+        public static Error Unauthorized => Error.Unauthorized("Interviews.CompleteInterview.Unauthorized", "Authentication is required.");
+    }
 }
