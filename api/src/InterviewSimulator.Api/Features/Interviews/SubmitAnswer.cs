@@ -64,13 +64,19 @@ public static class SubmitAnswer
         {
             var previousTurns = await store.ListTurnsAsync(userId, sessionId, cancellationToken);
             var nextTurnNumber = session.AnsweredCount + 1;
+            var turnsForGeneration = previousTurns
+                .Where(turn => turn.TurnNumber != currentTurn.TurnNumber)
+                .Append(currentTurn)
+                .OrderBy(turn => turn.TurnNumber)
+                .ToArray();
+
             var generateQuestionRequest = new GenerateQuestionRequest(
                 TargetRole: session.TargetRole,
                 Seniority: session.Seniority,
                 FocusArea: session.FocusArea,
                 TurnNumber: nextTurnNumber,
                 QuestionCount: session.QuestionCount,
-                PreviousTurns: [.. previousTurns.Select(turn => new PreviousInterviewTurn(
+                PreviousTurns: [.. turnsForGeneration.Select(turn => new PreviousInterviewTurn(
                     TurnNumber: turn.TurnNumber,
                     QuestionText: turn.Question.Text,
                     QuestionTopic: turn.Question.Topic,
