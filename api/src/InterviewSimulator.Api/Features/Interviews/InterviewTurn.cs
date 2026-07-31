@@ -24,6 +24,8 @@ public sealed class InterviewTurn
 
     public bool IsEvaluated => Evaluation is not null;
 
+    public string? ConcurrencyToken { get; private set; }
+
     public void RecordAnswer(string answer, DateTimeOffset answeredAt)
     {
         if (string.IsNullOrWhiteSpace(answer))
@@ -126,7 +128,8 @@ public sealed class InterviewTurn
         Answer: Answer,
         Evaluation: Evaluation,
         CreatedAt: CreatedAt,
-        UpdatedAt: UpdatedAt);
+        UpdatedAt: UpdatedAt,
+        ConcurrencyToken: ConcurrencyToken);
 
     public static InterviewTurn Restore(InterviewTurnState state)
     {
@@ -143,7 +146,8 @@ public sealed class InterviewTurn
         {
             Answer = state.Answer,
             Evaluation = state.Evaluation,
-            UpdatedAt = state.UpdatedAt
+            UpdatedAt = state.UpdatedAt,
+            ConcurrencyToken = state.ConcurrencyToken
         };
     }
 
@@ -254,5 +258,6 @@ public sealed record InterviewTurnState(
     InterviewAnswer? Answer,
     AnswerEvaluation? Evaluation,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    string? ConcurrencyToken = null);
 

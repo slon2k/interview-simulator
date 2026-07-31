@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json.Serialization;
 
 using InterviewSimulator.Api.Features.Interviews;
 using InterviewSimulator.Api.Infrastructure.Data;
@@ -33,6 +34,9 @@ public sealed class CosmosTurnDocument : IUserCosmosDocument
 
     public DateTimeOffset? AnsweredAt { get; set; }
 
+    [JsonPropertyName("_etag")]
+    public string? ETag { get; set; }
+
     public static CosmosTurnDocument FromDomain(InterviewTurn turn)
     {
         ArgumentNullException.ThrowIfNull(turn, nameof(turn));
@@ -61,6 +65,7 @@ public sealed class CosmosTurnDocument : IUserCosmosDocument
             CreatedAt = turn.CreatedAt,
             UpdatedAt = turn.UpdatedAt,
             AnsweredAt = turn.Answer?.AnsweredAt,
+            ETag = turn.ConcurrencyToken,
         };
     }
 
@@ -79,7 +84,8 @@ public sealed class CosmosTurnDocument : IUserCosmosDocument
                     ? new AnswerEvaluation(Evaluation.Score, Evaluation.Feedback)
                     : null,
                 CreatedAt: CreatedAt,
-                UpdatedAt: UpdatedAt));
+                UpdatedAt: UpdatedAt,
+                ConcurrencyToken: ETag));
     }
 
     public static string ToCosmosId(Guid sessionId, int turnNumber)
