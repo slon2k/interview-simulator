@@ -1,5 +1,7 @@
 using InterviewSimulator.Api.Features.Common;
 
+using Scalar.AspNetCore;
+
 namespace InterviewSimulator.Api.Startup;
 
 public static class DiagnosticsServices
@@ -8,7 +10,19 @@ public static class DiagnosticsServices
 
     public static WebApplicationBuilder AddDiagnosticsServices(this WebApplicationBuilder builder)
     {
-        builder.Services.AddOpenApi();
+        builder.Services.AddOpenApi(options =>
+        {
+            // Prefix nested types with their declaring class name to avoid schema name collisions.
+            options.CreateSchemaReferenceId = typeInfo =>
+            {
+                var type = typeInfo.Type;
+                if (type.IsNested && type.DeclaringType is { } parent)
+                {
+                    return $"{parent.Name}{type.Name}";
+                }
+                return type.IsGenericType ? null : type.Name;
+            };
+        });
         builder.Services.AddHealthChecks();
         builder.Services.AddExceptionHandler<DomainExceptionHandler>();
         builder.Services.AddExceptionHandler<InfrastructureExceptionHandler>();
@@ -32,6 +46,7 @@ public static class DiagnosticsServices
         if (isDevelopment)
         {
             app.MapOpenApi();
+            app.MapScalarApiReference();
         }
 
         app.Use(async (context, next) =>

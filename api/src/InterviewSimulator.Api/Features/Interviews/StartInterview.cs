@@ -10,7 +10,14 @@ public static class StartInterview
     public static void MapStartInterview(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapPost("/{interviewId:guid}/start", Handler)
-            .WithName("StartInterview");
+            .WithName("StartInterview")
+            .WithSummary("Start an interview session")
+            .WithDescription("Transitions the session to Active and generates the first question.")
+            .Produces<Response>()
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
     }
 
     private static async Task<IResult> Handler(

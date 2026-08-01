@@ -14,9 +14,14 @@ public static class GetInterviews
     public const int DefaultLimit = 100;
     public static IEndpointRouteBuilder MapGetInterviews(this IEndpointRouteBuilder endpoints)
     {
-          endpoints.MapGet("/", Handler)
+        endpoints.MapGet("/", Handler)
             .AddEndpointFilter<ValidationFilter<Request>>()
-            .WithName("GetInterviews");
+            .WithName("GetInterviews")
+            .WithSummary("List interview sessions")
+            .WithDescription("Returns interview sessions belonging to the authenticated user, optionally filtered by status.")
+            .Produces<IEnumerable<Response>>()
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         return endpoints;
     }

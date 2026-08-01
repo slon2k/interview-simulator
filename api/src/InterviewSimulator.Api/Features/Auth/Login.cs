@@ -8,13 +8,16 @@ public static class LoginEndpoint
 {
     public static IEndpointRouteBuilder MapLogin(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/login", LoginHandler)
-            .AllowAnonymous();
+        app.MapGet("/login", Handler)
+            .AllowAnonymous()
+            .WithName("Login")
+            .WithSummary("Initiate GitHub OAuth login")
+            .WithDescription("Redirects the user to GitHub for OAuth authentication. Accepts an optional relative returnUrl to redirect back to after login.");
 
         return app;
     }
 
-    public static IResult LoginHandler(string? returnUrl)
+    public static IResult Handler(string? returnUrl)
     {
         var safeReturnUrl = GetSafeReturnUrl(returnUrl);
 
@@ -58,4 +61,3 @@ public static class LoginEndpoint
         return returnUrl;
     }
 }
-
