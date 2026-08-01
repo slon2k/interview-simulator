@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "contracts:generate": "node ./scripts/generate-openapi-contracts.mjs",
+    "contracts:generate:ci": "node ./scripts/generate-openapi-contracts.mjs --strict-tls --require-schema-url",
     "typecheck": "tsc -b",
     "build": "tsc -b && vite build",
     "lint": "eslint .",

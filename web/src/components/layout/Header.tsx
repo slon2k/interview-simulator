@@ -6,7 +6,7 @@ import { buildLoginUrl } from '../../features/auth/authApi'
 const navItems = [
   { label: 'Home', to: '/' },
   { label: 'Dashboard', to: '/dashboard' },
-  { label: 'Interview', to: '/interview/new' },
+  { label: 'Interviews', to: '/interviews' },
   { label: 'History', to: '/history' },
 ]
 
