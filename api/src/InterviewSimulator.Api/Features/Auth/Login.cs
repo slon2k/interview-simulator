@@ -10,6 +10,7 @@ public static class LoginEndpoint
     {
         app.MapGet("/login", Handler)
             .AllowAnonymous()
+            .WithName("Login")
             .WithSummary("Initiate GitHub OAuth login")
             .WithDescription("Redirects the user to GitHub for OAuth authentication. Accepts an optional relative returnUrl to redirect back to after login.");
 
@@ -60,4 +61,3 @@ public static class LoginEndpoint
         return returnUrl;
     }
 }
-

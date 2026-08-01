@@ -8,6 +8,7 @@ public static class Logout
     {
         app.MapPost("/logout", Handler)
             .RequireAuthorization()
+            .WithName("Logout")
             .WithSummary("Sign out the current user")
             .WithDescription("Clears the authentication cookie and signs out the authenticated user.")
             .Produces(StatusCodes.Status200OK)
@@ -22,4 +23,3 @@ public static class Logout
             authenticationSchemes: [CookieAuthenticationDefaults.AuthenticationScheme]);
     }
 }
-
