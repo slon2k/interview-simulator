@@ -98,7 +98,9 @@ public sealed class CosmosInterviewStore(Container container) : IInterviewStore
                 new PartitionKey(userId),
                 cancellationToken: cancellationToken);
 
-            return response.Resource.ToDomain();
+            var document = response.Resource;
+            document.ETag = response.ETag;
+            return document.ToDomain();
         }
         catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
@@ -125,7 +127,9 @@ public sealed class CosmosInterviewStore(Container container) : IInterviewStore
                 new PartitionKey(userId),
                 cancellationToken: cancellationToken);
 
-            return response.Resource.ToDomain();
+            var document = response.Resource;
+            document.ETag = response.ETag;
+            return document.ToDomain();
         }
         catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {

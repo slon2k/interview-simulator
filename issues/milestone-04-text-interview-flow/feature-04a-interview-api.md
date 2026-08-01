@@ -3,7 +3,7 @@
 Phase: 2  
 Milestone: 04 - Text interview flow  
 Type: Feature  
-Status: Planned
+Status: Completed
 
 ## Summary
 
@@ -74,105 +74,105 @@ Users should be able to start an interview, answer questions, resume an active i
 
 ## Acceptance Criteria
 
-- [ ] `POST /api/interviews` accepts interview setup data:
+- [x] `POST /api/interviews` accepts interview setup data:
   - `role`
   - `seniority`
   - `topic`
   - `interviewType`
   - `questionCount`
-- [ ] `POST /api/interviews` creates a new persisted interview session with `status=created`
-- [ ] `POST /api/interviews` does not create the first turn yet
-- [ ] `POST /api/interviews` returns the created interview state
-- [ ] `POST /api/interviews/{id}/start` transitions interview state from `created` to `active`
-- [ ] `POST /api/interviews/{id}/start` creates the first persisted turn with a stubbed question
-- [ ] `POST /api/interviews/{id}/start` returns active interview state and first/current question
-- [ ] `GET /api/interviews` returns the current user’s interview summaries
-- [ ] `GET /api/interviews` supports status filtering for `created`, `active`, and `completed`
-- [ ] `GET /api/interviews` supports multi-status filtering
-- [ ] `GET /api/interviews/{id}` returns current interview state needed to resume the interview
-- [ ] `GET /api/interviews/{id}` includes the current question/current turn for active interviews
-- [ ] `GET /api/interviews/{id}` does not return full turn/answer history in M04
-- [ ] `GET /api/interviews/{id}` does not generate new questions
-- [ ] `POST /api/interviews/{id}/answers` accepts answer text and the current `turnNumber`
-- [ ] Invalid interview state transitions return `409 Conflict`
-- [ ] Answer submission saves the answer to the existing current turn
-- [ ] Answer submission creates the next stubbed question/turn when questions remain
-- [ ] Answer submission increments `answeredCount`
-- [ ] Answering the final question automatically marks the interview as `completed`
-- [ ] `POST /api/interviews/{id}/complete` marks an active interview as `completed`
-- [ ] Completing an interview sets `completedAt`
-- [ ] Completed interviews cannot receive new answers
-- [ ] Completed interviews cannot be completed again
-- [ ] Duplicate, stale, or wrong-turn answer submissions are rejected
-- [ ] Interview persistence uses existing `CosmosSessionDocument` and `CosmosTurnDocument`
-- [ ] Existing M03 document ID formats are preserved:
+- [x] `POST /api/interviews` creates a new persisted interview session with `status=created`
+- [x] `POST /api/interviews` does not create the first turn yet
+- [x] `POST /api/interviews` returns the created interview state
+- [x] `POST /api/interviews/{id}/start` transitions interview state from `created` to `active`
+- [x] `POST /api/interviews/{id}/start` creates the first persisted turn with a stubbed question
+- [x] `POST /api/interviews/{id}/start` returns active interview state and first/current question
+- [x] `GET /api/interviews` returns the current user’s interview summaries
+- [x] `GET /api/interviews` supports status filtering for `created`, `active`, and `completed`
+- [x] `GET /api/interviews` supports multi-status filtering
+- [x] `GET /api/interviews/{id}` returns current interview state needed to resume the interview
+- [x] `GET /api/interviews/{id}` includes the current question/current turn for active interviews
+- [x] `GET /api/interviews/{id}` does not return full turn/answer history in M04
+- [x] `GET /api/interviews/{id}` does not generate new questions
+- [x] `POST /api/interviews/{id}/answers` accepts answer text and the current `turnNumber`
+- [x] Invalid interview state transitions return `409 Conflict`
+- [x] Answer submission saves the answer to the existing current turn
+- [x] Answer submission creates the next stubbed question/turn when questions remain
+- [x] Answer submission increments `answeredCount`
+- [x] Answering the final question automatically marks the interview as `completed`
+- [x] `POST /api/interviews/{id}/complete` marks an active interview as `completed`
+- [x] Completing an interview sets `completedAt`
+- [x] Completed interviews cannot receive new answers
+- [x] Completed interviews cannot be completed again
+- [x] Duplicate, stale, or wrong-turn answer submissions are rejected
+- [x] Interview persistence uses existing `CosmosSessionDocument` and `CosmosTurnDocument`
+- [x] Existing M03 document ID formats are preserved:
   - `session|{guid:D}`
   - `turn|{guid:D}|{turnNumber:D3}`
-- [ ] Public API returns the raw interview/session id, not the Cosmos document id
-- [ ] Users can only list/retrieve/update their own interviews
-- [ ] Admin users do not receive cross-user interview access in M04
-- [ ] Anonymous users receive `401`
-- [ ] Authenticated non-invited users receive `403`
-- [ ] Invited users can create/list/retrieve/answer/complete their own interviews
-- [ ] Invited users can start their own created interviews
-- [ ] Unit tests cover question generator behavior
-- [ ] Unit tests cover interview state transitions
-- [ ] Integration tests cover endpoint happy path
-- [ ] Integration tests cover authorization scenarios
-- [ ] Existing tests continue to pass
+- [x] Public API returns the raw interview/session id, not the Cosmos document id
+- [x] Users can only list/retrieve/update their own interviews
+- [x] Admin users do not receive cross-user interview access in M04
+- [x] Anonymous users receive `401`
+- [x] Authenticated non-invited users receive `403`
+- [x] Invited users can create/list/retrieve/answer/complete their own interviews
+- [x] Invited users can start their own created interviews
+- [x] Unit tests cover question generator behavior
+- [x] Unit tests cover interview state transitions
+- [x] Integration tests cover endpoint happy path
+- [x] Integration tests cover authorization scenarios
+- [x] Existing tests continue to pass
 
 ## Tasks
 
 ### [ ] Interview persistence/query support
 
-- [ ] Define interview API request/response DTOs
-- [ ] Add hardcoded question generator
-- [ ] Add interview state constants: `created`, `active`, `completed`
-- [ ] Add interview service/state handling
-- [ ] Add persistence access for listing sessions and loading session turns
-- [ ] Add unit tests for state transitions
+- [x] Define interview API request/response DTOs
+- [x] Add hardcoded question generator
+- [x] Add interview state constants: `created`, `active`, `completed`
+- [x] Add interview service/state handling
+- [x] Add persistence access for listing sessions and loading session turns
+- [x] Add unit tests for state transitions
 
 ### [ ] Interview API endpoint implementation
 
-- [ ] Implement `POST /api/interviews`
-- [ ] Implement `POST /api/interviews/{id}/start`
-- [ ] Implement `GET /api/interviews`
-- [ ] Implement `GET /api/interviews/{id}`
-- [ ] Implement `POST /api/interviews/{id}/answers`
-- [ ] Implement `POST /api/interviews/{id}/complete`
+- [x] Implement `POST /api/interviews`
+- [x] Implement `POST /api/interviews/{id}/start`
+- [x] Implement `GET /api/interviews`
+- [x] Implement `GET /api/interviews/{id}`
+- [x] Implement `POST /api/interviews/{id}/answers`
+- [x] Implement `POST /api/interviews/{id}/complete`
 
 ### [ ] Interview API tests and documentation
 
-- [ ] Add integration tests for interview API happy path
-- [ ] Add integration tests for authorization scenarios
-- [ ] Update Swagger/OpenAPI documentation if applicable
+- [x] Add integration tests for interview API happy path
+- [x] Add integration tests for authorization scenarios
+- [x] Update Swagger/OpenAPI documentation if applicable
 
 ## Verification
 
-- [ ] `POST /api/interviews` creates a persisted session document
-- [ ] `POST /api/interviews` creates session in `created` status without creating turn 1
-- [ ] `POST /api/interviews/{id}/start` creates turn 1 with a stubbed question and moves status to `active`
-- [ ] Created session document uses id format `session|{guid:D}`
-- [ ] Created turn document uses id format `turn|{guid:D}|001`
-- [ ] `GET /api/interviews` returns only the current user’s interviews
-- [ ] `GET /api/interviews?status=created` returns only created interviews
-- [ ] `GET /api/interviews?status=active` returns only active interviews
-- [ ] `GET /api/interviews?status=completed` returns only completed interviews
-- [ ] `GET /api/interviews?status=created&status=active` returns interviews matching any selected status
-- [ ] `GET /api/interviews/{id}` returns the persisted current question for active interviews without generating new turns
-- [ ] `GET /api/interviews/{id}` does not return full turn/answer history in M04
-- [ ] `POST /api/interviews/{id}/answers` saves the submitted answer
-- [ ] `POST /api/interviews/{id}/answers` creates the next turn when questions remain
-- [ ] Final answer marks interview as completed
-- [ ] Duplicate answer submission is rejected
-- [ ] Wrong or stale `turnNumber` is rejected
-- [ ] Answer submission after completion is rejected
-- [ ] Completing an already completed interview is rejected
-- [ ] Anonymous requests return `401`
-- [ ] Non-invited authenticated requests return `403`
-- [ ] Invited user can complete the full API flow
-- [ ] User cannot access another user’s interview
-- [ ] Full test suite passes
+- [x] `POST /api/interviews` creates a persisted session document
+- [x] `POST /api/interviews` creates session in `created` status without creating turn 1
+- [x] `POST /api/interviews/{id}/start` creates turn 1 with a stubbed question and moves status to `active`
+- [x] Created session document uses id format `session|{guid:D}`
+- [x] Created turn document uses id format `turn|{guid:D}|001`
+- [x] `GET /api/interviews` returns only the current user’s interviews
+- [x] `GET /api/interviews?status=created` returns only created interviews
+- [x] `GET /api/interviews?status=active` returns only active interviews
+- [x] `GET /api/interviews?status=completed` returns only completed interviews
+- [x] `GET /api/interviews?status=created&status=active` returns interviews matching any selected status
+- [x] `GET /api/interviews/{id}` returns the persisted current question for active interviews without generating new turns
+- [x] `GET /api/interviews/{id}` does not return full turn/answer history in M04
+- [x] `POST /api/interviews/{id}/answers` saves the submitted answer
+- [x] `POST /api/interviews/{id}/answers` creates the next turn when questions remain
+- [x] Final answer marks interview as completed
+- [x] Duplicate answer submission is rejected
+- [x] Wrong or stale `turnNumber` is rejected
+- [x] Answer submission after completion is rejected
+- [x] Completing an already completed interview is rejected
+- [x] Anonymous requests return `401`
+- [x] Non-invited authenticated requests return `403`
+- [x] Invited user can complete the full API flow
+- [x] User cannot access another user’s interview
+- [x] Full test suite passes
 
 ## Dependencies and Blockers
 
