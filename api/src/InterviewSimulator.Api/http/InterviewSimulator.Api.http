@@ -1,0 +1,128 @@
+# To launch the API project with HTTPS, run the following command in the terminal from the root of the repository:
+# dotnet run --project "api/src/InterviewSimulator.Api/InterviewSimulator.Api.csproj" --launch-profile https
+#
+# Authorization:
+# 1. Open https://localhost:5001/api/auth/login in a browser to complete GitHub OAuth.
+# 2. Open DevTools → Application → Cookies → https://localhost:5001
+# 3. Copy the value of the "InterviewSimulator.Auth" cookie.
+# 4. Paste it below.
+
+@InterviewSimulator.Api_HostAddress = https://localhost:5001
+@authCookie = InterviewSimulator.Auth=CfDJ8P1f6_cIYJdJuExnQihdRD-QvpH3j3KgK7I0rEBI7RP5Cy29YaHEPsqdaWLSGM920HPa2k7vVwvLSeFlAkoK50Wub7Z6TT0pOQCXeqYxd1MqlLCrppTN_VfOaWkdbclhZngVEB5QXrshlvp2ZHkorZC1EPQpswVZjuhqEM26fcG1rD4raN9QOZstKgYXjjMO-VzZpSpehJRiuQxRvDNQGqAAufYXPWYLF_-XT8RgQqFacwke8r4gZSWX3z9zQpSaSWkTCQC-583AnJ5I3JN5AA6jVwnZpBq33xN3mhJ1EoPI2Z9k3yPvcpytD4pFF5OcoOlKvJ4nzpOI0drDPUl5axloZ8MdQgXtVjx8u_pM-K-fyDrEQLqEGdxs4XRxFM8NgynklEU4kI51qA3hh_N8XLnVEPs-YBNDQ4nHaFaGurt6SGRwmz6oawb_1pfbLwl4LfPlFFp8Vz8FtSoACZgXaTeoC4rf5EzAaXWvuYQPxiLga8Aw-icxHfNpFvTbKhzSu3hymp9qL7pYcv5YoSyEr8rrHa6v1-IGA2YtBWmo7yX12lgk1TGLqFshAzvyPd6ZCZpb0N3jfprajaf897F1XvBbXiD405L0qosc2Wnhkwx2DGuEjDE79w498rzOdR4NcDtLytda-pyIvytf6XYpvlgmzqMRSmrV8Qw9Rv7FRG6Qj-TOoIxUM6cZmFb0aaTmOURhuzMKG1kA1isUh33pCQlLRehAvj2taUy8r317sjWJgd5Bi7pFrhfPi_TXfSUnYq28jz3D3e0yLH6R2xudHLckbfbSEMXuwnCV9vyP4aKVj9ewAZL87QltBHys1220Xw
+
+### Health check
+
+GET {{InterviewSimulator.Api_HostAddress}}/api/health
+Accept: application/json
+
+###
+
+### ── Auth ──────────────────────────────────────────────────────────────────
+
+### Smoke test (requires authenticated session cookie)
+GET {{InterviewSimulator.Api_HostAddress}}/api/auth/smoke
+Accept: application/json
+Cookie: {{authCookie}}
+
+###
+
+### Sign out
+POST {{InterviewSimulator.Api_HostAddress}}/api/auth/logout
+Cookie: {{authCookie}}
+
+###
+
+### ── Interviews ────────────────────────────────────────────────────────────
+
+### 1. Create an interview session
+# @name createInterview
+POST {{InterviewSimulator.Api_HostAddress}}/api/interviews
+Content-Type: application/json
+Cookie: {{authCookie}}
+
+{
+  "targetRole": "Full Stack Engineer",
+  "focusArea": "dotnet",
+  "interviewType": "Technical",
+  "seniorityLevel": "Senior",
+  "questionCount": 3
+}
+
+###
+
+@interviewId = {{createInterview.response.body.$.id}}
+
+### 2. Get the created interview
+GET {{InterviewSimulator.Api_HostAddress}}/api/interviews/{{interviewId}}
+Accept: application/json
+Cookie: {{authCookie}}
+
+###
+
+### 3. List all interviews
+GET {{InterviewSimulator.Api_HostAddress}}/api/interviews
+Accept: application/json
+Cookie: {{authCookie}}
+
+###
+
+### 3a. List interviews filtered by status (created / active / completed)
+GET {{InterviewSimulator.Api_HostAddress}}/api/interviews?status=created&status=active
+Accept: application/json
+Cookie: {{authCookie}}
+
+###
+
+### 4. Start the interview (generates first question)
+POST {{InterviewSimulator.Api_HostAddress}}/api/interviews/{{interviewId}}/start
+Accept: application/json
+Cookie: {{authCookie}}
+
+###
+
+### 5. Submit answer for turn 1
+POST {{InterviewSimulator.Api_HostAddress}}/api/interviews/{{interviewId}}/answers
+Content-Type: application/json
+Cookie: {{authCookie}}
+
+{
+  "turnNumber": 1,
+  "answer": "I use async/await with ConfigureAwait(false) in library code and ensure all I/O operations are non-blocking. For CPU-bound work I offload to Task.Run."
+}
+
+###
+
+### 5b. Submit answer for turn 2
+POST {{InterviewSimulator.Api_HostAddress}}/api/interviews/{{interviewId}}/answers
+Content-Type: application/json
+Cookie: {{authCookie}}
+
+{
+  "turnNumber": 2,
+  "answer": "I apply dependency injection and prefer constructor injection. For testability I code against interfaces and use fakes or in-memory implementations in tests."
+}
+
+###
+
+### 5c. Submit answer for turn 3 (last turn — session moves to Completed after this)
+POST {{InterviewSimulator.Api_HostAddress}}/api/interviews/{{interviewId}}/answers
+Content-Type: application/json
+Cookie: {{authCookie}}
+
+{
+  "turnNumber": 3,
+  "answer": "I handle errors with a global exception handler and return RFC 9457 ProblemDetails responses. Domain errors are mapped to appropriate HTTP status codes."
+}
+
+###
+
+### 6. Complete the interview explicitly (if not auto-completed)
+POST {{InterviewSimulator.Api_HostAddress}}/api/interviews/{{interviewId}}/complete
+Cookie: {{authCookie}}
+
+###
+
+### 7. Get the completed interview (check feedback/score once evaluation is wired)
+GET {{InterviewSimulator.Api_HostAddress}}/api/interviews/{{interviewId}}
+Accept: application/json
+Cookie: {{authCookie}}
