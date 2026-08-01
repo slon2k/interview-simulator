@@ -3,7 +3,7 @@
 Phase: 2  
 Milestone: 04 - Text interview flow  
 Type: Feature  
-Status: Planned
+Status: Started
 
 ## Summary
 
@@ -104,7 +104,7 @@ This feature enables the UI flow needed before implementing the active interview
 
 ## Tasks
 
-### [ ] List page
+### List page
 
 - [ ] Create `/interviews` route
 - [ ] Add list/resume page component
@@ -118,7 +118,7 @@ This feature enables the UI flow needed before implementing the active interview
 - [ ] Add empty state
 - [ ] Protect route with existing auth/access behavior
 
-### [ ] Setup page
+### Setup page
 
 - [ ] Create `/interviews/new` route
 - [ ] Add setup form component
@@ -131,7 +131,7 @@ This feature enables the UI flow needed before implementing the active interview
 - [ ] Add cancel/back link to `/interviews`
 - [ ] Protect route with existing auth/access behavior
 
-### [ ] Tests
+### Tests
 
 - [ ] Add UI/component test for list loading/rendering if frontend test coverage exists
 - [ ] Add UI/component test for setup validation if frontend test coverage exists
@@ -222,22 +222,81 @@ The active interview page itself is implemented in 04c.
 
 Completed interview links can navigate to `/interviews/{id}`, but in M04 this only needs to show a basic completed/read-only state. Full history, questions, answers, feedback, and summaries are handled later in M06.
 
-Suggested setup request body:
+### API field names
+
+The backend field names differ from the display labels used in the spec. Use these exact names when calling the API:
+
+`POST /api/interviews` request body:
 
 ```json
 {
-  "role": "backend-engineer",
-  "seniority": "senior",
-  "topic": "dotnet",
-  "interviewType": "technical",
+  "targetRole": "Backend Engineer",
+  "focusArea": "dotnet",
+  "interviewType": "Technical",
+  "seniorityLevel": "Senior",
   "questionCount": 3
 }
 ```
 
-Expected successful creation response includes an `id` that can be used for navigation:
+Enum string values (case-insensitive on the backend):
 
-```text
-/interviews/{id}
+- `interviewType`: `Technical`, `Behavioral`, `SystemDesign`
+- `seniorityLevel`: `Junior`, `Middle`, `Senior`
+
+`POST /api/interviews` response (201 Created):
+
+```json
+{
+  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "userId": "github|123456789",
+  "status": "Created",
+  "targetRole": "Backend Engineer",
+  "focusArea": "dotnet",
+  "interviewType": "Technical",
+  "seniorityLevel": "Senior",
+  "questionCount": 3,
+  "createdAt": "2026-08-01T10:00:00Z"
+}
 ```
+
+`GET /api/interviews` response (200 OK) — array of:
+
+```json
+{
+  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "status": "Active",
+  "targetRole": "Backend Engineer",
+  "focusArea": "dotnet",
+  "interviewType": "Technical",
+  "seniorityLevel": "Senior",
+  "questionCount": 3,
+  "answeredCount": 1,
+  "createdAt": "2026-08-01T10:00:00Z",
+  "startedAt": "2026-08-01T10:01:00Z",
+  "completedAt": null,
+  "totalScore": null
+}
+```
+
+Progress can be derived as `answeredCount / questionCount`.
+
+### Existing scaffolding
+
+The following already exists and should be reused or updated:
+
+| Item                     | Location                      | Notes                                                          |
+| ------------------------ | ----------------------------- | -------------------------------------------------------------- |
+| `InterviewSetupPage.tsx` | `web/src/features/interview/` | Placeholder — needs full implementation                        |
+| Route `/interview/new`   | `web/src/app/router.tsx`      | **Wrong path** — must be renamed to `/interviews/new`          |
+| `apiClient.ts`           | `web/src/api/`                | Axios instance with cookie credentials — use for all API calls |
+| `apiError.ts`            | `web/src/api/`                | `toApiError()` / `ApiError` — use for error handling           |
+| `ProtectedRoute`         | `web/src/components/routing/` | Handles auth + invited-user guard — reuse for all new routes   |
+| `healthApi.ts`           | `web/src/api/`                | Pattern to follow for `interviewApi.ts`                        |
+
+New files to create:
+
+- `web/src/api/interviewApi.ts` — `getInterviews()`, `createInterview(request)` functions
+- `web/src/features/interview/InterviewListPage.tsx` — list/resume page
+- `web/src/features/interview/InterviewDetailPage.tsx` — placeholder detail page (full impl in 04c/M06)
 
 ---

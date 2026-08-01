@@ -2,6 +2,26 @@
 
 This guide covers local development concerns that should stay separate from Azure deployment setup.
 
+## Cosmos DB Emulator (Docker)
+
+For local development, run the Cosmos DB emulator using Docker Compose:
+
+```powershell
+docker compose up cosmos-emulator -d
+```
+
+The emulator starts with data persistence enabled. First-time setup requires trusting the emulator's self-signed certificate:
+
+```powershell
+# Wait for the emulator to finish starting (11/11 partitions), then:
+curl.exe -k https://localhost:8081/_explorer/emulator.pem -o "$env:TEMP\cosmos-emulator.pem"
+Import-Certificate -FilePath "$env:TEMP\cosmos-emulator.pem" -CertStoreLocation "Cert:\CurrentUser\Root"
+```
+
+Re-import the certificate if you recreate the container with `docker compose down -v` (volume deletion regenerates the cert).
+
+The emulator connection string is pre-configured in `appsettings.Development.json`. `InitializeOnStartup: true` auto-creates the database and containers on first run.
+
 ## Local Speech Configuration
 
 The API validates Azure Speech configuration on startup.
@@ -72,49 +92,37 @@ This enables:
 
 ## Session and Turn Persistence
 
-**Status**: Document models and repositories registered; endpoint implementations deferred to phase 2.
+**Status**: Fully implemented in milestones 03 and 04.
 
 ### Document Models
 
 Session and turn documents follow the deterministic ID strategy documented in ADR 0006:
 
-**Creating a session**:
+- Session ID format: `session|{guid:D}`
+- Turn ID format: `turn|{guid:D}|{turnNumber:D3}` (D3 padding for correct alphabetic ordering)
+
+### Creating and reading via CosmosInterviewStore
 
 ```csharp
-var sessionDoc = CosmosSessionDocument.Create(
-    sessionId: Guid.NewGuid(),
-    userId: authenticatedUserId,
-    role: "backend-engineer",
-    seniority: "mid",
-    topic: "dotnet",
-    interviewType: "technical",
-    createdAt: DateTimeOffset.UtcNow,
+// Create a session
+var session = InterviewSession.Create(
+    userId: userId,
+    targetRole: "Backend Engineer",
+    focusArea: "dotnet",
+    seniority: SeniorityLevel.Senior,
+    interviewType: InterviewType.Technical,
     questionCount: 5,
-    status: "active",
-    answeredCount: 0);
-
-await repository.UpsertAsync(sessionDoc, userId, ct);
-```
-
-**Creating a turn**:
-
-```csharp
-var question = new CosmosQuestionDocument { Text = "Your question here" };
-var turnDoc = CosmosTurnDocument.Create(
-    sessionId: sessionId,
-    userId: authenticatedUserId,
-    turnNumber: 1,
-    question: question,
     createdAt: DateTimeOffset.UtcNow);
 
-await repository.UpsertAsync(turnDoc, userId, ct);
+await store.CreateSessionAsync(session, cancellationToken);
+
+// Read a session (ConcurrencyToken is populated from _etag via ItemResponse.ETag)
+var session = await store.GetSessionAsync(userId, sessionId, cancellationToken);
+
+// Read a turn
+var turn = await store.GetTurnAsync(userId, sessionId, turnNumber, cancellationToken);
 ```
 
-**Reading a session**:
-
-```csharp
-var cosmosId = CosmosSessionDocument.ToCosmosId(sessionId);
-var doc = await repository.GetByIdAsync(cosmosId, userId, ct);
-```
+All mutable write operations (`StartInterviewAsync`, `SaveAnswerAsync`, `UpdateSessionAsync`) require a non-empty `ConcurrencyToken` on the session/turn. Always read before writing.
 
 Static `ToCosmosId()` methods ensure consistent ID derivation across CRUD operations. Always pass the authenticated `userId` as the partition key.
