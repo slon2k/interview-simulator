@@ -72,6 +72,47 @@ In Azure App Service, the non-secret Azure Speech settings are injected through 
 
 See [docs/deployment.md](./deployment.md) for deployment workflow, Azure RBAC, and Key Vault setup.
 
+## Frontend OpenAPI Contract Generation
+
+The web app uses generated API contracts in `web/src/api/contracts/openapi.ts`.
+
+Run commands from `web/`.
+
+### Local generation
+
+```bash
+npm run contracts:generate
+```
+
+Defaults:
+
+- Schema URL: `https://localhost:5001/openapi/v1.json`
+- Output path: `src/api/contracts/openapi.ts`
+
+For local `https://localhost` and `https://127.0.0.1`, the script automatically sets `NODE_TLS_REJECT_UNAUTHORIZED=0` only when that variable is not already defined.
+
+Optional overrides:
+
+- `OPENAPI_SCHEMA_URL`
+- `OPENAPI_OUTPUT_PATH`
+
+### CI generation (strict TLS)
+
+```bash
+npm run contracts:generate:ci
+```
+
+CI mode behavior:
+
+- Requires `OPENAPI_SCHEMA_URL` to be set
+- Enforces strict TLS (no automatic insecure TLS fallback)
+
+Example:
+
+```bash
+OPENAPI_SCHEMA_URL=https://api.example.com/openapi/v1.json npm run contracts:generate:ci
+```
+
 ## User Persistence on OAuth Login
 
 **Status**: Implemented in milestone 03, out-of-scope but essential for OAuth integration.

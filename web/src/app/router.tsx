@@ -3,7 +3,9 @@ import { RootLayout } from '../components/layout/RootLayout'
 import { ProtectedRoute } from '../components/routing/ProtectedRoute'
 import { LandingPage } from '../features/landing/LandingPage'
 import { DashboardPage } from '../features/dashboard/DashboardPage'
+import { InterviewListPage } from '../features/interview/InterviewListPage'
 import { InterviewSetupPage } from '../features/interview/InterviewSetupPage'
+import { InterviewDetailPage } from '../features/interview/InterviewDetailPage'
 import { SessionHistoryPage } from '../features/sessions/SessionHistoryPage'
 import { SessionDetailPage } from '../features/sessions/SessionDetailPage'
 import { UnauthorizedPage } from '../pages/UnauthorizedPage'
@@ -27,10 +29,26 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: 'interview/new',
+        path: 'interviews',
+        element: (
+          <ProtectedRoute>
+            <InterviewListPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'interviews/new',
         element: (
           <ProtectedRoute>
             <InterviewSetupPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'interviews/:interviewId',
+        element: (
+          <ProtectedRoute>
+            <InterviewDetailPage />
           </ProtectedRoute>
         ),
       },

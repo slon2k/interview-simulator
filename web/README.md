@@ -43,6 +43,44 @@ export default defineConfig([
 ])
 ```
 
+## OpenAPI Contract Generation
+
+The frontend contracts are generated from the API OpenAPI schema into `src/api/contracts/openapi.ts`.
+
+### Local generation
+
+```bash
+npm run contracts:generate
+```
+
+Default behavior:
+
+- Uses schema URL `https://localhost:5001/openapi/v1.json`
+- Writes output to `src/api/contracts/openapi.ts`
+- For local HTTPS on `localhost` or `127.0.0.1`, the script sets `NODE_TLS_REJECT_UNAUTHORIZED=0` only when it is not already defined.
+
+Optional environment variables:
+
+- `OPENAPI_SCHEMA_URL` - override schema URL
+- `OPENAPI_OUTPUT_PATH` - override output file path
+
+### CI generation (strict)
+
+```bash
+npm run contracts:generate:ci
+```
+
+CI mode requirements:
+
+- `OPENAPI_SCHEMA_URL` must be set
+- strict TLS is enforced (no automatic insecure TLS fallback)
+
+Example:
+
+```bash
+OPENAPI_SCHEMA_URL=https://api.example.com/openapi/v1.json npm run contracts:generate:ci
+```
+
 You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
 ```js
