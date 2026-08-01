@@ -8,13 +8,13 @@ public static class LoginEndpoint
 {
     public static IEndpointRouteBuilder MapLogin(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/login", LoginHandler)
+        app.MapGet("/login", Handler)
             .AllowAnonymous();
 
         return app;
     }
 
-    public static IResult LoginHandler(string? returnUrl)
+    public static IResult Handler(string? returnUrl)
     {
         var safeReturnUrl = GetSafeReturnUrl(returnUrl);
 

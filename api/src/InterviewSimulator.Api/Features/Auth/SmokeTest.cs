@@ -9,13 +9,13 @@ public static class SmokeTestEndpoint
 {
     public static IEndpointRouteBuilder MapSmokeTest(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet("/smoke", SmokeHandler)
+        endpoints.MapGet("/smoke", Handler)
             .RequireAuthorization(AuthorizationPolicies.InvitedUser);
 
         return endpoints;
     }
 
-    private static IResult SmokeHandler(ClaimsPrincipal user)
+    private static IResult Handler(ClaimsPrincipal user)
     {
         var userId = IdentityClaims.GetUserId(user);
 
