@@ -89,7 +89,7 @@ export function InterviewSetupPage() {
       }
 
       const created = await createInterview(request)
-      navigate(`/interviews/${created.id}`)
+      await navigate(`/interviews/${created.id}`)
     } catch (error) {
       const apiError =
         error instanceof ApiError ? error : new ApiError(0, 'Failed to create interview')
@@ -198,13 +198,15 @@ export function InterviewSetupPage() {
             <Group justify="space-between">
               <Button
                 variant="subtle"
-                onClick={() => navigate('/interviews')}
+                onClick={() => {
+                  void navigate('/interviews')
+                }}
                 disabled={isDisabled}
               >
                 Cancel
               </Button>
 
-              <Button type="submit" loading={isSubmitting} disabled={isDisabled || Object.keys(errors).length > 0}>
+              <Button type="submit" loading={isSubmitting} disabled={isDisabled}>
                 Start interview
               </Button>
             </Group>
@@ -213,7 +215,7 @@ export function InterviewSetupPage() {
       </Card>
 
       <Text size="sm" c="dimmed">
-        Suggested question counts: {questionCountOptions.join(', ')}
+        Allowed range is 1 to 20. Suggested question counts: {questionCountOptions.join(', ')}.
       </Text>
     </Stack>
   )
