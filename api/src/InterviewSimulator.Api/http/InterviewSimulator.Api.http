@@ -5,10 +5,11 @@
 # 1. Open https://localhost:5001/api/auth/login in a browser to complete GitHub OAuth.
 # 2. Open DevTools → Application → Cookies → https://localhost:5001
 # 3. Copy the value of the "InterviewSimulator.Auth.Local" cookie.
-# 4. Paste it below.
+# 4. Create api/src/InterviewSimulator.Api/http/.env (gitignored) with:
+#    AUTH_COOKIE=InterviewSimulator.Auth=<paste-cookie-value-here>
 
 @InterviewSimulator.Api_HostAddress = https://localhost:5001
-@authCookie = InterviewSimulator.Auth.Local=<paste-cookie-value-here>
+@authCookie = {{$dotenv AUTH_COOKIE}}
 
 ### Health check
 
