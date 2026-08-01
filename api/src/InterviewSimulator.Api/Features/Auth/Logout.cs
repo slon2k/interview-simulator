@@ -7,7 +7,11 @@ public static class Logout
     public static IEndpointRouteBuilder MapLogout(this IEndpointRouteBuilder app)
     {
         app.MapPost("/logout", Handler)
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .WithSummary("Sign out the current user")
+            .WithDescription("Clears the authentication cookie and signs out the authenticated user.")
+            .Produces(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         return app;
     }

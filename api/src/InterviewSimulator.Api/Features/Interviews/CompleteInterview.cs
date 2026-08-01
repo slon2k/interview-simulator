@@ -10,7 +10,13 @@ public static class CompleteInterview
     public static void MapCompleteInterview(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapPost("/{interviewId:guid}/complete", Handler)
-            .WithName("CompleteInterview");
+            .WithName("CompleteInterview")
+            .WithSummary("Complete an interview session")
+            .WithDescription("Transitions an active interview session to the Completed state.")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
     }
 
     private static async Task<IResult> Handler(

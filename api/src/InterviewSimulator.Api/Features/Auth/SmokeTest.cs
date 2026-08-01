@@ -10,7 +10,12 @@ public static class SmokeTestEndpoint
     public static IEndpointRouteBuilder MapSmokeTest(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapGet("/smoke", Handler)
-            .RequireAuthorization(AuthorizationPolicies.InvitedUser);
+            .RequireAuthorization(AuthorizationPolicies.InvitedUser)
+            .WithSummary("Verify authenticated access")
+            .WithDescription("Returns the authenticated user's ID. Requires the InvitedUser authorization policy.")
+            .Produces<Response>()
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
 
         return endpoints;
     }
@@ -19,11 +24,9 @@ public static class SmokeTestEndpoint
     {
         var userId = IdentityClaims.GetUserId(user);
 
-        return Results.Ok(new
-        {
-            status = "authenticated",
-            userId
-        });
+        return Results.Ok(new Response("authenticated", userId));
     }
+
+    public record Response(string Status, string? UserId);
 }
 

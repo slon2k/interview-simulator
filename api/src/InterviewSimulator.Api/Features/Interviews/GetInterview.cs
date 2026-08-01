@@ -10,7 +10,12 @@ public static class GetInterview
     public static IEndpointRouteBuilder MapGetInterview(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapGet("/{interviewId:guid}", GetInterviewHandler)
-            .WithName("GetInterview");
+            .WithName("GetInterview")
+            .WithSummary("Get an interview session")
+            .WithDescription("Returns the interview session with the given ID belonging to the authenticated user.")
+            .Produces<Response>()
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status404NotFound);
 
         return endpoints;
     }

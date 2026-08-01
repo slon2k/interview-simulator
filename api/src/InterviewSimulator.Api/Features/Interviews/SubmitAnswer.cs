@@ -15,7 +15,15 @@ public static class SubmitAnswer
     {
         endpoints.MapPost("/{sessionId:guid}/answers", SubmitAnswerHandler)
             .AddEndpointFilter<ValidationFilter<Request>>()
-            .WithName("SubmitAnswer");
+            .WithName("SubmitAnswer")
+            .WithSummary("Submit an answer")
+            .WithDescription("Records the answer for the current turn and returns the next question if the session is still active.")
+            .Produces<Response>()
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
 
         return endpoints;
     }

@@ -13,7 +13,12 @@ public static class CreateInterview
     {
         endpoints.MapPost("/", Handler)
             .AddEndpointFilter<ValidationFilter<Request>>()
-            .WithName("CreateInterview");
+            .WithName("CreateInterview")
+            .WithSummary("Create an interview session")
+            .WithDescription("Creates a new interview session in the Created state for the authenticated user.")
+            .Produces<Response>(StatusCodes.Status201Created)
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         return endpoints;
     }

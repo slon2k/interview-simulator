@@ -9,7 +9,9 @@ public static class LoginEndpoint
     public static IEndpointRouteBuilder MapLogin(this IEndpointRouteBuilder app)
     {
         app.MapGet("/login", Handler)
-            .AllowAnonymous();
+            .AllowAnonymous()
+            .WithSummary("Initiate GitHub OAuth login")
+            .WithDescription("Redirects the user to GitHub for OAuth authentication. Accepts an optional relative returnUrl to redirect back to after login.");
 
         return app;
     }

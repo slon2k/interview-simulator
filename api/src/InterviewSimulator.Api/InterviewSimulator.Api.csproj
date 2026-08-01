@@ -17,6 +17,7 @@
     <PackageReference Include="Microsoft.Azure.Cosmos" />
     <PackageReference Include="Microsoft.OpenApi" />
     <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="Scalar.AspNetCore" />
   </ItemGroup>
 
   <Target Name="BuildFrontendForPublish" AfterTargets="ComputeFilesToPublish" Condition="'$(SkipFrontendBuild)' != 'true' and Exists('$(WebProjectDir)/package.json')">
