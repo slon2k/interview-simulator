@@ -22,6 +22,15 @@ Re-import the certificate if you recreate the container with `docker compose dow
 
 The emulator connection string is pre-configured in `appsettings.Development.json`. `InitializeOnStartup: true` auto-creates the database and containers on first run.
 
+After starting the emulator, enable Cosmos DB in user-secrets (never committed):
+
+```powershell
+dotnet user-secrets set "CosmosDb:Enabled" "true" --project "api/src/InterviewSimulator.Api/InterviewSimulator.Api.csproj"
+dotnet user-secrets set "CosmosDb:ConnectionString" "AccountEndpoint=https://localhost:8081/;AccountKey=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b5n25MhvOqJ91CZ2VEf7HByoQeVCFe3Z3yVMJpN+2bgFGh5R+OIhBLY5pLsrCkE3LpwlFasWEZRE=" --project "api/src/InterviewSimulator.Api/InterviewSimulator.Api.csproj"
+```
+
+The `AccountKey` above is the well-known public emulator key — it is safe to document here.
+
 ## Local Speech Configuration
 
 The API validates Azure Speech configuration on startup.
