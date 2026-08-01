@@ -138,7 +138,7 @@ export function InterviewListPage() {
   )
 }
 
-function formatProgress(interview: InterviewSummary): string {
+export function formatProgress(interview: InterviewSummary): string {
   const answered = toCount(interview.answeredCount)
   const total = toCount(interview.questionCount)
 
@@ -149,7 +149,7 @@ function formatProgress(interview: InterviewSummary): string {
   return `${answered}/${total}`
 }
 
-function toCount(value: number | string): number {
+export function toCount(value: number | string): number {
   if (typeof value === 'number') {
     return value
   }
@@ -158,7 +158,7 @@ function toCount(value: number | string): number {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
-function statusColor(status: string): string {
+export function statusColor(status: string): string {
   if (status === 'active') {
     return 'blue'
   }

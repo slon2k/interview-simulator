@@ -14,16 +14,7 @@ import {
 import { useNavigate } from 'react-router-dom'
 import { ApiError } from '../../api/apiError'
 import { createInterview, type CreateInterviewRequest } from '../../api/interviewApi'
-
-type SetupFormValues = {
-  targetRole: string
-  focusArea: string
-  interviewType: string
-  seniorityLevel: string
-  questionCount: number
-}
-
-type SetupFormErrors = Partial<Record<keyof SetupFormValues, string>>
+import { validate, type SetupFormValues, type SetupFormErrors } from './validateInterviewSetup'
 
 const roleOptions = [
   'Backend Engineer',
@@ -219,30 +210,4 @@ export function InterviewSetupPage() {
       </Text>
     </Stack>
   )
-}
-
-function validate(values: SetupFormValues): SetupFormErrors {
-  const nextErrors: SetupFormErrors = {}
-
-  if (!values.targetRole.trim()) {
-    nextErrors.targetRole = 'Role is required.'
-  }
-
-  if (!values.focusArea.trim()) {
-    nextErrors.focusArea = 'Topic is required.'
-  }
-
-  if (!values.interviewType.trim()) {
-    nextErrors.interviewType = 'Interview type is required.'
-  }
-
-  if (!values.seniorityLevel.trim()) {
-    nextErrors.seniorityLevel = 'Seniority is required.'
-  }
-
-  if (!Number.isFinite(values.questionCount) || values.questionCount < 1) {
-    nextErrors.questionCount = 'Question count must be greater than zero.'
-  }
-
-  return nextErrors
 }
