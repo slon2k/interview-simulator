@@ -10,7 +10,9 @@ public sealed class LenientEnumJsonConverter<T> : JsonConverter<T>
     {
         if (reader.TokenType != JsonTokenType.String)
         {
-            JsonDocument.ParseValue(ref reader);
+            using (JsonDocument.ParseValue(ref reader))
+            { }
+
             return (T)(object)(-1);
         }
 
