@@ -130,7 +130,11 @@ function CreatedInterview({
 
   const startMutation = useMutation({
     mutationFn: () => startInterview(interviewId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['interview', interviewId] }),
+    onSuccess: (data) =>
+      queryClient.setQueryData<GetInterviewResponse>(['interview', interviewId], {
+        ...(data as unknown as GetInterviewResponse),
+        feedback: null,
+      }),
   })
 
   const errorMessage =
@@ -178,9 +182,12 @@ function ActiveInterview({
   const submitMutation = useMutation({
     mutationFn: (values: { answer: string }) =>
       submitAnswer(interviewId, { answer: values.answer, turnNumber }),
-    onSuccess: () => {
+    onSuccess: (data) => {
       form.reset()
-      void queryClient.invalidateQueries({ queryKey: ['interview', interviewId] })
+      queryClient.setQueryData<GetInterviewResponse>(
+        ['interview', interviewId],
+        data
+      )
     },
   })
 
