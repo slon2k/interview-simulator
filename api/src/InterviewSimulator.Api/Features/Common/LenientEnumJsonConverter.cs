@@ -3,27 +3,34 @@ using System.Text.Json.Serialization;
 
 namespace InterviewSimulator.Api.Features.Common;
 
-// Maps unknown string values to (T)(-1) instead of throwing, so FluentValidation can return 400.
-public sealed class LenientEnumJsonConverter<T> : JsonConverter<T> where T : struct, Enum
+public sealed class LenientEnumJsonConverter<T> : JsonConverter<T>
+    where T : struct, Enum
 {
     public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        if (reader.TokenType == JsonTokenType.String)
+        if (reader.TokenType != JsonTokenType.String)
         {
-            var value = reader.GetString();
-            if (Enum.TryParse<T>(value, ignoreCase: true, out var result))
-            {
-                return result;
-            }
-
+            reader.Skip();
             return (T)(object)(-1);
         }
 
-        return default;
+        var value = reader.GetString();
+        if (Enum.TryParse<T>(value, ignoreCase: true, out var result) && Enum.IsDefined(result))
+        {
+            return result;
+        }
+
+        // Unknown name -> sentinel; FluentValidation IsInEnum() rejects it (field-level 400).
+        return (T)(object)(-1);
     }
 
     public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
     {
+        if (!Enum.IsDefined(value))
+        {
+            throw new JsonException($"Cannot serialize undefined {typeof(T).Name} value '{value}'.");
+        }
+
         writer.WriteStringValue(value.ToString());
     }
 }

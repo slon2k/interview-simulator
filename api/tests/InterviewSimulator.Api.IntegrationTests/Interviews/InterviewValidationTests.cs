@@ -108,6 +108,28 @@ public sealed class InterviewValidationTests(AuthWebApplicationFactory factory) 
                 questionCount = 0
             },
             "Question count must be greater than zero."
+        },
+        {
+            new
+            {
+                targetRole = "Backend Engineer",
+                focusArea = "dotnet",
+                interviewType = "10",
+                seniorityLevel = "Middle",
+                questionCount = 5
+            },
+            "Interview type is invalid."
+        },
+        {
+            new
+            {
+                targetRole = "Backend Engineer",
+                focusArea = "dotnet",
+                interviewType = "Technical",
+                seniorityLevel = new {}, // Object instead of a string
+                questionCount = 5
+            },
+            "Seniority level is invalid."
         }
     };
 
