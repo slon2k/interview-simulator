@@ -1,6 +1,7 @@
+using System.Text.Json.Serialization;
+
 using FluentValidation;
 
-using InterviewSimulator.Api.Features.Common;
 using InterviewSimulator.Api.Features.Interviews;
 
 namespace InterviewSimulator.Api.Startup;
@@ -13,7 +14,7 @@ public static class InterviewServices
         builder.Services.AddValidatorsFromAssemblyContaining<Program>();
         builder.Services.ConfigureHttpJsonOptions(options =>
         {
-            options.SerializerOptions.Converters.Add(new LenientEnumJsonConverterFactory());
+            options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
         });
 
         return builder;

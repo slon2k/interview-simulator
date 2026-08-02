@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text.Json.Serialization;
 
 using FluentValidation;
 
@@ -57,7 +58,9 @@ public static class CreateInterview
     public record Request(
         string TargetRole,
         string FocusArea,
+        [property: JsonConverter(typeof(LenientEnumJsonConverter<InterviewTypeContract>))]
         InterviewTypeContract InterviewType,
+        [property: JsonConverter(typeof(LenientEnumJsonConverter<SeniorityLevelContract>))]
         SeniorityLevelContract SeniorityLevel,
         int QuestionCount);
 
