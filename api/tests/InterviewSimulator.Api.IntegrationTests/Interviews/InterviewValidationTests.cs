@@ -85,7 +85,7 @@ public sealed class InterviewValidationTests(AuthWebApplicationFactory factory) 
                 seniorityLevel = "Middle",
                 questionCount = 2
             },
-            "Invalid interview type: UnknownType"
+            "Interview type is invalid."
         },
         {
             new
@@ -96,7 +96,7 @@ public sealed class InterviewValidationTests(AuthWebApplicationFactory factory) 
                 seniorityLevel = "UnknownLevel",
                 questionCount = 2
             },
-            "Invalid seniority level: UnknownLevel"
+            "Seniority level is invalid."
         },
         {
             new
