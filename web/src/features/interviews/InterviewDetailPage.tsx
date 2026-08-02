@@ -1,13 +1,26 @@
-import { Alert, Badge, Button, Card, Group, Loader, Stack, Text, Textarea, Title } from '@mantine/core'
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Group,
+  Loader,
+  Modal,
+  Stack,
+  Text,
+  Textarea,
+  Title,
+} from '@mantine/core'
+import { useDisclosure } from '@mantine/hooks'
 import { useForm } from '@mantine/form'
-import { useState } from 'react'
 import { Link as RouterLink, useParams } from 'react-router-dom'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ApiError } from '../../api/apiError'
 import {
   getInterview,
   startInterview,
   submitAnswer,
+  completeInterview,
   type GetInterviewResponse,
 } from '../../api/interviewApi'
 import { toCount } from './interviewListHelpers'
@@ -114,21 +127,18 @@ function CreatedInterview({
   interview: GetInterviewResponse
 }) {
   const queryClient = useQueryClient()
-  const [isStarting, setIsStarting] = useState(false)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  const handleStart = async () => {
-    setErrorMessage(null)
-    setIsStarting(true)
-    try {
-      await startInterview(interviewId)
-      await queryClient.invalidateQueries({ queryKey: ['interview', interviewId] })
-    } catch (error) {
-      setErrorMessage(error instanceof ApiError ? error.message : 'Could not start interview.')
-    } finally {
-      setIsStarting(false)
-    }
-  }
+  const startMutation = useMutation({
+    mutationFn: () => startInterview(interviewId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['interview', interviewId] }),
+  })
+
+  const errorMessage =
+    startMutation.error instanceof ApiError
+      ? startMutation.error.message
+      : startMutation.isError
+        ? 'Could not start interview.'
+        : null
 
   return (
     <Stack gap="md">
@@ -139,7 +149,7 @@ function CreatedInterview({
         </Alert>
       )}
       <Group>
-        <Button loading={isStarting} onClick={() => void handleStart()}>
+        <Button loading={startMutation.isPending} onClick={() => startMutation.mutate()}>
           Start interview
         </Button>
       </Group>
@@ -155,8 +165,6 @@ function ActiveInterview({
   interview: GetInterviewResponse
 }) {
   const queryClient = useQueryClient()
-  const [apiErrorMessage, setApiErrorMessage] = useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const turnNumber = toCount(interview.answeredCount) + 1
 
@@ -167,19 +175,38 @@ function ActiveInterview({
     },
   })
 
-  const handleSubmit = async (values: { answer: string }) => {
-    setApiErrorMessage(null)
-    setIsSubmitting(true)
-    try {
-      await submitAnswer(interviewId, { answer: values.answer, turnNumber })
+  const submitMutation = useMutation({
+    mutationFn: (values: { answer: string }) =>
+      submitAnswer(interviewId, { answer: values.answer, turnNumber }),
+    onSuccess: () => {
       form.reset()
-      await queryClient.invalidateQueries({ queryKey: ['interview', interviewId] })
-    } catch (error) {
-      setApiErrorMessage(error instanceof ApiError ? error.message : 'Could not submit answer.')
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
+      void queryClient.invalidateQueries({ queryKey: ['interview', interviewId] })
+    },
+  })
+
+  const [stopModalOpened, { open: openStopModal, close: closeStopModal }] = useDisclosure(false)
+
+  const stopMutation = useMutation({
+    mutationFn: () => completeInterview(interviewId),
+    onSuccess: () => {
+      closeStopModal()
+      void queryClient.invalidateQueries({ queryKey: ['interview', interviewId] })
+    },
+  })
+
+  const apiErrorMessage =
+    submitMutation.error instanceof ApiError
+      ? submitMutation.error.message
+      : submitMutation.isError
+        ? 'Could not submit answer.'
+        : null
+
+  const stopErrorMessage =
+    stopMutation.error instanceof ApiError
+      ? stopMutation.error.message
+      : stopMutation.isError
+        ? 'Could not stop interview.'
+        : null
 
   return (
     <Stack gap="md">
@@ -195,11 +222,16 @@ function ActiveInterview({
           </Stack>
         </Card>
       )}
-      <form onSubmit={form.onSubmit((values) => void handleSubmit(values))}>
+      <form onSubmit={form.onSubmit((values) => submitMutation.mutate(values))}>
         <Stack gap="md">
           {apiErrorMessage && (
             <Alert color="red" title="Could not submit answer">
               {apiErrorMessage}
+            </Alert>
+          )}
+          {stopErrorMessage && (
+            <Alert color="red" title="Could not stop interview">
+              {stopErrorMessage}
             </Alert>
           )}
           <Textarea
@@ -207,16 +239,47 @@ function ActiveInterview({
             placeholder="Type your answer here..."
             minRows={5}
             autosize
-            disabled={isSubmitting}
+            disabled={submitMutation.isPending}
             {...form.getInputProps('answer')}
           />
-          <Group>
-            <Button type="submit" loading={isSubmitting}>
+          <Group justify="space-between">
+            <Button type="submit" loading={submitMutation.isPending}>
               Submit answer
+            </Button>
+            <Button
+              variant="subtle"
+              color="red"
+              disabled={submitMutation.isPending}
+              onClick={openStopModal}
+            >
+              Stop interview
             </Button>
           </Group>
         </Stack>
       </form>
+
+      <Modal
+        opened={stopModalOpened}
+        onClose={closeStopModal}
+        title="Stop interview?"
+        centered
+      >
+        <Stack gap="md">
+          <Text>Your progress so far will be saved. You won't be able to continue answering.</Text>
+          <Group justify="flex-end">
+            <Button variant="default" onClick={closeStopModal} disabled={stopMutation.isPending}>
+              Cancel
+            </Button>
+            <Button
+              color="red"
+              loading={stopMutation.isPending}
+              onClick={() => stopMutation.mutate()}
+            >
+              Stop interview
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Stack>
   )
 }
