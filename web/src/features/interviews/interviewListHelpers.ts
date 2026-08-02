@@ -1,7 +1,7 @@
 import type { InterviewSummary } from '../../api/interviewApi'
+import { toCount } from './interviewHelpers'
 
-// Pure presentation helpers for the interview list, kept separate from the page
-// component so the page file only exports components (react-refresh constraint).
+export { toCount } from './interviewHelpers'
 
 export function formatProgress(interview: InterviewSummary): string {
   const answered = toCount(interview.answeredCount)
@@ -12,18 +12,6 @@ export function formatProgress(interview: InterviewSummary): string {
   }
 
   return `${answered}/${total}`
-}
-
-// answeredCount / questionCount are typed `number | string` by the generated
-// contract (the .NET OpenAPI generator emits Int32 that way), so the string branch
-// is a real case, not dead defensive code.
-export function toCount(value: number | string): number {
-  if (typeof value === 'number') {
-    return value
-  }
-
-  const parsed = Number.parseInt(value, 10)
-  return Number.isFinite(parsed) ? parsed : 0
 }
 
 export function statusColor(status: string): string {

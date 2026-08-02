@@ -23,7 +23,7 @@ import {
   completeInterview,
   type GetInterviewResponse,
 } from '../../api/interviewApi'
-import { toCount } from './interviewListHelpers'
+import { toCount } from './interviewHelpers'
 
 type InterviewQuery = ReturnType<typeof useQuery<GetInterviewResponse>>
 
