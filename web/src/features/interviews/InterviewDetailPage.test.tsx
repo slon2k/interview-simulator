@@ -21,7 +21,8 @@ vi.mock('@tanstack/react-query', async (importOriginal) => {
 vi.mock('@mantine/core', async (importOriginal) => {
   const mod = await importOriginal<typeof import('@mantine/core')>()
   const TextareaStub = forwardRef<HTMLTextAreaElement, ComponentProps<typeof mod.Textarea>>(
-    function Textarea({ label, minRows, autosize: _, error, ...props }, ref) {
+    function Textarea({ label, minRows, autosize, error, ...props }, ref) {
+      void autosize
       return (
         <label>
           {label}
@@ -30,7 +31,9 @@ vi.mock('@mantine/core', async (importOriginal) => {
             rows={minRows}
             {...(props as TextareaHTMLAttributes<HTMLTextAreaElement>)}
           />
-          {error && <span>{String(error)}</span>}
+          {error != null && (
+            <span>{typeof error === 'string' ? error : JSON.stringify(error)}</span>
+          )}
         </label>
       )
     }
@@ -227,7 +230,9 @@ describe('InterviewDetailPage', () => {
 
       await userEvent.click(screen.getByRole('button', { name: /stop interview/i }))
 
-      expect(screen.getByText(/your progress so far will be saved/i)).toBeInTheDocument()
+      // Mantine's Modal opens with a transition/portal, so the body isn't in the DOM
+      // on the same tick — wait for it rather than querying synchronously.
+      expect(await screen.findByText(/your progress so far will be saved/i)).toBeInTheDocument()
     })
 
     it('calls completeInterview when the modal is confirmed', async () => {
