@@ -85,7 +85,7 @@ public sealed class InterviewValidationTests(AuthWebApplicationFactory factory) 
                 seniorityLevel = "Middle",
                 questionCount = 2
             },
-            "Invalid interview type: UnknownType"
+            "Interview type is invalid."
         },
         {
             new
@@ -96,7 +96,7 @@ public sealed class InterviewValidationTests(AuthWebApplicationFactory factory) 
                 seniorityLevel = "UnknownLevel",
                 questionCount = 2
             },
-            "Invalid seniority level: UnknownLevel"
+            "Seniority level is invalid."
         },
         {
             new
@@ -108,6 +108,28 @@ public sealed class InterviewValidationTests(AuthWebApplicationFactory factory) 
                 questionCount = 0
             },
             "Question count must be greater than zero."
+        },
+        {
+            new
+            {
+                targetRole = "Backend Engineer",
+                focusArea = "dotnet",
+                interviewType = "10",
+                seniorityLevel = "Middle",
+                questionCount = 5
+            },
+            "Interview type is invalid."
+        },
+        {
+            new
+            {
+                targetRole = "Backend Engineer",
+                focusArea = "dotnet",
+                interviewType = "Technical",
+                seniorityLevel = new {}, // Object instead of a string
+                questionCount = 5
+            },
+            "Seniority level is invalid."
         }
     };
 

@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text.Json.Serialization;
 
 using FluentValidation;
 
@@ -36,17 +37,14 @@ public static class CreateInterview
             return Errors.Unauthorized.ToProblemResult();
         }
 
-        var interviewType = Enum.Parse<InterviewType>(request.InterviewType, ignoreCase: true);
-        var seniorityLevel = Enum.Parse<SeniorityLevel>(request.SeniorityLevel, ignoreCase: true);
-
         var now = timeProvider.GetUtcNow();
 
         var interviewSession = InterviewSession.Create(
             userId: userId,
             targetRole: request.TargetRole,
             focusArea: request.FocusArea,
-            seniority: seniorityLevel,
-            interviewType: interviewType,
+            seniority: request.SeniorityLevel.ToDomain(),
+            interviewType: request.InterviewType.ToDomain(),
             questionCount: request.QuestionCount,
             createdAt: now);
 
@@ -60,8 +58,10 @@ public static class CreateInterview
     public record Request(
         string TargetRole,
         string FocusArea,
-        string InterviewType,
-        string SeniorityLevel,
+        [property: JsonConverter(typeof(LenientEnumJsonConverter<InterviewTypeContract>))]
+        InterviewTypeContract InterviewType,
+        [property: JsonConverter(typeof(LenientEnumJsonConverter<SeniorityLevelContract>))]
+        SeniorityLevelContract SeniorityLevel,
         int QuestionCount);
 
     public record Response(
@@ -70,8 +70,8 @@ public static class CreateInterview
         string Status,
         string TargetRole,
         string FocusArea,
-        string InterviewType,
-        string SeniorityLevel,
+        InterviewTypeContract InterviewType,
+        SeniorityLevelContract SeniorityLevel,
         int QuestionCount,
         DateTimeOffset CreatedAt);
 
@@ -82,8 +82,8 @@ public static class CreateInterview
             Status: session.Status.ToString(),
             TargetRole: session.TargetRole,
             FocusArea: session.FocusArea,
-            InterviewType: session.InterviewType.ToString(),
-            SeniorityLevel: session.Seniority.ToString(),
+            InterviewType: session.InterviewType.ToContract(),
+            SeniorityLevel: session.Seniority.ToContract(),
             QuestionCount: session.QuestionCount,
             CreatedAt: session.CreatedAt);
 
@@ -93,17 +93,8 @@ public static class CreateInterview
         {
             RuleFor(x => x.TargetRole).NotEmpty().WithMessage("Target role is required.");
             RuleFor(x => x.FocusArea).NotEmpty().WithMessage("Focus area is required.");
-
-            RuleFor(x => x.InterviewType)
-                .NotEmpty().WithMessage("Interview type is required.")
-                .IsEnumName(typeof(InterviewType), caseSensitive: false)
-                .WithMessage(value => $"Invalid interview type: {value.InterviewType}");
-
-            RuleFor(x => x.SeniorityLevel)
-                .NotEmpty().WithMessage("Seniority level is required.")
-                .IsEnumName(typeof(SeniorityLevel), caseSensitive: false)
-                .WithMessage(value => $"Invalid seniority level: {value.SeniorityLevel}");
-
+            RuleFor(x => x.InterviewType).IsInEnum().WithMessage("Interview type is invalid.");
+            RuleFor(x => x.SeniorityLevel).IsInEnum().WithMessage("Seniority level is invalid.");
             RuleFor(x => x.QuestionCount).GreaterThan(0).WithMessage("Question count must be greater than zero.");
         }
     }

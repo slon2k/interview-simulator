@@ -6,7 +6,8 @@ import { renderWithProviders } from '../../test/renderWithProviders'
 import type { UseQueryResult } from '@tanstack/react-query'
 import { ApiError } from '../../api/apiError'
 import type { InterviewSummary } from '../../api/interviewApi'
-import { InterviewListPage, formatProgress, toCount, statusColor } from './InterviewListPage'
+import { InterviewListPage } from './InterviewListPage'
+import { formatProgress, toCount, statusColor } from './interviewListHelpers'
 
 vi.mock('@tanstack/react-query', async (importOriginal) => {
   const mod = await importOriginal<typeof import('@tanstack/react-query')>()
