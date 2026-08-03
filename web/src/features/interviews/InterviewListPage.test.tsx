@@ -7,7 +7,7 @@ import type { UseQueryResult } from '@tanstack/react-query'
 import { ApiError } from '../../api/apiError'
 import type { InterviewSummary } from '../../api/interviewApi'
 import { InterviewListPage } from './InterviewListPage'
-import { formatProgress, toCount, statusColor } from './interviewListHelpers'
+import { formatProgress, statusColor } from './interviewListHelpers'
 
 vi.mock('@tanstack/react-query', async (importOriginal) => {
   const mod = await importOriginal<typeof import('@tanstack/react-query')>()
@@ -44,20 +44,6 @@ const fakeInterview: InterviewSummary = {
 function renderPage() {
   return renderWithProviders(<InterviewListPage />)
 }
-
-describe('toCount', () => {
-  it('returns a number as-is', () => {
-    expect(toCount(7)).toBe(7)
-  })
-
-  it('parses a numeric string', () => {
-    expect(toCount('3')).toBe(3)
-  })
-
-  it('returns 0 for a non-numeric string', () => {
-    expect(toCount('abc')).toBe(0)
-  })
-})
 
 describe('formatProgress', () => {
   it('formats answered/total', () => {
