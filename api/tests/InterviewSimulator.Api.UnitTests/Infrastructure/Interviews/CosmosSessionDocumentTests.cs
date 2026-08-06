@@ -109,7 +109,7 @@ public sealed class CosmosSessionDocument_Mapping
         Assert.Equal(5, doc.QuestionCount);
         Assert.Equal(5, doc.AnsweredCount);
         Assert.NotNull(doc.Feedback);
-        Assert.Equal(85, doc.Feedback.TotalScore);
+        Assert.Equal(85, doc.Feedback.Score);
         Assert.Equal("Great interview", doc.Feedback.Summary);
     }
 
@@ -142,7 +142,7 @@ public sealed class CosmosSessionDocument_Mapping
             AnsweredCount = 5,
             Feedback = new CosmosSessionFeedbackDocument
             {
-                TotalScore = 85,
+                Score = 85,
                 Summary = "Great interview"
             }
         };
