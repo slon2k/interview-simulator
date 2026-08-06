@@ -6,8 +6,6 @@ import { DashboardPage } from '../features/dashboard/DashboardPage'
 import { InterviewListPage } from '../features/interviews/InterviewListPage'
 import { InterviewSetupPage } from '../features/interviews/InterviewSetupPage'
 import { InterviewDetailPage } from '../features/interviews/InterviewDetailPage'
-import { SessionHistoryPage } from '../features/sessions/SessionHistoryPage'
-import { SessionDetailPage } from '../features/sessions/SessionDetailPage'
 import { UnauthorizedPage } from '../pages/UnauthorizedPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
 
@@ -49,22 +47,6 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <InterviewDetailPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'history',
-        element: (
-          <ProtectedRoute>
-            <SessionHistoryPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'history/:sessionId',
-        element: (
-          <ProtectedRoute>
-            <SessionDetailPage />
           </ProtectedRoute>
         ),
       },
