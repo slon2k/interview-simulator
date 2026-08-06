@@ -1,6 +1,7 @@
 using InterviewSimulator.Api.Features.Common;
 
 using Microsoft.AspNetCore.OpenApi;
+using Microsoft.OpenApi;
 
 using Scalar.AspNetCore;
 
@@ -14,6 +15,16 @@ public static class DiagnosticsServices
     {
         builder.Services.AddOpenApi(options =>
         {
+            options.AddSchemaTransformer((schema, context, ct) =>
+            {
+                if (schema.Format == "int32" && schema.Type is { } type && type.HasFlag(JsonSchemaType.String))
+                {
+                    schema.Type = type & ~JsonSchemaType.String;
+                    schema.Pattern = null;
+                }
+
+                return Task.CompletedTask;
+            });
             // Prefix nested types with their declaring class name to avoid schema name collisions.
             options.CreateSchemaReferenceId = typeInfo =>
             {
