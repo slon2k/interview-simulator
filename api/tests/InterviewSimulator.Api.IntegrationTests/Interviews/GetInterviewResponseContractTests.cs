@@ -201,7 +201,7 @@ public sealed class GetInterviewResponseContractTests(AuthWebApplicationFactory 
             session.Start(startedAt);
             session.RecordAnswer(startedAt.AddMinutes(1));
             session.RecordAnswer(completedAt);
-            session.Evaluate(new Feedback(85, "Strong and concise answers."), evaluatedAt);
+            session.Evaluate(new InterviewFeedback(Score: 85, Summary: "Strong and concise answers."), evaluatedAt);
 
             _sessions[session.Id] = session;
             return session.Id;

@@ -13,3 +13,7 @@ public enum SeniorityLevelContract
     Middle,
     Senior,
 }
+
+public record Question(string Text, string Topic);
+
+public record Feedback(int Score, string? Summary);

@@ -97,10 +97,6 @@ public static class StartInterview
         DateTimeOffset? CompletedAt,
         Question CurrentQuestion);
 
-    public record Question(
-        string Text,
-        string Topic);
-
     private static Response MapToResponse(InterviewSession session, InterviewTurn turn) => new(
         Id: session.Id,
         UserId: session.UserId,

@@ -381,12 +381,12 @@ public sealed class InterviewSession_Evaluate
         session.Start(createdAt.AddSeconds(1));
         session.RecordAnswer(createdAt.AddSeconds(2));
 
-        var feedback = new Feedback(TotalScore: 85, Summary: "Good performance");
+        var feedback = new InterviewFeedback(Score: 85, Summary: "Good performance");
         var evaluatedAt = createdAt.AddSeconds(3);
         session.Evaluate(feedback, evaluatedAt);
 
         Assert.NotNull(session.Feedback);
-        Assert.Equal(85, session.Feedback.TotalScore);
+        Assert.Equal(85, session.Feedback.Score);
         Assert.Equal("Good performance", session.Feedback.Summary);
         Assert.Equal(evaluatedAt, session.UpdatedAt);
     }
@@ -406,7 +406,7 @@ public sealed class InterviewSession_Evaluate
 
         session.Start(createdAt.AddSeconds(1));
 
-        var feedback = new Feedback(TotalScore: 85, Summary: "Good performance");
+        var feedback = new InterviewFeedback(Score: 85, Summary: "Good performance");
         var ex = Assert.Throws<DomainConflictException>(() =>
             session.Evaluate(feedback, createdAt.AddSeconds(2)));
 
@@ -430,7 +430,7 @@ public sealed class InterviewSession_Evaluate
         var completedAt = createdAt.AddSeconds(2);
         session.RecordAnswer(completedAt);
 
-        var feedback = new Feedback(TotalScore: 85, Summary: "Good performance");
+        var feedback = new InterviewFeedback(Score: 85, Summary: "Good performance");
         var ex = Assert.Throws<InvalidOperationException>(() =>
             session.Evaluate(feedback, completedAt.AddSeconds(-1)));
 

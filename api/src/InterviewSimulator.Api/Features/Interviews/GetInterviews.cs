@@ -86,7 +86,7 @@ public static class GetInterviews
             CreatedAt: session.CreatedAt,
             StartedAt: session.StartedAt,
             CompletedAt: session.CompletedAt,
-            TotalScore: session.Feedback?.TotalScore);
+            TotalScore: session.Feedback?.Score);
     }
 
     public class Validator : AbstractValidator<Request>

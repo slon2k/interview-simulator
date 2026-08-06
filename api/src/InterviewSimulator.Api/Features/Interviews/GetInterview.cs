@@ -62,7 +62,7 @@ public static class GetInterview
 
         var feedback = interview.Feedback is not null
             ? new Feedback(
-                Score: interview.Feedback.TotalScore,
+                Score: interview.Feedback.Score,
                 Summary: interview.Feedback.Summary)
             : null;
 
@@ -98,14 +98,6 @@ public static class GetInterview
         DateTimeOffset? CompletedAt,
         Feedback? Feedback,
         Question? CurrentQuestion);
-
-    public record Question(
-        string Text,
-        string Topic);
-
-    public record Feedback(
-        int Score,
-        string? Summary);
 
     public static class Errors
     {

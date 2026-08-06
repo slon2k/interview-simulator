@@ -13,7 +13,7 @@ public static class SubmitAnswer
 
     public static IEndpointRouteBuilder MapSubmitAnswer(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapPost("/{sessionId:guid}/answers", SubmitAnswerHandler)
+        endpoints.MapPost("/{interviewId:guid}/answers", SubmitAnswerHandler)
             .AddEndpointFilter<ValidationFilter<Request>>()
             .WithName("SubmitAnswer")
             .WithSummary("Submit an answer")
@@ -29,7 +29,7 @@ public static class SubmitAnswer
     }
 
     public static async Task<IResult> SubmitAnswerHandler(
-        Guid sessionId,
+        Guid interviewId,
         Request request,
         IInterviewStore store,
         IQuestionGenerator questionGenerator,
@@ -42,7 +42,7 @@ public static class SubmitAnswer
             return Errors.Unauthorized.ToProblemResult();
         }
 
-        if (await store.GetSessionAsync(userId, sessionId, cancellationToken) is not InterviewSession session)
+        if (await store.GetSessionAsync(userId, interviewId, cancellationToken) is not InterviewSession session)
         {
             return Errors.SessionNotFound.ToProblemResult();
         }
@@ -57,7 +57,7 @@ public static class SubmitAnswer
             return Errors.InvalidTurnNumber.ToProblemResult();
         }
 
-        if (await store.GetTurnAsync(userId, sessionId, request.TurnNumber, cancellationToken) is not InterviewTurn currentTurn)
+        if (await store.GetTurnAsync(userId, interviewId, request.TurnNumber, cancellationToken) is not InterviewTurn currentTurn)
         {
             return Errors.TurnNotFound.ToProblemResult();
         }
@@ -70,7 +70,7 @@ public static class SubmitAnswer
 
         if (session.Status == InterviewStatus.Active)
         {
-            var previousTurns = await store.ListTurnsAsync(userId, sessionId, cancellationToken);
+            var previousTurns = await store.ListTurnsAsync(userId, interviewId, cancellationToken);
             var nextTurnNumber = session.AnsweredCount + 1;
             var turnsForGeneration = previousTurns
                 .Where(turn => turn.TurnNumber != currentTurn.TurnNumber)
@@ -101,7 +101,7 @@ public static class SubmitAnswer
             }
 
             nextTurn = InterviewTurn.Create(
-                sessionId: session.Id,
+                sessionId: interviewId,
                 turnNumber: nextTurnNumber,
                 question: new InterviewQuestion(
                     text: nextQuestion.Text,
@@ -134,7 +134,7 @@ public static class SubmitAnswer
         CompletedAt: session.CompletedAt,
         Feedback: session.Feedback is not null
             ? new Feedback(
-                Score: session.Feedback.TotalScore,
+                Score: session.Feedback.Score,
                 Summary: session.Feedback.Summary)
             : null,
         CurrentQuestion: nextTurn is not null
@@ -158,14 +158,6 @@ public static class SubmitAnswer
         DateTimeOffset? CompletedAt,
         Feedback? Feedback,
         Question? CurrentQuestion);
-
-    public record Question(
-        string Text,
-        string Topic);
-
-    public record Feedback(
-        int Score,
-        string? Summary);
 
     public class Validator : AbstractValidator<Request>
     {

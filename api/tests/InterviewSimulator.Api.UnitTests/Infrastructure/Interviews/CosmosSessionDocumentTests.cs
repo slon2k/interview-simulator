@@ -89,7 +89,7 @@ public sealed class CosmosSessionDocument_Mapping
             CompletedAt: completedAt,
             QuestionCount: 5,
             AnsweredCount: 5,
-            Feedback: new Feedback(TotalScore: 85, Summary: "Great interview")));
+            Feedback: new InterviewFeedback(Score: 85, Summary: "Great interview")));
 
         var doc = CosmosSessionDocument.FromDomain(sessionWithId);
 
@@ -163,7 +163,7 @@ public sealed class CosmosSessionDocument_Mapping
         Assert.Equal(5, session.QuestionCount);
         Assert.Equal(5, session.AnsweredCount);
         Assert.NotNull(session.Feedback);
-        Assert.Equal(85, session.Feedback.TotalScore);
+        Assert.Equal(85, session.Feedback.Score);
         Assert.Equal("Great interview", session.Feedback.Summary);
     }
 
@@ -186,7 +186,7 @@ public sealed class CosmosSessionDocument_Mapping
         originalSession.RecordAnswer(createdAt.AddSeconds(30));
         originalSession.RecordAnswer(createdAt.AddSeconds(60));
         originalSession.RecordAnswer(createdAt.AddSeconds(90));
-        originalSession.Evaluate(new Feedback(TotalScore: 92, Summary: "Excellent"), createdAt.AddSeconds(100));
+        originalSession.Evaluate(new InterviewFeedback(Score: 92, Summary: "Excellent"), createdAt.AddSeconds(100));
 
         // Map to document and back
         var doc = CosmosSessionDocument.FromDomain(originalSession);
@@ -202,7 +202,7 @@ public sealed class CosmosSessionDocument_Mapping
         Assert.Equal(originalSession.InterviewType, restoredSession.InterviewType);
         Assert.Equal(originalSession.QuestionCount, restoredSession.QuestionCount);
         Assert.Equal(originalSession.AnsweredCount, restoredSession.AnsweredCount);
-        Assert.Equal(originalSession.Feedback?.TotalScore, restoredSession.Feedback?.TotalScore);
+        Assert.Equal(originalSession.Feedback?.Score, restoredSession.Feedback?.Score);
         Assert.Equal(originalSession.Feedback?.Summary, restoredSession.Feedback?.Summary);
     }
 

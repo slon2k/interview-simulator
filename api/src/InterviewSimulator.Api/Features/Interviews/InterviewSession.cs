@@ -30,7 +30,7 @@ public sealed class InterviewSession
 
     public int AnsweredCount { get; private set; }
 
-    public Feedback? Feedback { get; private set; }
+    public InterviewFeedback? Feedback { get; private set; }
 
     public string? ConcurrencyToken { get; private set; }
 
@@ -164,7 +164,7 @@ public sealed class InterviewSession
         UpdatedAt = completedAt;
     }
 
-    public void Evaluate(Feedback feedback, DateTimeOffset updatedAt)
+    public void Evaluate(InterviewFeedback feedback, DateTimeOffset updatedAt)
     {
         if (Status != InterviewStatus.Completed)
         {
@@ -354,8 +354,8 @@ public sealed class InterviewSession
     }
 }
 
-public record Feedback(
-    int TotalScore,
+public record InterviewFeedback(
+    int Score,
     string? Summary);
 
 public enum InterviewStatus
@@ -393,6 +393,6 @@ public sealed record InterviewSessionState(
     DateTimeOffset? CompletedAt,
     int QuestionCount,
     int AnsweredCount,
-    Feedback? Feedback,
+    InterviewFeedback? Feedback,
     string? ConcurrencyToken = null);
 
