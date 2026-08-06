@@ -1,5 +1,7 @@
 using InterviewSimulator.Api.Features.Common;
 
+using Microsoft.AspNetCore.OpenApi;
+
 using Scalar.AspNetCore;
 
 namespace InterviewSimulator.Api.Startup;
@@ -20,7 +22,23 @@ public static class DiagnosticsServices
                 {
                     return $"{parent.Name}{type.Name}";
                 }
-                return type.IsGenericType ? null : type.Name;
+
+                if (type.IsPrimitive
+                    || type.IsGenericType
+                    || type == typeof(DateOnly)
+                    || type == typeof(TimeOnly)
+                    || type == typeof(string)
+                    || type == typeof(decimal)
+                    || type == typeof(DateTime)
+                    || type == typeof(DateTimeOffset)
+                    || type == typeof(Guid)
+                    || type == typeof(TimeSpan)
+                    )
+                {
+                    return null;
+                }
+
+                return OpenApiOptions.CreateDefaultSchemaReferenceId(typeInfo);
             };
         });
         builder.Services.AddHealthChecks();
