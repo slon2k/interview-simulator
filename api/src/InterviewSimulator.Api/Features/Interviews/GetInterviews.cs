@@ -38,7 +38,7 @@ public static class GetInterviews
         }
 
         IReadOnlyList<InterviewStatus>? statuses = request.Status is { Length: > 0 }
-            ? request.Status.Select(s => Enum.Parse<InterviewStatus>(s, ignoreCase: true)).ToList()
+            ? request.Status.Select(s => Enum.Parse<InterviewStatusContract>(s, ignoreCase: true).ToDomain()).ToList()
             : null;
 
         var interviews = await interviewStore.ListSessionsAsync(
@@ -94,7 +94,7 @@ public static class GetInterviews
         public Validator()
         {
             RuleForEach(x => x.Status)
-                .IsEnumName(typeof(InterviewStatus), caseSensitive: false)
+                .IsEnumName(typeof(InterviewStatusContract), caseSensitive: false)
                 .WithMessage("Invalid status filter. Allowed values: created, active, completed.")
                 .When(x => x.Status is { Length: > 0 });
         }
