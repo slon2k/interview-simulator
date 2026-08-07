@@ -18,7 +18,7 @@ public static class SubmitAnswer
             .WithName("SubmitAnswer")
             .WithSummary("Submit an answer")
             .WithDescription("Records the answer for the current turn and returns the next question if the session is still active.")
-            .Produces<Response>()
+            .Produces<InterviewResponse>()
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status404NotFound)
@@ -119,7 +119,7 @@ public static class SubmitAnswer
         return Results.Ok(MapToResponse(session, nextTurn));
     }
 
-    private static Response MapToResponse(InterviewSession session, InterviewTurn? nextTurn) => new(
+    private static InterviewResponse MapToResponse(InterviewSession session, InterviewTurn? nextTurn) => new(
         Id: session.Id,
         UserId: session.UserId,
         Status: session.Status.ToContract(),
@@ -133,32 +133,16 @@ public static class SubmitAnswer
         StartedAt: session.StartedAt,
         CompletedAt: session.CompletedAt,
         Feedback: session.Feedback is not null
-            ? new FeedbackResponse(
+            ? new FeedbackContract(
                 Score: session.Feedback.Score,
                 Summary: session.Feedback.Summary)
             : null,
         CurrentQuestion: nextTurn is not null
-            ? new QuestionResponse(
+            ? new QuestionContract(
                 Text: nextTurn.Question.Text,
                 Topic: nextTurn.Question.Topic,
                 TurnNumber: nextTurn.TurnNumber)
             : null);
-
-    public record Response(
-        Guid Id,
-        string UserId,
-        InterviewStatusContract Status,
-        string TargetRole,
-        string FocusArea,
-        InterviewTypeContract InterviewType,
-        SeniorityLevelContract SeniorityLevel,
-        int QuestionCount,
-        int AnsweredCount,
-        DateTimeOffset CreatedAt,
-        DateTimeOffset? StartedAt,
-        DateTimeOffset? CompletedAt,
-        FeedbackResponse? Feedback,
-        QuestionResponse? CurrentQuestion);
 
     public class Validator : AbstractValidator<Request>
     {

@@ -13,7 +13,7 @@ public static class GetInterview
             .WithName("GetInterview")
             .WithSummary("Get an interview session")
             .WithDescription("Returns the interview session with the given ID belonging to the authenticated user.")
-            .Produces<Response>()
+            .Produces<InterviewResponse>()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
@@ -41,7 +41,7 @@ public static class GetInterview
             return Errors.SessionNotFound.ToProblemResult();
         }
 
-        QuestionResponse? currentQuestion = null;
+        QuestionContract? currentQuestion = null;
 
         if (interview.Status == InterviewStatus.Active)
         {
@@ -55,7 +55,7 @@ public static class GetInterview
             if (currentTurn is not null)
             {
                 var question = currentTurn.Question;
-                currentQuestion = new QuestionResponse(
+                currentQuestion = new QuestionContract(
                     Text: question.Text,
                     Topic: question.Topic,
                     TurnNumber: turnNumber);
@@ -63,12 +63,12 @@ public static class GetInterview
         }
 
         var feedback = interview.Feedback is not null
-            ? new FeedbackResponse(
+            ? new FeedbackContract(
                 Score: interview.Feedback.Score,
                 Summary: interview.Feedback.Summary)
             : null;
 
-        return Results.Ok(new Response(
+        return Results.Ok(new InterviewResponse(
             Id: interview.Id,
             UserId: interview.UserId,
             Status: interview.Status.ToContract(),
@@ -84,22 +84,6 @@ public static class GetInterview
             Feedback: feedback,
             CurrentQuestion: currentQuestion));
     }
-
-    public record Response(
-        Guid Id,
-        string UserId,
-        InterviewStatusContract Status,
-        string TargetRole,
-        string FocusArea,
-        InterviewTypeContract InterviewType,
-        SeniorityLevelContract SeniorityLevel,
-        int QuestionCount,
-        int AnsweredCount,
-        DateTimeOffset CreatedAt,
-        DateTimeOffset? StartedAt,
-        DateTimeOffset? CompletedAt,
-        FeedbackResponse? Feedback,
-        QuestionResponse? CurrentQuestion);
 
     public static class Errors
     {

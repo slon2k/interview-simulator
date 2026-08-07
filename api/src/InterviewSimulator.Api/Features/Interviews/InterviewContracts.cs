@@ -21,6 +21,22 @@ public enum InterviewStatusContract
     Completed,
 }
 
-public record QuestionResponse(string Text, string Topic, int TurnNumber);
+public record QuestionContract(string Text, string Topic, int TurnNumber);
 
-public record FeedbackResponse(int Score, string? Summary);
+public record FeedbackContract(int Score, string? Summary);
+
+public record InterviewResponse(
+    Guid Id,
+    string UserId,
+    InterviewStatusContract Status,
+    string TargetRole,
+    string FocusArea,
+    InterviewTypeContract InterviewType,
+    SeniorityLevelContract SeniorityLevel,
+    int QuestionCount,
+    int AnsweredCount,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? StartedAt,
+    DateTimeOffset? CompletedAt,
+    FeedbackContract? Feedback,
+    QuestionContract? CurrentQuestion);

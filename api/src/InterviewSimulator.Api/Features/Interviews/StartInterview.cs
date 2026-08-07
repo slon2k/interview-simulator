@@ -95,7 +95,7 @@ public static class StartInterview
         DateTimeOffset CreatedAt,
         DateTimeOffset? StartedAt,
         DateTimeOffset? CompletedAt,
-        QuestionResponse CurrentQuestion);
+        QuestionContract CurrentQuestion);
 
     private static Response MapToResponse(InterviewSession session, InterviewTurn turn) => new(
         Id: session.Id,
@@ -110,7 +110,7 @@ public static class StartInterview
         CreatedAt: session.CreatedAt,
         StartedAt: session.StartedAt,
         CompletedAt: session.CompletedAt,
-        CurrentQuestion: new QuestionResponse(
+        CurrentQuestion: new QuestionContract(
             Text: turn.Question.Text,
             Topic: turn.Question.Topic,
             TurnNumber: turn.TurnNumber
