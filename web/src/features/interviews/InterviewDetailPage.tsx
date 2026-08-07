@@ -167,8 +167,6 @@ function ActiveInterview({
 }) {
   const queryClient = useQueryClient()
 
-  const turnNumber = interview.answeredCount + 1
-
   const form = useForm({
     initialValues: { answer: '' },
     validate: {
@@ -178,7 +176,10 @@ function ActiveInterview({
 
   const submitMutation = useMutation({
     mutationFn: (values: { answer: string }) =>
-      submitAnswer(interviewId, { answer: values.answer, turnNumber }),
+      submitAnswer(interviewId, {
+        answer: values.answer,
+        turnNumber: interview.currentQuestion?.turnNumber ?? interview.answeredCount + 1,
+      }),
     onSuccess: (data) => {
       form.reset()
       queryClient.setQueryData<InterviewResponse>(['interview', interviewId], data)
@@ -216,7 +217,8 @@ function ActiveInterview({
         <Card withBorder radius="md">
           <Stack gap="xs">
             <Text size="sm" c="dimmed" fw={500}>
-              Question {turnNumber} of {interview.questionCount} · {interview.currentQuestion.topic}
+              Question {interview.currentQuestion.turnNumber} of {interview.questionCount} ·{' '}
+              {interview.currentQuestion.topic}
             </Text>
             <Text fw={500}>{interview.currentQuestion.text}</Text>
           </Stack>
