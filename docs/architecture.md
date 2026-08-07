@@ -306,21 +306,26 @@ The `/api/me` endpoint should return a normalized auth view such as:
 
 ---
 
-## Planned API Surface
+## API Surface
 
 ```text
 GET  /api/health
 GET  /api/me
-POST /api/sessions
-POST /api/sessions/{sessionId}/turns
-POST /api/sessions/{sessionId}/complete
-GET  /api/sessions
-GET  /api/sessions/{sessionId}
-GET  /api/dashboard/summary
-POST /api/speech/token
+POST /api/auth/login
+POST /api/auth/logout
+
+POST /api/interviews
+POST /api/interviews/{interviewId}/start
+GET  /api/interviews
+GET  /api/interviews/{interviewId}
+POST /api/interviews/{interviewId}/answers
+POST /api/interviews/{interviewId}/complete
+
+GET  /api/dashboard/summary  (planned — M07)
+POST /api/speech/token       (planned — future)
 ```
 
-These endpoints are enough to support the phase 1 foundation, the text-based interview MVP, and later voice support.
+All `/api/interviews` endpoints require the `InvitedUser` authorization policy.
 
 ---
 
