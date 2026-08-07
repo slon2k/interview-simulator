@@ -133,14 +133,15 @@ public static class SubmitAnswer
         StartedAt: session.StartedAt,
         CompletedAt: session.CompletedAt,
         Feedback: session.Feedback is not null
-            ? new Feedback(
+            ? new FeedbackResponse(
                 Score: session.Feedback.Score,
                 Summary: session.Feedback.Summary)
             : null,
         CurrentQuestion: nextTurn is not null
-            ? new Question(
+            ? new QuestionResponse(
                 Text: nextTurn.Question.Text,
-                Topic: nextTurn.Question.Topic)
+                Topic: nextTurn.Question.Topic,
+                TurnNumber: nextTurn.TurnNumber)
             : null);
 
     public record Response(
@@ -156,8 +157,8 @@ public static class SubmitAnswer
         DateTimeOffset CreatedAt,
         DateTimeOffset? StartedAt,
         DateTimeOffset? CompletedAt,
-        Feedback? Feedback,
-        Question? CurrentQuestion);
+        FeedbackResponse? Feedback,
+        QuestionResponse? CurrentQuestion);
 
     public class Validator : AbstractValidator<Request>
     {

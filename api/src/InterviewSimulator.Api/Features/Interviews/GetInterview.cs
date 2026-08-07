@@ -41,27 +41,29 @@ public static class GetInterview
             return Errors.SessionNotFound.ToProblemResult();
         }
 
-        Question? currentQuestion = null;
+        QuestionResponse? currentQuestion = null;
 
         if (interview.Status == InterviewStatus.Active)
         {
+            int turnNumber = interview.AnsweredCount + 1;
             var currentTurn = await store.GetTurnAsync(
                 userId: userId,
                 sessionId: interview.Id,
-                turnNumber: interview.AnsweredCount + 1,
+                turnNumber: turnNumber,
                 cancellationToken: cancellationToken);
 
             if (currentTurn is not null)
             {
                 var question = currentTurn.Question;
-                currentQuestion = new Question(
+                currentQuestion = new QuestionResponse(
                     Text: question.Text,
-                    Topic: question.Topic);
+                    Topic: question.Topic,
+                    TurnNumber: turnNumber);
             }
         }
 
         var feedback = interview.Feedback is not null
-            ? new Feedback(
+            ? new FeedbackResponse(
                 Score: interview.Feedback.Score,
                 Summary: interview.Feedback.Summary)
             : null;
@@ -72,8 +74,8 @@ public static class GetInterview
             Status: interview.Status.ToString(),
             TargetRole: interview.TargetRole,
             FocusArea: interview.FocusArea,
-            InterviewType: interview.InterviewType.ToString(),
-            SeniorityLevel: interview.Seniority.ToString(),
+            InterviewType: interview.InterviewType.ToContract(),
+            SeniorityLevel: interview.Seniority.ToContract(),
             QuestionCount: interview.QuestionCount,
             AnsweredCount: interview.AnsweredCount,
             CreatedAt: interview.CreatedAt,
@@ -89,15 +91,15 @@ public static class GetInterview
         string Status,
         string TargetRole,
         string FocusArea,
-        string InterviewType,
-        string SeniorityLevel,
+        InterviewTypeContract InterviewType,
+        SeniorityLevelContract SeniorityLevel,
         int QuestionCount,
         int AnsweredCount,
         DateTimeOffset CreatedAt,
         DateTimeOffset? StartedAt,
         DateTimeOffset? CompletedAt,
-        Feedback? Feedback,
-        Question? CurrentQuestion);
+        FeedbackResponse? Feedback,
+        QuestionResponse? CurrentQuestion);
 
     public static class Errors
     {

@@ -88,14 +88,14 @@ public static class StartInterview
         string Status,
         string TargetRole,
         string FocusArea,
-        string InterviewType,
-        string SeniorityLevel,
+        InterviewTypeContract InterviewType,
+        SeniorityLevelContract SeniorityLevel,
         int QuestionCount,
         int AnsweredCount,
         DateTimeOffset CreatedAt,
         DateTimeOffset? StartedAt,
         DateTimeOffset? CompletedAt,
-        Question CurrentQuestion);
+        QuestionResponse CurrentQuestion);
 
     private static Response MapToResponse(InterviewSession session, InterviewTurn turn) => new(
         Id: session.Id,
@@ -103,16 +103,18 @@ public static class StartInterview
         Status: session.Status.ToString(),
         TargetRole: session.TargetRole,
         FocusArea: session.FocusArea,
-        InterviewType: session.InterviewType.ToString(),
-        SeniorityLevel: session.Seniority.ToString(),
+        InterviewType: session.InterviewType.ToContract(),
+        SeniorityLevel: session.Seniority.ToContract(),
         QuestionCount: session.QuestionCount,
         AnsweredCount: session.AnsweredCount,
         CreatedAt: session.CreatedAt,
         StartedAt: session.StartedAt,
         CompletedAt: session.CompletedAt,
-        CurrentQuestion: new Question(
+        CurrentQuestion: new QuestionResponse(
             Text: turn.Question.Text,
-            Topic: turn.Question.Topic));
+            Topic: turn.Question.Topic,
+            TurnNumber: turn.TurnNumber
+            ));
     
     public static class Errors
     {

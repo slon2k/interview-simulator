@@ -14,6 +14,6 @@ public enum SeniorityLevelContract
     Senior,
 }
 
-public record Question(string Text, string Topic);
+public record QuestionResponse(string Text, string Topic, int TurnNumber);
 
-public record Feedback(int Score, string? Summary);
+public record FeedbackResponse(int Score, string? Summary);
