@@ -59,7 +59,7 @@ public static class GetInterviews
     public record Response(
         Guid Id,
         string UserId,
-        string Status,
+        InterviewStatusContract Status,
         string TargetRole,
         string FocusArea,
         InterviewTypeContract InterviewType,
@@ -76,7 +76,7 @@ public static class GetInterviews
         return new Response(
             Id: session.Id,
             UserId: session.UserId,
-            Status: session.Status.ToString(),
+            Status: session.Status.ToContract(),
             TargetRole: session.TargetRole,
             FocusArea: session.FocusArea,
             InterviewType: session.InterviewType.ToContract(),

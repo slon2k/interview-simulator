@@ -14,6 +14,13 @@ public enum SeniorityLevelContract
     Senior,
 }
 
+public enum InterviewStatusContract
+{
+    Created,
+    Active,
+    Completed,
+}
+
 public record QuestionResponse(string Text, string Topic, int TurnNumber);
 
 public record FeedbackResponse(int Score, string? Summary);

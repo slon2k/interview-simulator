@@ -71,7 +71,7 @@ public static class GetInterview
         return Results.Ok(new Response(
             Id: interview.Id,
             UserId: interview.UserId,
-            Status: interview.Status.ToString(),
+            Status: interview.Status.ToContract(),
             TargetRole: interview.TargetRole,
             FocusArea: interview.FocusArea,
             InterviewType: interview.InterviewType.ToContract(),
@@ -88,7 +88,7 @@ public static class GetInterview
     public record Response(
         Guid Id,
         string UserId,
-        string Status,
+        InterviewStatusContract Status,
         string TargetRole,
         string FocusArea,
         InterviewTypeContract InterviewType,

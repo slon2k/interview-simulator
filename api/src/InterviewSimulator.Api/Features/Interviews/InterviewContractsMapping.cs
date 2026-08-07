@@ -33,4 +33,20 @@ public static class InterviewContractMapping
         SeniorityLevel.Senior => SeniorityLevelContract.Senior,
         _ => throw new ArgumentOutOfRangeException(nameof(value), value, "Unmapped seniority level domain value."),
     };
+
+    public static InterviewStatusContract ToContract(this InterviewStatus value) => value switch
+    {
+        InterviewStatus.Created => InterviewStatusContract.Created,
+        InterviewStatus.Active => InterviewStatusContract.Active,
+        InterviewStatus.Completed => InterviewStatusContract.Completed,
+        _ => throw new ArgumentOutOfRangeException(nameof(value), value, "Unmapped interview status domain value."),
+    };
+
+    public static InterviewStatus ToDomain(this InterviewStatusContract value) => value switch
+    {
+        InterviewStatusContract.Created => InterviewStatus.Created,
+        InterviewStatusContract.Active => InterviewStatus.Active,
+        InterviewStatusContract.Completed => InterviewStatus.Completed,
+        _ => throw new ArgumentOutOfRangeException(nameof(value), value, "Unmapped interview status contract value."),
+    };
 }
