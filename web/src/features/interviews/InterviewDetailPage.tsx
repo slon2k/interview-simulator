@@ -21,11 +21,10 @@ import {
   startInterview,
   submitAnswer,
   completeInterview,
-  type GetInterviewResponse,
+  type InterviewResponse,
 } from '../../api/interviewApi'
-import { toCount } from './interviewHelpers'
 
-type InterviewQuery = ReturnType<typeof useQuery<GetInterviewResponse>>
+type InterviewQuery = ReturnType<typeof useQuery<InterviewResponse>>
 
 export function InterviewDetailPage() {
   const { interviewId } = useParams<{ interviewId: string }>()
@@ -79,24 +78,22 @@ function InterviewBody({ interviewId, query }: { interviewId: string; query: Int
   const interview = query.data
   if (!interview) return null
 
-  const status = interview.status.toLowerCase()
-
-  if (status === 'created') {
+  if (interview.status === 'Created') {
     return <CreatedInterview interviewId={interviewId} interview={interview} />
   }
 
-  if (status === 'active') {
+  if (interview.status === 'Active') {
     return <ActiveInterview interviewId={interviewId} interview={interview} />
   }
 
-  if (status === 'completed') {
+  if (interview.status === 'Completed') {
     return <CompletedInterview interview={interview} />
   }
 
   return <Text c="dimmed">Unknown interview status: {interview.status}</Text>
 }
 
-function InterviewMeta({ interview }: { interview: GetInterviewResponse }) {
+function InterviewMeta({ interview }: { interview: InterviewResponse }) {
   return (
     <Card withBorder radius="md">
       <Stack gap="xs">
@@ -111,7 +108,7 @@ function InterviewMeta({ interview }: { interview: GetInterviewResponse }) {
             {interview.seniorityLevel}
           </Badge>
           <Text size="sm" c="dimmed">
-            {toCount(interview.answeredCount)} / {toCount(interview.questionCount)} questions
+            {interview.answeredCount} / {interview.questionCount} questions
           </Text>
         </Group>
       </Stack>
@@ -124,15 +121,15 @@ function CreatedInterview({
   interview,
 }: {
   interviewId: string
-  interview: GetInterviewResponse
+  interview: InterviewResponse
 }) {
   const queryClient = useQueryClient()
 
   const startMutation = useMutation({
     mutationFn: () => startInterview(interviewId),
     onSuccess: (data) =>
-      queryClient.setQueryData<GetInterviewResponse>(['interview', interviewId], {
-        ...(data as unknown as GetInterviewResponse),
+      queryClient.setQueryData<InterviewResponse>(['interview', interviewId], {
+        ...data,
         feedback: null,
       }),
   })
@@ -166,11 +163,11 @@ function ActiveInterview({
   interview,
 }: {
   interviewId: string
-  interview: GetInterviewResponse
+  interview: InterviewResponse
 }) {
   const queryClient = useQueryClient()
 
-  const turnNumber = toCount(interview.answeredCount) + 1
+  const turnNumber = interview.answeredCount + 1
 
   const form = useForm({
     initialValues: { answer: '' },
@@ -184,10 +181,7 @@ function ActiveInterview({
       submitAnswer(interviewId, { answer: values.answer, turnNumber }),
     onSuccess: (data) => {
       form.reset()
-      queryClient.setQueryData<GetInterviewResponse>(
-        ['interview', interviewId],
-        data
-      )
+      queryClient.setQueryData<InterviewResponse>(['interview', interviewId], data)
     },
   })
 
@@ -222,8 +216,7 @@ function ActiveInterview({
         <Card withBorder radius="md">
           <Stack gap="xs">
             <Text size="sm" c="dimmed" fw={500}>
-              Question {turnNumber} of {toCount(interview.questionCount)} ·{' '}
-              {interview.currentQuestion.topic}
+              Question {turnNumber} of {interview.questionCount} · {interview.currentQuestion.topic}
             </Text>
             <Text fw={500}>{interview.currentQuestion.text}</Text>
           </Stack>
@@ -265,12 +258,7 @@ function ActiveInterview({
         </Stack>
       </form>
 
-      <Modal
-        opened={stopModalOpened}
-        onClose={closeStopModal}
-        title="Stop interview?"
-        centered
-      >
+      <Modal opened={stopModalOpened} onClose={closeStopModal} title="Stop interview?" centered>
         <Stack gap="md">
           <Text>Your progress so far will be saved. You won't be able to continue answering.</Text>
           <Group justify="flex-end">
@@ -291,7 +279,7 @@ function ActiveInterview({
   )
 }
 
-function CompletedInterview({ interview }: { interview: GetInterviewResponse }) {
+function CompletedInterview({ interview }: { interview: InterviewResponse }) {
   return (
     <Stack gap="md">
       <InterviewMeta interview={interview} />
@@ -299,8 +287,7 @@ function CompletedInterview({ interview }: { interview: GetInterviewResponse }) 
         <Stack gap="xs">
           <Text fw={600}>Interview completed</Text>
           <Text c="dimmed">
-            You answered {toCount(interview.answeredCount)} of {toCount(interview.questionCount)}{' '}
-            questions.
+            You answered {interview.answeredCount} of {interview.questionCount} questions.
           </Text>
           <Text size="sm" c="dimmed">
             Feedback will be available here once it has been generated.
