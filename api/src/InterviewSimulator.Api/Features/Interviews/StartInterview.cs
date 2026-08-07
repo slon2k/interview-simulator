@@ -85,7 +85,7 @@ public static class StartInterview
     public record Response(
         Guid Id,
         string UserId,
-        string Status,
+        InterviewStatusContract Status,
         string TargetRole,
         string FocusArea,
         InterviewTypeContract InterviewType,
@@ -100,7 +100,7 @@ public static class StartInterview
     private static Response MapToResponse(InterviewSession session, InterviewTurn turn) => new(
         Id: session.Id,
         UserId: session.UserId,
-        Status: session.Status.ToString(),
+        Status: session.Status.ToContract(),
         TargetRole: session.TargetRole,
         FocusArea: session.FocusArea,
         InterviewType: session.InterviewType.ToContract(),
