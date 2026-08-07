@@ -56,20 +56,16 @@ describe('formatProgress', () => {
 })
 
 describe('statusColor', () => {
-  it('returns blue for active', () => {
-    expect(statusColor('active')).toBe('blue')
+  it('returns blue for Active', () => {
+    expect(statusColor('Active')).toBe('blue')
   })
 
-  it('returns green for completed', () => {
-    expect(statusColor('completed')).toBe('green')
+  it('returns green for Completed', () => {
+    expect(statusColor('Completed')).toBe('green')
   })
 
-  it('returns gray for created', () => {
-    expect(statusColor('created')).toBe('gray')
-  })
-
-  it('returns gray for unknown status', () => {
-    expect(statusColor('unknown')).toBe('gray')
+  it('returns gray for Created', () => {
+    expect(statusColor('Created')).toBe('gray')
   })
 })
 

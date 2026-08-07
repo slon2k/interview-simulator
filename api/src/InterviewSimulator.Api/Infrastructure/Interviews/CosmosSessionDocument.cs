@@ -69,7 +69,7 @@ public sealed class CosmosSessionDocument : IUserCosmosDocument
             Feedback = session.Feedback is not null
                 ? new CosmosSessionFeedbackDocument
                 {
-                    TotalScore = session.Feedback.TotalScore,
+                    Score = session.Feedback.Score,
                     Summary = session.Feedback.Summary
                 }
                 : null
@@ -87,8 +87,8 @@ public sealed class CosmosSessionDocument : IUserCosmosDocument
         QuestionCount: QuestionCount,
         AnsweredCount: AnsweredCount,
         Feedback: Feedback is not null
-            ? new Feedback(
-                TotalScore: Feedback.TotalScore,
+            ? new InterviewFeedback(
+                Score: Feedback.Score,
                 Summary: Feedback.Summary)
             : null,
         CreatedAt: CreatedAt,
@@ -106,7 +106,7 @@ public sealed class CosmosSessionDocument : IUserCosmosDocument
 
 public sealed class CosmosSessionFeedbackDocument
 {
-    public int TotalScore { get; set; }
+    public int Score { get; set; }
 
     public string? Summary { get; set; }
 }

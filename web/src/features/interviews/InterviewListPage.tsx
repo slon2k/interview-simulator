@@ -105,8 +105,6 @@ function InterviewsTable({ interviews }: { interviews: InterviewSummary[] }) {
 }
 
 function InterviewRow({ interview }: { interview: InterviewSummary }) {
-  const status = interview.status.toLowerCase()
-
   return (
     <Table.Tr>
       <Table.Td>{interview.targetRole}</Table.Td>
@@ -115,7 +113,7 @@ function InterviewRow({ interview }: { interview: InterviewSummary }) {
       <Table.Td>{interview.interviewType}</Table.Td>
       <Table.Td>{formatProgress(interview)}</Table.Td>
       <Table.Td>
-        <Badge color={statusColor(status)} variant="light">
+        <Badge color={statusColor(interview.status)} variant="light">
           {interview.status}
         </Badge>
       </Table.Td>
@@ -126,7 +124,7 @@ function InterviewRow({ interview }: { interview: InterviewSummary }) {
           variant="subtle"
           size="compact-sm"
         >
-          {statusAction(status)}
+          {statusAction(interview.status)}
         </Button>
       </Table.Td>
     </Table.Tr>

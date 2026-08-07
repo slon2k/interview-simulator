@@ -15,7 +15,12 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ApiError } from '../../api/apiError'
 import { extractFieldErrors } from '../../api/serverValidation'
-import { createInterview, type CreateInterviewRequest } from '../../api/interviewApi'
+import {
+  createInterview,
+  type CreateInterviewRequest,
+  type InterviewTypeContract,
+  type SeniorityLevelContract,
+} from '../../api/interviewApi'
 import {
   defaultQuestionCount,
   focusAreaOptions,
@@ -71,8 +76,8 @@ export function InterviewSetupPage() {
       const request: CreateInterviewRequest = {
         targetRole: values.targetRole,
         focusArea: values.focusArea,
-        interviewType: values.interviewType,
-        seniorityLevel: values.seniorityLevel,
+        interviewType: values.interviewType as InterviewTypeContract,
+        seniorityLevel: values.seniorityLevel as SeniorityLevelContract,
         questionCount: values.questionCount,
       }
 

@@ -11,24 +11,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
+        /**
+         * Get current user information
+         * @description Returns information about the currently authenticated user, including their authentication status, invitation status, admin status, and profile details.
+         */
+        get: operations["GetCurrentUser"];
         put?: never;
         post?: never;
         delete?: never;
@@ -161,7 +148,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/interviews/{sessionId}/answers": {
+    "/api/interviews/{interviewId}/answers": {
         parameters: {
             query?: never;
             header?: never;
@@ -206,148 +193,146 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         CreateInterviewRequest: {
-            targetRole: components["schemas"]["String"];
-            focusArea: components["schemas"]["String"];
-            interviewType: components["schemas"]["String"];
-            seniorityLevel: components["schemas"]["String"];
-            questionCount: components["schemas"]["Int32"];
+            targetRole: string;
+            focusArea: string;
+            interviewType: components["schemas"]["InterviewTypeContract"];
+            seniorityLevel: components["schemas"]["SeniorityLevelContract"];
+            /** Format: int32 */
+            questionCount: number;
         };
         CreateInterviewResponse: {
-            id: components["schemas"]["Guid"];
-            userId: components["schemas"]["String"];
-            status: components["schemas"]["String"];
-            targetRole: components["schemas"]["String"];
-            focusArea: components["schemas"]["String"];
-            interviewType: components["schemas"]["String"];
-            seniorityLevel: components["schemas"]["String"];
-            questionCount: components["schemas"]["Int32"];
-            createdAt: components["schemas"]["DateTimeOffset"];
-        };
-        /** Format: date-time */
-        DateTimeOffset: string;
-        GetInterviewFeedback: {
-            score: components["schemas"]["Int32"];
-            summary: null | components["schemas"]["String"];
-        };
-        GetInterviewQuestion: {
-            text: components["schemas"]["String"];
-            topic: components["schemas"]["String"];
-        };
-        GetInterviewResponse: {
-            id: components["schemas"]["Guid"];
-            userId: components["schemas"]["String"];
-            status: components["schemas"]["String"];
-            targetRole: components["schemas"]["String"];
-            focusArea: components["schemas"]["String"];
-            interviewType: components["schemas"]["String"];
-            seniorityLevel: components["schemas"]["String"];
-            questionCount: components["schemas"]["Int32"];
-            answeredCount: components["schemas"]["Int32"];
-            createdAt: components["schemas"]["DateTimeOffset"];
+            /** Format: uuid */
+            id: string;
+            userId: string;
+            status: components["schemas"]["InterviewStatusContract"];
+            targetRole: string;
+            focusArea: string;
+            interviewType: components["schemas"]["InterviewTypeContract"];
+            seniorityLevel: components["schemas"]["SeniorityLevelContract"];
+            /** Format: int32 */
+            questionCount: number;
             /** Format: date-time */
-            startedAt: null | string;
-            /** Format: date-time */
-            completedAt: null | string;
-            feedback: null | components["schemas"]["GetInterviewFeedback"];
-            currentQuestion: null | components["schemas"]["GetInterviewQuestion"];
+            createdAt: string;
+        };
+        CurrentUserResponse: {
+            isAuthenticated: boolean;
+            isInvited: boolean;
+            isAdmin: boolean;
+            userId: null | string;
+            identityProvider: null | string;
+            displayName: null | string;
+            githubLogin: null | string;
+            avatarUrl: null | string;
+        };
+        FeedbackContract: {
+            /** Format: int32 */
+            score: number;
+            summary: null | string;
         };
         GetInterviewsResponse: {
-            id: components["schemas"]["Guid"];
-            userId: components["schemas"]["String"];
-            status: components["schemas"]["String"];
-            targetRole: components["schemas"]["String"];
-            focusArea: components["schemas"]["String"];
-            interviewType: components["schemas"]["String"];
-            seniorityLevel: components["schemas"]["String"];
-            questionCount: components["schemas"]["Int32"];
-            answeredCount: components["schemas"]["Int32"];
-            createdAt: components["schemas"]["DateTimeOffset"];
+            /** Format: uuid */
+            id: string;
+            userId: string;
+            status: components["schemas"]["InterviewStatusContract"];
+            targetRole: string;
+            focusArea: string;
+            interviewType: components["schemas"]["InterviewTypeContract"];
+            seniorityLevel: components["schemas"]["SeniorityLevelContract"];
+            /** Format: int32 */
+            questionCount: number;
+            /** Format: int32 */
+            answeredCount: number;
+            /** Format: date-time */
+            createdAt: string;
             /** Format: date-time */
             startedAt: null | string;
             /** Format: date-time */
             completedAt: null | string;
             /** Format: int32 */
-            totalScore: null | number | string;
+            totalScore: null | number;
         };
-        /** Format: uuid */
-        Guid: string;
         HttpValidationProblemDetails: {
-            type?: null | components["schemas"]["String"];
-            title?: null | components["schemas"]["String"];
+            type?: null | string;
+            title?: null | string;
             /** Format: int32 */
-            status?: null | number | string;
-            detail?: null | components["schemas"]["String"];
-            instance?: null | components["schemas"]["String"];
+            status?: null | number;
+            detail?: null | string;
+            instance?: null | string;
             errors?: {
-                [key: string]: components["schemas"]["String[]"];
+                [key: string]: string[];
             };
         };
-        /** Format: int32 */
-        Int32: number | string;
-        ProblemDetails: {
-            type?: null | components["schemas"]["String"];
-            title?: null | components["schemas"]["String"];
+        InterviewResponse: {
+            /** Format: uuid */
+            id: string;
+            userId: string;
+            status: components["schemas"]["InterviewStatusContract"];
+            targetRole: string;
+            focusArea: string;
+            interviewType: components["schemas"]["InterviewTypeContract"];
+            seniorityLevel: components["schemas"]["SeniorityLevelContract"];
             /** Format: int32 */
-            status?: null | number | string;
-            detail?: null | components["schemas"]["String"];
-            instance?: null | components["schemas"]["String"];
+            questionCount: number;
+            /** Format: int32 */
+            answeredCount: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            startedAt: null | string;
+            /** Format: date-time */
+            completedAt: null | string;
+            feedback: null | components["schemas"]["FeedbackContract"];
+            currentQuestion: null | components["schemas"]["QuestionContract"];
         };
+        /** @enum {unknown} */
+        InterviewStatusContract: "Created" | "Active" | "Completed";
+        /** @enum {unknown} */
+        InterviewTypeContract: "Technical" | "Behavioral" | "SystemDesign";
+        ProblemDetails: {
+            type?: null | string;
+            title?: null | string;
+            /** Format: int32 */
+            status?: null | number;
+            detail?: null | string;
+            instance?: null | string;
+        };
+        QuestionContract: {
+            text: string;
+            topic: string;
+            /** Format: int32 */
+            turnNumber: number;
+        };
+        /** @enum {unknown} */
+        SeniorityLevelContract: "Junior" | "Middle" | "Senior";
         SmokeTestEndpointResponse: {
-            status: components["schemas"]["String"];
-            userId: null | components["schemas"]["String"];
-        };
-        StartInterviewQuestion: {
-            text: components["schemas"]["String"];
-            topic: components["schemas"]["String"];
+            status: string;
+            userId: null | string;
         };
         StartInterviewResponse: {
-            id: components["schemas"]["Guid"];
-            userId: components["schemas"]["String"];
-            status: components["schemas"]["String"];
-            targetRole: components["schemas"]["String"];
-            focusArea: components["schemas"]["String"];
-            interviewType: components["schemas"]["String"];
-            seniorityLevel: components["schemas"]["String"];
-            questionCount: components["schemas"]["Int32"];
-            answeredCount: components["schemas"]["Int32"];
-            createdAt: components["schemas"]["DateTimeOffset"];
+            /** Format: uuid */
+            id: string;
+            userId: string;
+            status: components["schemas"]["InterviewStatusContract"];
+            targetRole: string;
+            focusArea: string;
+            interviewType: components["schemas"]["InterviewTypeContract"];
+            seniorityLevel: components["schemas"]["SeniorityLevelContract"];
+            /** Format: int32 */
+            questionCount: number;
+            /** Format: int32 */
+            answeredCount: number;
+            /** Format: date-time */
+            createdAt: string;
             /** Format: date-time */
             startedAt: null | string;
             /** Format: date-time */
             completedAt: null | string;
-            currentQuestion: components["schemas"]["StartInterviewQuestion"];
-        };
-        String: string;
-        "String[]": components["schemas"]["String"][];
-        SubmitAnswerFeedback: {
-            score: components["schemas"]["Int32"];
-            summary: null | components["schemas"]["String"];
-        };
-        SubmitAnswerQuestion: {
-            text: components["schemas"]["String"];
-            topic: components["schemas"]["String"];
+            currentQuestion: components["schemas"]["QuestionContract"];
         };
         SubmitAnswerRequest: {
-            turnNumber: components["schemas"]["Int32"];
-            answer: components["schemas"]["String"];
-        };
-        SubmitAnswerResponse: {
-            id: components["schemas"]["Guid"];
-            userId: components["schemas"]["String"];
-            status: components["schemas"]["String"];
-            targetRole: components["schemas"]["String"];
-            focusArea: components["schemas"]["String"];
-            interviewType: components["schemas"]["String"];
-            seniorityLevel: components["schemas"]["String"];
-            questionCount: components["schemas"]["Int32"];
-            answeredCount: components["schemas"]["Int32"];
-            createdAt: components["schemas"]["DateTimeOffset"];
-            /** Format: date-time */
-            startedAt: null | string;
-            /** Format: date-time */
-            completedAt: null | string;
-            feedback: null | components["schemas"]["SubmitAnswerFeedback"];
-            currentQuestion: null | components["schemas"]["SubmitAnswerQuestion"];
+            /** Format: int32 */
+            turnNumber: number;
+            answer: string;
         };
     };
     responses: never;
@@ -358,10 +343,39 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    GetCurrentUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CurrentUserResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     Login: {
         parameters: {
             query?: {
-                returnUrl?: components["schemas"]["String"];
+                returnUrl?: string;
             };
             header?: never;
             path?: never;
@@ -448,7 +462,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                interviewId: components["schemas"]["Guid"];
+                interviewId: string;
             };
             cookie?: never;
         };
@@ -460,7 +474,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GetInterviewResponse"];
+                    "application/json": components["schemas"]["InterviewResponse"];
                 };
             };
             /** @description Unauthorized */
@@ -486,7 +500,7 @@ export interface operations {
     GetInterviews: {
         parameters: {
             query?: {
-                status?: components["schemas"]["String[]"];
+                status?: string[];
             };
             header?: never;
             path?: never;
@@ -570,7 +584,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                interviewId: components["schemas"]["Guid"];
+                interviewId: string;
             };
             cookie?: never;
         };
@@ -628,7 +642,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                sessionId: components["schemas"]["Guid"];
+                interviewId: string;
             };
             cookie?: never;
         };
@@ -644,7 +658,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SubmitAnswerResponse"];
+                    "application/json": components["schemas"]["InterviewResponse"];
                 };
             };
             /** @description Bad Request */
@@ -699,7 +713,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                interviewId: components["schemas"]["Guid"];
+                interviewId: string;
             };
             cookie?: never;
         };

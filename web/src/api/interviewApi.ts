@@ -3,11 +3,13 @@ import { toApiError } from './apiError'
 import type { components, operations } from './contracts/openapi'
 
 export type InterviewSummary = components['schemas']['GetInterviewsResponse']
+export type InterviewResponse = components['schemas']['InterviewResponse']
+export type InterviewStatusContract = components['schemas']['InterviewStatusContract']
+export type InterviewTypeContract = components['schemas']['InterviewTypeContract']
+export type SeniorityLevelContract = components['schemas']['SeniorityLevelContract']
 export type CreateInterviewRequest = components['schemas']['CreateInterviewRequest']
 export type CreateInterviewResponse = components['schemas']['CreateInterviewResponse']
 export type StartInterviewResponse = components['schemas']['StartInterviewResponse']
-export type GetInterviewResponse = components['schemas']['GetInterviewResponse']
-export type SubmitAnswerResponse = components['schemas']['SubmitAnswerResponse']
 export type SubmitAnswerRequest = components['schemas']['SubmitAnswerRequest']
 
 type GetInterviewsQuery = operations['GetInterviews']['parameters']['query']
@@ -48,12 +50,9 @@ export async function createInterview(
   }
 }
 
-export async function getInterview(
-  id: string,
-  signal?: AbortSignal
-): Promise<GetInterviewResponse> {
+export async function getInterview(id: string, signal?: AbortSignal): Promise<InterviewResponse> {
   try {
-    const response = await apiClient.get<GetInterviewResponse>(`/interviews/${id}`, {
+    const response = await apiClient.get<InterviewResponse>(`/interviews/${id}`, {
       ...(signal !== undefined && { signal }),
     })
     return response.data
@@ -84,15 +83,11 @@ export async function submitAnswer(
   id: string,
   request: SubmitAnswerRequest,
   signal?: AbortSignal
-): Promise<SubmitAnswerResponse> {
+): Promise<InterviewResponse> {
   try {
-    const response = await apiClient.post<SubmitAnswerResponse>(
-      `/interviews/${id}/answers`,
-      request,
-      {
-        ...(signal !== undefined && { signal }),
-      }
-    )
+    const response = await apiClient.post<InterviewResponse>(`/interviews/${id}/answers`, request, {
+      ...(signal !== undefined && { signal }),
+    })
     return response.data
   } catch (error) {
     throw toApiError(error)

@@ -1,35 +1,31 @@
-import type { InterviewSummary } from '../../api/interviewApi'
-import { toCount } from './interviewHelpers'
-
-export { toCount } from './interviewHelpers'
+import type { InterviewSummary, InterviewStatusContract } from '../../api/interviewApi'
 
 export function formatProgress(interview: InterviewSummary): string {
-  const answered = toCount(interview.answeredCount)
-  const total = toCount(interview.questionCount)
+  const { answeredCount, questionCount } = interview
 
-  if (total <= 0) {
+  if (questionCount <= 0) {
     return '0/0'
   }
 
-  return `${answered}/${total}`
+  return `${answeredCount}/${questionCount}`
 }
 
-export function statusColor(status: string): string {
+export function statusColor(status: InterviewStatusContract): string {
   switch (status) {
-    case 'active':
+    case 'Active':
       return 'blue'
-    case 'completed':
+    case 'Completed':
       return 'green'
     default:
       return 'gray'
   }
 }
 
-export function statusAction(status: string): string {
+export function statusAction(status: InterviewStatusContract): string {
   switch (status) {
-    case 'active':
+    case 'Active':
       return 'Continue'
-    case 'completed':
+    case 'Completed':
       return 'View'
     default:
       return 'Open'

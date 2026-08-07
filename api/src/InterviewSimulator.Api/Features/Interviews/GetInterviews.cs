@@ -38,7 +38,7 @@ public static class GetInterviews
         }
 
         IReadOnlyList<InterviewStatus>? statuses = request.Status is { Length: > 0 }
-            ? request.Status.Select(s => Enum.Parse<InterviewStatus>(s, ignoreCase: true)).ToList()
+            ? request.Status.Select(s => Enum.Parse<InterviewStatusContract>(s, ignoreCase: true).ToDomain()).ToList()
             : null;
 
         var interviews = await interviewStore.ListSessionsAsync(
@@ -59,11 +59,11 @@ public static class GetInterviews
     public record Response(
         Guid Id,
         string UserId,
-        string Status,
+        InterviewStatusContract Status,
         string TargetRole,
         string FocusArea,
-        string InterviewType,
-        string SeniorityLevel,
+        InterviewTypeContract InterviewType,
+        SeniorityLevelContract SeniorityLevel,
         int QuestionCount,
         int AnsweredCount,
         DateTimeOffset CreatedAt,
@@ -76,17 +76,17 @@ public static class GetInterviews
         return new Response(
             Id: session.Id,
             UserId: session.UserId,
-            Status: session.Status.ToString(),
+            Status: session.Status.ToContract(),
             TargetRole: session.TargetRole,
             FocusArea: session.FocusArea,
-            InterviewType: session.InterviewType.ToString(),
-            SeniorityLevel: session.Seniority.ToString(),
+            InterviewType: session.InterviewType.ToContract(),
+            SeniorityLevel: session.Seniority.ToContract(),
             QuestionCount: session.QuestionCount,
             AnsweredCount: session.AnsweredCount,
             CreatedAt: session.CreatedAt,
             StartedAt: session.StartedAt,
             CompletedAt: session.CompletedAt,
-            TotalScore: session.Feedback?.TotalScore);
+            TotalScore: session.Feedback?.Score);
     }
 
     public class Validator : AbstractValidator<Request>
@@ -94,7 +94,7 @@ public static class GetInterviews
         public Validator()
         {
             RuleForEach(x => x.Status)
-                .IsEnumName(typeof(InterviewStatus), caseSensitive: false)
+                .IsEnumName(typeof(InterviewStatusContract), caseSensitive: false)
                 .WithMessage("Invalid status filter. Allowed values: created, active, completed.")
                 .When(x => x.Status is { Length: > 0 });
         }

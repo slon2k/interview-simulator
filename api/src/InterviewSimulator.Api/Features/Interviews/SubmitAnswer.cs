@@ -13,12 +13,12 @@ public static class SubmitAnswer
 
     public static IEndpointRouteBuilder MapSubmitAnswer(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapPost("/{sessionId:guid}/answers", SubmitAnswerHandler)
+        endpoints.MapPost("/{interviewId:guid}/answers", SubmitAnswerHandler)
             .AddEndpointFilter<ValidationFilter<Request>>()
             .WithName("SubmitAnswer")
             .WithSummary("Submit an answer")
             .WithDescription("Records the answer for the current turn and returns the next question if the session is still active.")
-            .Produces<Response>()
+            .Produces<InterviewResponse>()
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status404NotFound)
@@ -29,7 +29,7 @@ public static class SubmitAnswer
     }
 
     public static async Task<IResult> SubmitAnswerHandler(
-        Guid sessionId,
+        Guid interviewId,
         Request request,
         IInterviewStore store,
         IQuestionGenerator questionGenerator,
@@ -42,7 +42,7 @@ public static class SubmitAnswer
             return Errors.Unauthorized.ToProblemResult();
         }
 
-        if (await store.GetSessionAsync(userId, sessionId, cancellationToken) is not InterviewSession session)
+        if (await store.GetSessionAsync(userId, interviewId, cancellationToken) is not InterviewSession session)
         {
             return Errors.SessionNotFound.ToProblemResult();
         }
@@ -57,7 +57,7 @@ public static class SubmitAnswer
             return Errors.InvalidTurnNumber.ToProblemResult();
         }
 
-        if (await store.GetTurnAsync(userId, sessionId, request.TurnNumber, cancellationToken) is not InterviewTurn currentTurn)
+        if (await store.GetTurnAsync(userId, interviewId, request.TurnNumber, cancellationToken) is not InterviewTurn currentTurn)
         {
             return Errors.TurnNotFound.ToProblemResult();
         }
@@ -70,7 +70,7 @@ public static class SubmitAnswer
 
         if (session.Status == InterviewStatus.Active)
         {
-            var previousTurns = await store.ListTurnsAsync(userId, sessionId, cancellationToken);
+            var previousTurns = await store.ListTurnsAsync(userId, interviewId, cancellationToken);
             var nextTurnNumber = session.AnsweredCount + 1;
             var turnsForGeneration = previousTurns
                 .Where(turn => turn.TurnNumber != currentTurn.TurnNumber)
@@ -101,7 +101,7 @@ public static class SubmitAnswer
             }
 
             nextTurn = InterviewTurn.Create(
-                sessionId: session.Id,
+                sessionId: interviewId,
                 turnNumber: nextTurnNumber,
                 question: new InterviewQuestion(
                     text: nextQuestion.Text,
@@ -119,53 +119,30 @@ public static class SubmitAnswer
         return Results.Ok(MapToResponse(session, nextTurn));
     }
 
-    private static Response MapToResponse(InterviewSession session, InterviewTurn? nextTurn) => new(
+    private static InterviewResponse MapToResponse(InterviewSession session, InterviewTurn? nextTurn) => new(
         Id: session.Id,
         UserId: session.UserId,
-        Status: session.Status.ToString(),
+        Status: session.Status.ToContract(),
         TargetRole: session.TargetRole,
         FocusArea: session.FocusArea,
-        InterviewType: session.InterviewType.ToString(),
-        SeniorityLevel: session.Seniority.ToString(),
+        InterviewType: session.InterviewType.ToContract(),
+        SeniorityLevel: session.Seniority.ToContract(),
         QuestionCount: session.QuestionCount,
         AnsweredCount: session.AnsweredCount,
         CreatedAt: session.CreatedAt,
         StartedAt: session.StartedAt,
         CompletedAt: session.CompletedAt,
         Feedback: session.Feedback is not null
-            ? new Feedback(
-                Score: session.Feedback.TotalScore,
+            ? new FeedbackContract(
+                Score: session.Feedback.Score,
                 Summary: session.Feedback.Summary)
             : null,
         CurrentQuestion: nextTurn is not null
-            ? new Question(
+            ? new QuestionContract(
                 Text: nextTurn.Question.Text,
-                Topic: nextTurn.Question.Topic)
+                Topic: nextTurn.Question.Topic,
+                TurnNumber: nextTurn.TurnNumber)
             : null);
-
-    public record Response(
-        Guid Id,
-        string UserId,
-        string Status,
-        string TargetRole,
-        string FocusArea,
-        string InterviewType,
-        string SeniorityLevel,
-        int QuestionCount,
-        int AnsweredCount,
-        DateTimeOffset CreatedAt,
-        DateTimeOffset? StartedAt,
-        DateTimeOffset? CompletedAt,
-        Feedback? Feedback,
-        Question? CurrentQuestion);
-
-    public record Question(
-        string Text,
-        string Topic);
-
-    public record Feedback(
-        int Score,
-        string? Summary);
 
     public class Validator : AbstractValidator<Request>
     {

@@ -7,7 +7,7 @@ import type { UseQueryResult } from '@tanstack/react-query'
 import { MantineProvider } from '@mantine/core'
 import { MemoryRouter } from 'react-router-dom'
 import { ApiError } from '../../api/apiError'
-import type { GetInterviewResponse } from '../../api/interviewApi'
+import type { InterviewResponse } from '../../api/interviewApi'
 import { InterviewDetailPage } from './InterviewDetailPage'
 import * as interviewApi from '../../api/interviewApi'
 
@@ -53,7 +53,7 @@ vi.mock('../../api/interviewApi', () => ({
   completeInterview: vi.fn(),
 }))
 
-function mockQuery(overrides: Partial<UseQueryResult<GetInterviewResponse>>) {
+function mockQuery(overrides: Partial<UseQueryResult<InterviewResponse>>) {
   vi.mocked(useQuery).mockReturnValue({
     isLoading: false,
     isError: false,
@@ -61,7 +61,7 @@ function mockQuery(overrides: Partial<UseQueryResult<GetInterviewResponse>>) {
     error: null,
     refetch: vi.fn(),
     ...overrides,
-  } as unknown as UseQueryResult<GetInterviewResponse>)
+  } as unknown as UseQueryResult<InterviewResponse>)
 }
 
 function renderPage() {
@@ -79,7 +79,7 @@ function renderPage() {
   })
 }
 
-const baseInterview: GetInterviewResponse = {
+const baseInterview: InterviewResponse = {
   id: 'test-interview-id',
   userId: 'github|1',
   targetRole: 'Backend Engineer',
@@ -96,15 +96,15 @@ const baseInterview: GetInterviewResponse = {
   currentQuestion: null,
 }
 
-const activeInterview: GetInterviewResponse = {
+const activeInterview: InterviewResponse = {
   ...baseInterview,
   status: 'Active',
   answeredCount: 1,
   startedAt: '2026-01-01T00:01:00Z',
-  currentQuestion: { text: 'Explain async/await in C#', topic: 'Async Programming' },
+  currentQuestion: { text: 'Explain async/await in C#', topic: 'Async Programming', turnNumber: 2 },
 }
 
-const completedInterview: GetInterviewResponse = {
+const completedInterview: InterviewResponse = {
   ...baseInterview,
   status: 'Completed',
   answeredCount: 5,

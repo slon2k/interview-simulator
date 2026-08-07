@@ -13,7 +13,7 @@ public static class GetInterview
             .WithName("GetInterview")
             .WithSummary("Get an interview session")
             .WithDescription("Returns the interview session with the given ID belonging to the authenticated user.")
-            .Produces<Response>()
+            .Produces<InterviewResponse>()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
@@ -41,39 +41,41 @@ public static class GetInterview
             return Errors.SessionNotFound.ToProblemResult();
         }
 
-        Question? currentQuestion = null;
+        QuestionContract? currentQuestion = null;
 
         if (interview.Status == InterviewStatus.Active)
         {
+            int turnNumber = interview.AnsweredCount + 1;
             var currentTurn = await store.GetTurnAsync(
                 userId: userId,
                 sessionId: interview.Id,
-                turnNumber: interview.AnsweredCount + 1,
+                turnNumber: turnNumber,
                 cancellationToken: cancellationToken);
 
             if (currentTurn is not null)
             {
                 var question = currentTurn.Question;
-                currentQuestion = new Question(
+                currentQuestion = new QuestionContract(
                     Text: question.Text,
-                    Topic: question.Topic);
+                    Topic: question.Topic,
+                    TurnNumber: turnNumber);
             }
         }
 
         var feedback = interview.Feedback is not null
-            ? new Feedback(
-                Score: interview.Feedback.TotalScore,
+            ? new FeedbackContract(
+                Score: interview.Feedback.Score,
                 Summary: interview.Feedback.Summary)
             : null;
 
-        return Results.Ok(new Response(
+        return Results.Ok(new InterviewResponse(
             Id: interview.Id,
             UserId: interview.UserId,
-            Status: interview.Status.ToString(),
+            Status: interview.Status.ToContract(),
             TargetRole: interview.TargetRole,
             FocusArea: interview.FocusArea,
-            InterviewType: interview.InterviewType.ToString(),
-            SeniorityLevel: interview.Seniority.ToString(),
+            InterviewType: interview.InterviewType.ToContract(),
+            SeniorityLevel: interview.Seniority.ToContract(),
             QuestionCount: interview.QuestionCount,
             AnsweredCount: interview.AnsweredCount,
             CreatedAt: interview.CreatedAt,
@@ -82,30 +84,6 @@ public static class GetInterview
             Feedback: feedback,
             CurrentQuestion: currentQuestion));
     }
-
-    public record Response(
-        Guid Id,
-        string UserId,
-        string Status,
-        string TargetRole,
-        string FocusArea,
-        string InterviewType,
-        string SeniorityLevel,
-        int QuestionCount,
-        int AnsweredCount,
-        DateTimeOffset CreatedAt,
-        DateTimeOffset? StartedAt,
-        DateTimeOffset? CompletedAt,
-        Feedback? Feedback,
-        Question? CurrentQuestion);
-
-    public record Question(
-        string Text,
-        string Topic);
-
-    public record Feedback(
-        int Score,
-        string? Summary);
 
     public static class Errors
     {

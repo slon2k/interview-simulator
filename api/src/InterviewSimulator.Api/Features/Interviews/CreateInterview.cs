@@ -67,7 +67,7 @@ public static class CreateInterview
     public record Response(
         Guid Id,
         string UserId,
-        string Status,
+        InterviewStatusContract Status,
         string TargetRole,
         string FocusArea,
         InterviewTypeContract InterviewType,
@@ -79,7 +79,7 @@ public static class CreateInterview
         InterviewSession session) => new(
             Id: session.Id,
             UserId: session.UserId,
-            Status: session.Status.ToString(),
+            Status: session.Status.ToContract(),
             TargetRole: session.TargetRole,
             FocusArea: session.FocusArea,
             InterviewType: session.InterviewType.ToContract(),

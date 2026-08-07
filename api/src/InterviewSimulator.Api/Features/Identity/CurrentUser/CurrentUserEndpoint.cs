@@ -7,6 +7,11 @@ public static class CurrentUserEndpoint
     public static IEndpointRouteBuilder MapCurrentUser(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/me", CurrentUserHandler)
+            .WithName("GetCurrentUser")
+            .WithSummary("Get current user information")
+            .WithDescription("Returns information about the currently authenticated user, including their authentication status, invitation status, admin status, and profile details.")
+            .Produces<CurrentUserResponse>()
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
             .AllowAnonymous();
 
         return app;
