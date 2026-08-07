@@ -26,7 +26,7 @@ public sealed class InterviewLifecycleHappyPathTests(AuthWebApplicationFactory f
             focusArea = "dotnet",
             interviewType = "Technical",
             seniorityLevel = "Middle",
-            questionCount = 2
+            questionCount = 3
         });
 
         var createResponse = await client.SendAsync(createRequest);
@@ -72,7 +72,7 @@ public sealed class InterviewLifecycleHappyPathTests(AuthWebApplicationFactory f
         secondAnswerRequest.Content = JsonContent.Create(new
         {
             turnNumber = 2,
-            answer = "My final answer"
+            answer = "My second answer"
         });
 
         var secondAnswerResponse = await client.SendAsync(secondAnswerRequest);
@@ -81,10 +81,27 @@ public sealed class InterviewLifecycleHappyPathTests(AuthWebApplicationFactory f
         using var secondAnswerJson = await ReadJsonAsync(secondAnswerResponse);
         var secondAnswerRoot = secondAnswerJson.RootElement;
 
-        Assert.Equal("Completed", secondAnswerRoot.GetProperty("status").GetString());
+        Assert.Equal("Active", secondAnswerRoot.GetProperty("status").GetString());
         Assert.Equal(2, secondAnswerRoot.GetProperty("answeredCount").GetInt32());
-        Assert.Equal(JsonValueKind.Null, secondAnswerRoot.GetProperty("currentQuestion").ValueKind);
-        Assert.Equal(JsonValueKind.String, secondAnswerRoot.GetProperty("completedAt").ValueKind);
+        Assert.Equal("Question 3", secondAnswerRoot.GetProperty("currentQuestion").GetProperty("text").GetString());
+
+        using var thirdAnswerRequest = CreateAuthenticatedRequest(HttpMethod.Post, $"/api/interviews/{interviewId}/answers", "github|100", "invited-user");
+        thirdAnswerRequest.Content = JsonContent.Create(new
+        {
+            turnNumber = 3,
+            answer = "My final answer"
+        });
+
+        var thirdAnswerResponse = await client.SendAsync(thirdAnswerRequest);
+        Assert.Equal(HttpStatusCode.OK, thirdAnswerResponse.StatusCode);
+
+        using var thirdAnswerJson = await ReadJsonAsync(thirdAnswerResponse);
+        var thirdAnswerRoot = thirdAnswerJson.RootElement;
+
+        Assert.Equal("Completed", thirdAnswerRoot.GetProperty("status").GetString());
+        Assert.Equal(3, thirdAnswerRoot.GetProperty("answeredCount").GetInt32());
+        Assert.Equal(JsonValueKind.Null, thirdAnswerRoot.GetProperty("currentQuestion").ValueKind);
+        Assert.Equal(JsonValueKind.String, thirdAnswerRoot.GetProperty("completedAt").ValueKind);
 
         using var getInterviewRequest = CreateAuthenticatedRequest(HttpMethod.Get, $"/api/interviews/{interviewId}", "github|100", "invited-user");
         var getInterviewResponse = await client.SendAsync(getInterviewRequest);
