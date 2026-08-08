@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
 
-namespace InterviewSimulator.Api;
+namespace InterviewSimulator.Api.Options;
 
 public sealed class AzureOpenAIOptions
 {

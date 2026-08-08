@@ -2,6 +2,7 @@ using InterviewSimulator.Api.Features.Identity.Access;
 using InterviewSimulator.Api.Features.Identity.CurrentUser;
 using InterviewSimulator.Api.Features.Identity.Profile;
 using InterviewSimulator.Api.Infrastructure.Data;
+using InterviewSimulator.Api.Options;
 
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;

@@ -1,4 +1,4 @@
-using InterviewSimulator.Api.Features.Identity.Access;
+using InterviewSimulator.Api.Options;
 
 using Microsoft.Extensions.Options;
 

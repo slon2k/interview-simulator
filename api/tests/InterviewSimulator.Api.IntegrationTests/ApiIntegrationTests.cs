@@ -1,5 +1,8 @@
 using System.Net;
 using System.Text.Json;
+
+using InterviewSimulator.Api.Options;
+
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;

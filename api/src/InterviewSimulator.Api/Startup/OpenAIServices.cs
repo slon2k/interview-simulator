@@ -2,6 +2,8 @@ using Azure;
 using Azure.AI.OpenAI;
 using Azure.Identity;
 
+using InterviewSimulator.Api.Options;
+
 using Microsoft.Extensions.Options;
 
 namespace InterviewSimulator.Api.Startup;
