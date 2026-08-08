@@ -1,8 +1,10 @@
 using System.Text.Json.Serialization;
 
 using FluentValidation;
+using Microsoft.Extensions.Options;
 
 using InterviewSimulator.Api.Features.Interviews;
+using InterviewSimulator.Api.Features.Interviews.Ai;
 
 namespace InterviewSimulator.Api.Startup;
 
@@ -16,6 +18,13 @@ public static class InterviewServices
         {
             options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
         });
+
+
+        builder.Services.AddOptions<AiOptions>()
+            .Bind(builder.Configuration.GetSection(AiOptions.SectionName))
+            .ValidateOnStart();
+        builder.Services.AddSingleton<IValidateOptions<AiOptions>, AiOptionsValidator>();
+        builder.Services.AddScoped(typeof(AiStructuredOutputRunner<>));
 
         return builder;
     }

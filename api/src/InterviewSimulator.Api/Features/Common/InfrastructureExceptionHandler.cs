@@ -1,3 +1,4 @@
+using InterviewSimulator.Api.Features.Interviews.Ai;
 using Microsoft.AspNetCore.Diagnostics;
 
 namespace InterviewSimulator.Api.Features.Common;
@@ -9,6 +10,21 @@ public sealed class InfrastructureExceptionHandler(ILogger<InfrastructureExcepti
         Exception exception,
         CancellationToken cancellationToken)
     {
+        if (exception is AiException aiException)
+        {
+            logger.LogWarning(
+                exception,
+                "AI operation failed (code: {ErrorCode}, operation: {OperationName}).",
+                aiException.Code,
+                aiException.OperationName);
+
+            await Error.Unavailable(aiException.Code, aiException.Message)
+                .ToProblemResult()
+                .ExecuteAsync(httpContext);
+
+            return true;
+        }
+
         if (exception is not InfrastructureException infrastructureException)
         {
             return false;

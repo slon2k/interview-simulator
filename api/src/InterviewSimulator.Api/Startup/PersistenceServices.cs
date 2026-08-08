@@ -75,11 +75,12 @@ public static class PersistenceServices
                 cosmosOptions.DatabaseName,
                 cosmosOptions.SessionsContainerName)));
 
-        services.AddScoped<CosmosIdentityUserStore>(sp => new CosmosIdentityUserStore(
+        services.AddScoped(sp => new CosmosIdentityUserStore(
             sp.GetRequiredService<CosmosClient>()
                 .GetContainer(
                     cosmosOptions.DatabaseName,
                     cosmosOptions.UsersContainerName)));
+
         services.AddScoped<IUserProfileStore>(sp => sp.GetRequiredService<CosmosIdentityUserStore>());
         services.AddScoped<IUserAccessReader>(sp => sp.GetRequiredService<CosmosIdentityUserStore>());
 
