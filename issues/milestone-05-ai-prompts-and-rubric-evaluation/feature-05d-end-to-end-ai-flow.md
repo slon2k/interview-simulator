@@ -48,7 +48,7 @@ Verify that the full interview flow works end-to-end with faked AI boundaries in
 
 ## Tasks
 
-### [ ] E2E integration test
+### E2E integration test
 
 - [ ] Add `api/tests/InterviewSimulator.Api.IntegrationTests/Interviews/InterviewAiFlowEndToEndTests.cs`
   - Uses stub AI boundary (`StubAnswerEvaluator` + `SequencedQuestionGenerator` from `AuthWebApplicationFactory`)
@@ -57,20 +57,20 @@ Verify that the full interview flow works end-to-end with faked AI boundaries in
   - Asserts `lastEvaluation.overallScore` is in 0–100 range
   - Asserts final session status is `Completed` and `answeredCount == 3`
 
-### [ ] Prompt version recording test
+### Prompt version recording test
 
 - [ ] In the E2E test (or a separate test), assert that persisted turn documents contain:
   - `questionAi.promptVersion` on all turns
   - `evaluationAi.promptVersion` on all answered turns
 
-### [ ] Degradation tests
+### Degradation tests
 
 - [ ] Add degradation test cases (can be in `SubmitAnswerEvaluationTests.cs` or a dedicated file)
   - Start generation failure: `IQuestionGenerator` throws `AiGenerationFailedException`; response is 503; `GET /api/interviews/{id}` returns `Status = Created`; retrying `POST /start` succeeds
   - Answer evaluation failure: `IAnswerEvaluator` throws `AiEvaluationFailedException`; response is 503; `GET /api/interviews/{id}` returns `Status = Active` with `answeredCount` unchanged; resubmitting the same answer succeeds
   - Evaluation success + generation failure: `IAnswerEvaluator` succeeds but `IQuestionGenerator` throws; response is 503; session/turn state unchanged; resubmit succeeds
 
-### [ ] Documentation
+### Documentation
 
 - [ ] Update `docs/architecture.md`
   - Add AI boundary section covering: synchronous AI-before-persistence model, `AiStructuredOutputRunner`, `IQuestionGenerator`, `IAnswerEvaluator`, prompt versioning, retry policy, error routing, and graceful degradation guarantees
@@ -82,7 +82,7 @@ Verify that the full interview flow works end-to-end with faked AI boundaries in
   - Consequences: AI failures are always resumable; historical sessions are interpretable across prompt changes; Azure-specific details do not leak into endpoint code
 - [ ] Update `docs/milestones.md` — check off M05 acceptance criteria
 
-### [ ] Manual real-AI verification (non-CI)
+### Manual real-AI verification (non-CI)
 
 - [ ] Verify full flow against real Azure OpenAI with `Ai:Provider = AzureOpenAI`
   - Generated questions reflect role, seniority, interview type, and focus area

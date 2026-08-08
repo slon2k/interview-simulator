@@ -14,6 +14,7 @@ This feature builds on the AI boundary infrastructure from 05a and shares the Az
 ## Problem and User Value
 
 M04 records answers but returns no feedback. The core value of an interview simulator is actionable, per-answer feedback. This feature provides:
+
 - Structured per-dimension scores the user can act on
 - Persisted evaluation data so M06 summaries and M07 analytics can be computed without re-calling the AI
 - The same graceful degradation guarantees as question generation — an evaluation failure never corrupts session state
@@ -60,21 +61,19 @@ M04 records answers but returns no feedback. The core value of an interview simu
 
 ## SubmitAnswer flow (canonical — no AI result, no Cosmos write)
 
-```
 1. Read session with ETag
 2. Read current turn with ETag
 3. Validate state
 4. Load bounded prior context
-5. EvaluateAsync          ← IAnswerEvaluator
-6. GenerateQuestionAsync  ← IQuestionGenerator (if session not complete)
+5. EvaluateAsync ← IAnswerEvaluator
+6. GenerateQuestionAsync ← IQuestionGenerator (if session not complete)
 7. Mutate session/turn objects in memory
-8. SaveAnswerAsync        ← only reached when steps 5 and 6 succeeded
+8. SaveAnswerAsync ← only reached when steps 5 and 6 succeeded
 9. Return response with lastEvaluation populated
-```
 
 ## Tasks
 
-### [ ] `IAnswerEvaluator` interface and request type
+### `IAnswerEvaluator` interface and request type
 
 - [ ] Add `Features/Interviews/IAnswerEvaluator.cs`
   - `Task<AnswerEvaluation> EvaluateAsync(EvaluateAnswerRequest request, CancellationToken cancellationToken = default)`
@@ -92,7 +91,7 @@ M04 records answers but returns no feedback. The core value of an interview simu
 - [ ] Add `PreviousTurnContext` record:
   - `int TurnNumber`, `string QuestionText`, `string QuestionTopic`, `string AnswerText`, `int? OverallScore`, `string? Feedback`
 
-### [ ] Rubric definitions
+### Rubric definitions
 
 - [ ] Add `Features/Interviews/Ai/Rubrics.cs`
   - Each dimension: `(string Key, string Label, string Description)`
@@ -101,19 +100,19 @@ M04 records answers but returns no feedback. The core value of an interview simu
   - SystemDesign: `requirementsClarity`, `componentDesign`, `scalability`, `tradeoffs`
   - `GetRubric(InterviewType) → IReadOnlyList<RubricDimension>` — used in prompt building and response validation
 
-### [ ] Expand `AnswerEvaluation` domain type
+### Expand `AnswerEvaluation` domain type
 
 - [ ] In `Features/Interviews/InterviewTurn.cs`:
   - Rename `Score` → `OverallScore` on `AnswerEvaluation`
   - Add `IReadOnlyList<EvaluationDimension> Dimensions`
 - [ ] Add `EvaluationDimension(string Key, string Label, int Score, string Feedback)` record — `Score` 0–100
 
-### [ ] Expand `InterviewTurn` domain model
+### Expand `InterviewTurn` domain model
 
 - [ ] Add `AiCallMetadata? AnswerEvaluationMetadata { get; private set; }` property
 - [ ] Add `RecordEvaluation(AnswerEvaluation evaluation, AiCallMetadata? metadata)` method — sets `Evaluation` and `AnswerEvaluationMetadata`
 
-### [ ] Expand `CosmosTurnDocument`
+### Expand `CosmosTurnDocument`
 
 - [ ] Expand `CosmosEvaluationDocument`:
   - Add `List<CosmosEvaluationDimensionDocument>? Dimensions` (nullable — backwards compatible)
@@ -121,14 +120,14 @@ M04 records answers but returns no feedback. The core value of an interview simu
 - [ ] Add `CosmosAiMetadataDocument? EvaluationAiMetadata` (serialised as `"evaluationAi"`) — added alongside `QuestionAiMetadata` from 05b
 - [ ] Update `CosmosInterviewStore` mapping to wire `EvaluationAiMetadata` and `Dimensions`
 
-### [ ] Update interview response contract
+### Update interview response contract
 
 - [ ] Add `EvaluationDimensionContract(string Key, string Label, int Score, int MaxScore, string Feedback)` — `MaxScore` always 100
 - [ ] Add `EvaluationContract(int TurnNumber, int OverallScore, int MaxScore, string Feedback, IReadOnlyList<EvaluationDimensionContract> Dimensions)`
 - [ ] Add `EvaluationContract? LastEvaluation` to `InterviewResponse` (nullable, additive)
 - [ ] Update `InterviewContractsMapping` to map `AnswerEvaluation` including dimensions, keys, and labels
 
-### [ ] Implement `AzureOpenAIAnswerEvaluator`
+### Implement `AzureOpenAIAnswerEvaluator`
 
 - [ ] Add `Features/Interviews/AzureOpenAIAnswerEvaluator.cs`
   - Selects rubric via `Rubrics.GetRubric(request.InterviewType)`
@@ -138,20 +137,20 @@ M04 records answers but returns no feedback. The core value of an interview simu
   - Uses `AiStructuredOutputRunner` for call, parse, validate, retry
   - Returns `AnswerEvaluation` with dimensions, overall score, feedback, and evaluation AI metadata
 
-### [ ] Add explicit response validator
+### Add explicit response validator
 
 - [ ] Add `EvaluationResponseValidator.Validate(response, rubric)` — returns `IReadOnlyList<string>` error list
   - All rubric dimension keys must be present in the response
   - Each dimension score must be 0–100
   - `feedback` field required and non-empty
 
-### [ ] Implement `StubAnswerEvaluator`
+### Implement `StubAnswerEvaluator`
 
 - [ ] Add `Features/Interviews/StubAnswerEvaluator.cs`
   - Returns deterministic `AnswerEvaluation` for each interview type with all rubric dimensions at fixed scores
   - `AiCallMetadata` set to `AiCallMetadata(PromptVersions.HardcodedAnswerEvaluation, "Hardcoded", null, null, null)`
 
-### [ ] Update `SubmitAnswer`
+### Update `SubmitAnswer`
 
 - [ ] Inject `IAnswerEvaluator`
 - [ ] Build `EvaluateAnswerRequest` from session + current turn + bounded prior turns
@@ -161,14 +160,14 @@ M04 records answers but returns no feedback. The core value of an interview simu
 - [ ] Call `SaveAnswerAsync` only when all AI calls succeeded
 - [ ] Populate `LastEvaluation` in the response from `currentTurn.Evaluation`
 
-### [ ] Wire config-driven selection
+### Wire config-driven selection
 
 - [ ] Update `Startup/InterviewServices.cs`:
   - `Ai:Provider = Hardcoded` → register `StubAnswerEvaluator`
   - `Ai:Provider = AzureOpenAI` → register `AzureOpenAIAnswerEvaluator`
 - [ ] Update `AuthWebApplicationFactory` to register `StubAnswerEvaluator` for `IAnswerEvaluator`
 
-### [ ] Tests
+### Tests
 
 - [ ] `RubricTests.cs` (unit)
   - `GetRubric(Technical)` returns exactly 4 dimensions with keys `technicalCorrectness`, `depth`, `communication`, `problemSolving`

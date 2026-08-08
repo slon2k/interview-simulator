@@ -16,6 +16,7 @@ This feature builds directly on the AI boundary infrastructure established in 05
 M04 delivered the full interview lifecycle with deterministic hardcoded questions. Questions are the same regardless of role, topic, seniority, or prior answers, which is not a usable interview experience.
 
 This feature makes questions:
+
 - Relevant to the selected role, seniority, topic, and interview type
 - Adaptive — later questions take prior turns into account
 - Varied across sessions instead of a fixed script
@@ -57,24 +58,24 @@ This feature makes questions:
 
 ## Tasks
 
-### [ ] Expand `GeneratedQuestion` and `IQuestionGenerator`
+### Expand `GeneratedQuestion` and `IQuestionGenerator`
 
 - [ ] Add `AiCallMetadata? AiMetadata` to `GeneratedQuestion` record
 - [ ] Update `HardcodedQuestionGenerator` to return `AiCallMetadata(PromptVersions.HardcodedQuestionGeneration, "Hardcoded", null, null, null)`
 
-### [ ] Expand `InterviewTurn` domain model
+### Expand `InterviewTurn` domain model
 
 - [ ] Add `AiCallMetadata? QuestionGenerationMetadata { get; private set; }` property
 - [ ] Add `RecordQuestionGenerationMetadata(AiCallMetadata metadata)` method
 
-### [ ] Expand `CosmosTurnDocument`
+### Expand `CosmosTurnDocument`
 
 - [ ] Replace single `AiMetadata` field with two fields:
   - `CosmosAiMetadataDocument? QuestionAiMetadata` (serialised as `"questionAi"`)
   - `CosmosAiMetadataDocument? EvaluationAiMetadata` (serialised as `"evaluationAi"`) — populated in 05c
 - [ ] Update `CosmosInterviewStore` mapping to wire `QuestionAiMetadata` from/to `InterviewTurn.QuestionGenerationMetadata`
 
-### [ ] Implement `AzureOpenAIQuestionGenerator`
+### Implement `AzureOpenAIQuestionGenerator`
 
 - [ ] Add `Features/Interviews/AzureOpenAIQuestionGenerator.cs`
   - Takes `AzureOpenAIClient`, `AzureOpenAIOptions`, `AiStructuredOutputRunner`, `AiOptions`
@@ -85,24 +86,24 @@ This feature makes questions:
   - Throws `AiGenerationFailedException` only if the runner throws (runner handles retries internally)
   - Returns `GeneratedQuestion` with `AiCallMetadata(PromptVersions.QuestionGeneration, "AzureOpenAI", model, promptTokens, completionTokens)`
 
-### [ ] Add explicit response validator
+### Add explicit response validator
 
 - [ ] Add `QuestionGenerationResponseValidator.Validate(response)` — returns `IReadOnlyList<string>` error list
   - `text` required and non-whitespace
   - `topic` required and non-whitespace
 
-### [ ] Wire config-driven selection
+### Wire config-driven selection
 
 - [ ] Update `Startup/InterviewServices.cs`
   - Read `Ai:Provider` (`Hardcoded` / `AzureOpenAI`); default `Hardcoded`
   - Register `HardcodedQuestionGenerator` or `AzureOpenAIQuestionGenerator` accordingly
 
-### [ ] Stamp generation metadata on turns
+### Stamp generation metadata on turns
 
 - [ ] Update `StartInterview.cs` — after `GenerateQuestionAsync`, call `firstTurn.RecordQuestionGenerationMetadata(result.AiMetadata)` if metadata present
 - [ ] Update `SubmitAnswer.cs` — after `GenerateQuestionAsync`, call `nextTurn.RecordQuestionGenerationMetadata(result.AiMetadata)` if metadata present
 
-### [ ] Tests
+### Tests
 
 - [ ] `AzureOpenAIQuestionGeneratorTests.cs` (unit)
   - Prompt text includes target role, seniority level, interview type, and focus area

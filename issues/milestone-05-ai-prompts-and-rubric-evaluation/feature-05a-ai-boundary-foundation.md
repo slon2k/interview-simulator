@@ -16,6 +16,7 @@ No domain interfaces, no AI implementations, and no endpoint changes are introdu
 Without a shared boundary, each AI call site would invent its own retry logic, error handling, and prompt versioning, making failures inconsistent and historical sessions uninterpretable when prompts change.
 
 Centralising this in one layer means:
+
 - AI failures always degrade gracefully to 503 ProblemDetails and never corrupt session state
 - Prompt versions are recorded consistently across generation and evaluation
 - Retry policy is bounded and predictable
@@ -52,7 +53,7 @@ Centralising this in one layer means:
 
 ## Tasks
 
-### [ ] Prompt registry
+### Prompt registry
 
 - [ ] Add `Features/Interviews/Ai/PromptVersions.cs`
   - `HardcodedQuestionGeneration = "hardcoded-question-generation-v1"`
@@ -62,7 +63,7 @@ Centralising this in one layer means:
   - `EvaluationBehavioral = "evaluation-behavioral-v1"`
   - `EvaluationSystemDesign = "evaluation-system-design-v1"`
 
-### [ ] AI options
+### AI options
 
 - [ ] Add `AiOptions` (config section `Ai:`) with startup validation
   - `MaxQuestionGenerationPreviousTurns` (default 3) — prior turns included in question prompt
@@ -75,14 +76,14 @@ Centralising this in one layer means:
 - [ ] Register and validate `AiOptions` in `Startup/InterviewServices.cs`
 - [ ] Add default values to `appsettings.json` under `Ai:`
 
-### [ ] Typed AI exceptions
+### Typed AI exceptions
 
 - [ ] `Features/Interviews/Ai/AiGenerationFailedException.cs`
 - [ ] `Features/Interviews/Ai/AiEvaluationFailedException.cs`
 - [ ] `Features/Interviews/Ai/AiInvalidResponseException.cs`
 - [ ] `Features/Interviews/Ai/AiProviderUnavailableException.cs`
 
-### [ ] Structured output runner
+### Structured output runner
 
 - [ ] Add `Features/Interviews/Ai/AiCallMetadata.cs`
   - Properties: `string PromptVersion`, `string Provider`, `string? Model`, `int? PromptTokens`, `int? CompletionTokens`
@@ -95,26 +96,26 @@ Centralising this in one layer means:
   - On Azure `RequestFailedException`: retry up to `TransientRetryCount`; then wrap in `AiProviderUnavailableException`
   - On `OperationCanceledException`: rethrow without retry
 
-### [ ] Error routing
+### Error routing
 
-- [ ] Extend `Features/Common/InfrastructureExceptionHandler.cs`
-  - `AiGenerationFailedException` → 503
-  - `AiEvaluationFailedException` → 503
-  - `AiInvalidResponseException` → 503
-  - `AiProviderUnavailableException` → 503
-  - ProblemDetails `detail`: "The AI service could not complete the request. Please retry."
-  - ProblemDetails `type`: stable URI, e.g. `https://interviewsimulator/errors/ai-unavailable`
+- Extend `Features/Common/InfrastructureExceptionHandler.cs`
+- `AiGenerationFailedException` → 503
+- `AiEvaluationFailedException` → 503
+- `AiInvalidResponseException` → 503
+- `AiProviderUnavailableException` → 503
+- ProblemDetails `detail`: "The AI service could not complete the request. Please retry."
+- ProblemDetails `type`: stable URI, e.g. `https://interviewsimulator/errors/ai-unavailable`
 
-### [ ] Tests
+### Tests
 
-- [ ] `api/tests/.../Ai/AiStructuredOutputRunnerTests.cs`
-  - Valid JSON + passing validator → returns `AiStructuredOutput<T>`
-  - Malformed JSON → retries once, succeeds on second attempt → returns result
-  - Malformed JSON twice → throws `AiInvalidResponseException`
-  - Validator returns errors → retries once, fails again → throws `AiInvalidResponseException`
-  - Azure `RequestFailedException` (transient) → retries once, succeeds → returns result
-  - Azure `RequestFailedException` twice → throws `AiProviderUnavailableException`
-  - `OperationCanceledException` → rethrown, no retry
+- `api/tests/.../Ai/AiStructuredOutputRunnerTests.cs`
+- Valid JSON + passing validator → returns `AiStructuredOutput<T>`
+- Malformed JSON → retries once, succeeds on second attempt → returns result
+- Malformed JSON twice → throws `AiInvalidResponseException`
+- Validator returns errors → retries once, fails again → throws `AiInvalidResponseException`
+- Azure `RequestFailedException` (transient) → retries once, succeeds → returns result
+- Azure `RequestFailedException` twice → throws `AiProviderUnavailableException`
+- `OperationCanceledException` → rethrown, no retry
 
 ## Verification
 

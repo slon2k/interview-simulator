@@ -84,17 +84,15 @@ public sealed record AiCallMetadata(
 
 ## SubmitAnswer Flow
 
-```
 1. Read session with ETag
 2. Read current turn with ETag
 3. Validate state
 4. Load bounded prior context
-5. EvaluateAsync          ← IAnswerEvaluator
-6. GenerateQuestionAsync  ← IQuestionGenerator (if session not complete)
+5. EvaluateAsync ← IAnswerEvaluator
+6. GenerateQuestionAsync ← IQuestionGenerator (if session not complete)
 7. Mutate session/turn objects in memory
-8. SaveAnswerAsync        ← only reached when steps 5 and 6 succeeded
+8. SaveAnswerAsync ← only reached when steps 5 and 6 succeeded
 9. Return response with lastEvaluation populated
-```
 
 ## Exit Criteria
 
