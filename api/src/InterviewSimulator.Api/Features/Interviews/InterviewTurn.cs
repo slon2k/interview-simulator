@@ -199,6 +199,11 @@ public sealed class InterviewTurn
         {
             throw new ArgumentException("Answer timestamp cannot be before created timestamp.", nameof(state));
         }
+
+        if (state.Evaluation is null && state.AnswerEvaluationMetadata is not null)
+        {
+            throw new ArgumentException("Cannot have answer evaluation metadata without evaluation.", nameof(state));
+        }
     }
 
     public static class Errors
@@ -267,6 +272,16 @@ public sealed record AnswerEvaluation
             throw new ArgumentException("Evaluation must contain at least one dimension.", nameof(dimensions));
         }
 
+        var dimensionKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var dimension in dimensions)
+        {
+            if (!dimensionKeys.Add(dimension.Key))
+            {
+                throw new ArgumentException($"Duplicate dimension key found: {dimension.Key}", nameof(dimensions));
+            }
+        }
+
         OverallScore = overallScore;
         Feedback = feedback;
         Dimensions = dimensions;
@@ -299,8 +314,8 @@ public sealed record EvaluationDimension
             throw new ArgumentException("Dimension label cannot be null or whitespace.", nameof(label));
         }
 
-        Key = key;
-        Label = label;
+        Key = key.Trim();
+        Label = label.Trim();
         Score = score;
         Feedback = feedback;
     }
@@ -347,7 +362,7 @@ public readonly record struct Feedback
             throw new ArgumentException("Feedback text cannot be null or whitespace.", nameof(text));
         }
 
-        Text = text;
+        Text = text.Trim();
     }
 
     public static implicit operator string(Feedback feedback) => feedback.Text;

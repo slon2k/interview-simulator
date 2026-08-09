@@ -60,20 +60,7 @@ public sealed class CosmosTurnDocument : IUserCosmosDocument
             Answer = turn.Answer is not null
                 ? new CosmosAnswerDocument { Text = turn.Answer.Text }
                 : null,
-            Evaluation = turn.Evaluation is not null
-                ? new CosmosEvaluationDocument
-                {
-                    OverallScore = turn.Evaluation.OverallScore,
-                    Feedback = turn.Evaluation.Feedback,
-                    Dimensions = [.. turn.Evaluation.Dimensions.Select(d => new CosmosEvaluationDimensionDocument
-                    {
-                        Key = d.Key,
-                        Label = d.Label,
-                        Score = d.Score,
-                        Feedback = d.Feedback
-                    })]
-                }
-                : null,
+            Evaluation = FromDomainEvaluation(turn.Evaluation),
             QuestionGenerationMetadata = FromDomainMetadata(turn.QuestionGenerationMetadata),
             AnswerEvaluationMetadata = FromDomainMetadata(turn.AnswerEvaluationMetadata),
             CreatedAt = turn.CreatedAt,
@@ -96,19 +83,48 @@ public sealed class CosmosTurnDocument : IUserCosmosDocument
                 Answer: Answer is not null
                     ? new InterviewAnswer(Answer.Text, AnsweredAt ?? CreatedAt)
                     : null,
-                Evaluation: Evaluation is not null
-                    ? new AnswerEvaluation(
-                        new Score(Evaluation.OverallScore),
-                        new Feedback(Evaluation.Feedback),
-                        [.. (Evaluation.Dimensions ?? []).Select(d => new EvaluationDimension(
-                            d.Key,
-                            d.Label,
-                            new Score(d.Score),
-                            new Feedback(d.Feedback)))])
-                    : null,
+                Evaluation: ToDomainEvaluation(Evaluation),
                 CreatedAt: CreatedAt,
                 UpdatedAt: UpdatedAt,
                 ConcurrencyToken: ETag));
+    }
+
+    private static AnswerEvaluation? ToDomainEvaluation(CosmosEvaluationDocument? document)
+    {
+        if (document is null)
+        {
+            return null;
+        }
+
+        return new AnswerEvaluation(
+            new Score(document.OverallScore),
+            new Feedback(document.Feedback),
+            [.. (document.Dimensions ?? []).Select(d => new EvaluationDimension(
+                d.Key,
+                d.Label,
+                new Score(d.Score),
+                new Feedback(d.Feedback)))]);
+    }
+
+    private static CosmosEvaluationDocument? FromDomainEvaluation(AnswerEvaluation? evaluation)
+    {
+        if (evaluation is null)
+        {
+            return null;
+        }
+
+        return new CosmosEvaluationDocument
+        {
+            OverallScore = evaluation.OverallScore,
+            Feedback = evaluation.Feedback,
+            Dimensions = [.. evaluation.Dimensions.Select(d => new CosmosEvaluationDimensionDocument
+            {
+                Key = d.Key,
+                Label = d.Label,
+                Score = d.Score,
+                Feedback = d.Feedback
+            })]
+        };
     }
 
     public static string ToCosmosId(Guid sessionId, int turnNumber)
