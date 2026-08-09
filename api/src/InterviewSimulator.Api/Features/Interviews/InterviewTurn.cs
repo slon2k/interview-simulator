@@ -19,6 +19,8 @@ public sealed class InterviewTurn
 
     public AiCallMetadata? QuestionGenerationMetadata { get; private set; }
 
+    public AiCallMetadata? AnswerEvaluationMetadata { get; private set; }
+
     public DateTimeOffset CreatedAt { get; private init; }
 
     public DateTimeOffset UpdatedAt { get; private set; }
@@ -76,6 +78,7 @@ public sealed class InterviewTurn
         }
 
         Evaluation = evaluation;
+        AnswerEvaluationMetadata = evaluation.AiMetadata;
         UpdatedAt = updatedAt;
     }
 
@@ -140,6 +143,7 @@ public sealed class InterviewTurn
         CreatedAt: CreatedAt,
         UpdatedAt: UpdatedAt,
         QuestionGenerationMetadata: QuestionGenerationMetadata,
+        AnswerEvaluationMetadata: AnswerEvaluationMetadata,
         ConcurrencyToken: ConcurrencyToken);
 
     public static InterviewTurn Restore(InterviewTurnState state)
@@ -158,6 +162,7 @@ public sealed class InterviewTurn
             Answer = state.Answer,
             Evaluation = state.Evaluation,
             QuestionGenerationMetadata = state.QuestionGenerationMetadata,
+            AnswerEvaluationMetadata = state.AnswerEvaluationMetadata,
             UpdatedAt = state.UpdatedAt,
             ConcurrencyToken = state.ConcurrencyToken
         };
@@ -239,28 +244,18 @@ public sealed record InterviewAnswer
         AnsweredAt = answeredAt;
     }
 }
-public sealed record AnswerEvaluation
-{
-    public int Score { get; }
+public sealed record AnswerEvaluation(
+    Score OverallScore,
+    string Feedback,
+    IReadOnlyList<EvaluationDimension> Dimensions,
+    AiCallMetadata? AiMetadata = null);
 
-    public string Feedback { get; }
 
-    public AnswerEvaluation(int score, string feedback)
-    {
-        if (score < 0 || score > 100)
-        {
-            throw new ArgumentOutOfRangeException(nameof(score), "Score must be between 0 and 100.");
-        }
-
-        if (string.IsNullOrWhiteSpace(feedback))
-        {
-            throw new ArgumentException("Feedback cannot be null or whitespace.", nameof(feedback));
-        }
-
-        Score = score;
-        Feedback = feedback;
-    }
-}
+public sealed record EvaluationDimension(
+    string Key,
+    string Label,
+    Score Score,
+    Feedback Feedback);
 
 public sealed record InterviewTurnState(
     Guid SessionId,
@@ -272,5 +267,39 @@ public sealed record InterviewTurnState(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     AiCallMetadata? QuestionGenerationMetadata = null,
+    AiCallMetadata? AnswerEvaluationMetadata = null,
     string? ConcurrencyToken = null);
 
+public readonly record struct Score
+{
+    public int Value { get; }
+
+    public Score(int value)
+    {
+        if (value < 0 || value > 100)
+        {
+            throw new ArgumentOutOfRangeException(nameof(value), "Score must be between 0 and 100.");
+        }
+
+        Value = value;
+    }
+
+    public static implicit operator int(Score score) => score.Value;
+}
+
+public readonly record struct Feedback
+{
+    public string Text { get; }
+
+    public Feedback(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            throw new ArgumentException("Feedback text cannot be null or whitespace.", nameof(text));
+        }
+
+        Text = text;
+    }
+
+    public static implicit operator string(Feedback feedback) => feedback.Text;
+}

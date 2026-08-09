@@ -61,8 +61,15 @@ public sealed class CosmosTurnDocument : IUserCosmosDocument
             Evaluation = turn.Evaluation is not null
                 ? new CosmosEvaluationDocument
                 {
-                    Score = turn.Evaluation.Score,
+                    OverallScore = turn.Evaluation.OverallScore,
                     Feedback = turn.Evaluation.Feedback,
+                    Dimensions = [.. turn.Evaluation.Dimensions.Select(d => new CosmosEvaluationDimensionDocument
+                    {
+                        Key = d.Key,
+                        Label = d.Label,
+                        Score = d.Score,
+                        Feedback = d.Feedback
+                    })]
                 }
                 : null,
             QuestionGenerationMetadata = turn.QuestionGenerationMetadata is not null
@@ -73,6 +80,16 @@ public sealed class CosmosTurnDocument : IUserCosmosDocument
                     PromptVersion = turn.QuestionGenerationMetadata.PromptVersion,
                     PromptTokens = turn.QuestionGenerationMetadata.PromptTokens,
                     CompletionTokens = turn.QuestionGenerationMetadata.CompletionTokens
+                }
+                : null,
+            AnswerEvaluationMetadata = turn.AnswerEvaluationMetadata is not null
+                ? new CosmosAiMetadataDocument
+                {
+                    Provider = turn.AnswerEvaluationMetadata.Provider,
+                    Model = turn.AnswerEvaluationMetadata.Model,
+                    PromptVersion = turn.AnswerEvaluationMetadata.PromptVersion,
+                    PromptTokens = turn.AnswerEvaluationMetadata.PromptTokens,
+                    CompletionTokens = turn.AnswerEvaluationMetadata.CompletionTokens
                 }
                 : null,
             CreatedAt = turn.CreatedAt,
@@ -98,11 +115,27 @@ public sealed class CosmosTurnDocument : IUserCosmosDocument
                         PromptTokens: QuestionGenerationMetadata.PromptTokens,
                         CompletionTokens: QuestionGenerationMetadata.CompletionTokens)
                     : null,
+                AnswerEvaluationMetadata: AnswerEvaluationMetadata is not null
+                    ? new AiCallMetadata(
+                        PromptVersion: AnswerEvaluationMetadata.PromptVersion ?? string.Empty,
+                        Provider: AnswerEvaluationMetadata.Provider ?? string.Empty,
+                        Model: AnswerEvaluationMetadata.Model,
+                        PromptTokens: AnswerEvaluationMetadata.PromptTokens,
+                        CompletionTokens: AnswerEvaluationMetadata.CompletionTokens)
+                    : null,
                 Answer: Answer is not null
                     ? new InterviewAnswer(Answer.Text, AnsweredAt ?? CreatedAt)
                     : null,
                 Evaluation: Evaluation is not null
-                    ? new AnswerEvaluation(Evaluation.Score, Evaluation.Feedback)
+                    ? new AnswerEvaluation(
+                        new Score(Evaluation.OverallScore),
+                        Evaluation.Feedback,
+                        [.. Evaluation.Dimensions.Select(d => new EvaluationDimension(
+                            Key: d.Key,
+                            Label: d.Label,
+                            Score: new Score(d.Score),
+                            Feedback: new Feedback(d.Feedback)
+                        ))])
                     : null,
                 CreatedAt: CreatedAt,
                 UpdatedAt: UpdatedAt,
@@ -143,6 +176,19 @@ public sealed class CosmosAnswerDocument
 
 public sealed class CosmosEvaluationDocument
 {
+    public int OverallScore { get; init; }
+
+    public string Feedback { get; init; } = string.Empty;
+
+    public IReadOnlyList<CosmosEvaluationDimensionDocument> Dimensions { get; init; } = [];
+}
+
+public sealed class CosmosEvaluationDimensionDocument
+{
+    public string Key { get; init; } = string.Empty;
+
+    public string Label { get; init; } = string.Empty;
+
     public int Score { get; init; }
 
     public string Feedback { get; init; } = string.Empty;

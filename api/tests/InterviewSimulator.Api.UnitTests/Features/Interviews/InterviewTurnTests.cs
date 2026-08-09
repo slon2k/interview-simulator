@@ -197,13 +197,13 @@ public sealed class InterviewTurn_Evaluate
         var answeredAt = createdAt.AddSeconds(5);
         turn.RecordAnswer("My answer", answeredAt);
 
-        var evaluation = new AnswerEvaluation(score: 75, feedback: "Good work!");
+        var evaluation = new AnswerEvaluation(OverallScore: new Score(75), Feedback: "Good work!", Dimensions: []);
         var evaluatedAt = createdAt.AddSeconds(10);
         turn.Evaluate(evaluation, evaluatedAt);
 
         Assert.True(turn.IsEvaluated);
         Assert.NotNull(turn.Evaluation);
-        Assert.Equal(75, turn.Evaluation.Score);
+        Assert.Equal(75, turn.Evaluation.OverallScore.Value);
         Assert.Equal("Good work!", turn.Evaluation.Feedback);
         Assert.Equal(evaluatedAt, turn.UpdatedAt);
     }
@@ -238,7 +238,7 @@ public sealed class InterviewTurn_Evaluate
             question: new InterviewQuestion("Question?", "topic"),
             createdAt: createdAt);
 
-        var evaluation = new AnswerEvaluation(score: 75, feedback: "Good!");
+        var evaluation = new AnswerEvaluation(OverallScore: new Score(75), Feedback: "Good!", Dimensions: []);
         var ex = Assert.Throws<DomainConflictException>(() =>
             turn.Evaluate(evaluation, createdAt.AddSeconds(5)));
 
@@ -257,10 +257,10 @@ public sealed class InterviewTurn_Evaluate
             createdAt: createdAt);
 
         turn.RecordAnswer("Answer", createdAt.AddSeconds(5));
-        turn.Evaluate(new AnswerEvaluation(score: 75, feedback: "Good!"), createdAt.AddSeconds(10));
+        turn.Evaluate(new AnswerEvaluation(OverallScore: new Score(75), Feedback: "Good!", Dimensions: []), createdAt.AddSeconds(10));
 
         var ex = Assert.Throws<DomainConflictException>(() =>
-            turn.Evaluate(new AnswerEvaluation(score: 80, feedback: "Better!"), createdAt.AddSeconds(15)));
+            turn.Evaluate(new AnswerEvaluation(OverallScore: new Score(80), Feedback: "Better!", Dimensions: []), createdAt.AddSeconds(15)));
 
         Assert.Equal(InterviewTurn.Errors.TurnAlreadyEvaluated.Code, ex.Code);
     }
@@ -279,7 +279,7 @@ public sealed class InterviewTurn_Evaluate
 
         turn.RecordAnswer("Answer", answeredAt);
 
-        var evaluation = new AnswerEvaluation(score: 75, feedback: "Good!");
+        var evaluation = new AnswerEvaluation(OverallScore: new Score(75), Feedback: "Good!", Dimensions: []);
         var ex = Assert.Throws<ArgumentException>(() =>
             turn.Evaluate(evaluation, answeredAt.AddSeconds(-1)));
 
@@ -324,7 +324,7 @@ public sealed class InterviewTurn_StateProperties
 
         Assert.False(turn.IsEvaluated);
 
-        turn.Evaluate(new AnswerEvaluation(score: 75, feedback: "Good!"), createdAt.AddSeconds(10));
+        turn.Evaluate(new AnswerEvaluation(OverallScore: new Score(75), Feedback: "Good!", Dimensions: []), createdAt.AddSeconds(10));
 
         Assert.True(turn.IsEvaluated);
     }
