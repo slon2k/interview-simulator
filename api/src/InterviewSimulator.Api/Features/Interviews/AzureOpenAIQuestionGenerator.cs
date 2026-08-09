@@ -110,8 +110,8 @@ public sealed class AzureOpenAIQuestionGenerator(
             cancellationToken: cancellationToken);
 
         return new GeneratedQuestion(
-            Text: response.Value.Text ?? throw new InvalidOperationException("AI response text was null."),
-            Topic: response.Value.Topic ?? throw new InvalidOperationException("AI response topic was null."),
+            Text: response.Value.Text ?? throw new AiInvalidResponseException(operationContext, "AI response text was null."),
+            Topic: response.Value.Topic ?? throw new AiInvalidResponseException(operationContext, "AI response topic was null."),
             AiMetadata: response.Metadata);
     }
 

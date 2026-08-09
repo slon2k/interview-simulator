@@ -73,7 +73,7 @@ public static class QuestionPromptBuilder
         builder.AppendLine("- Keep the question specific to role, seniority, interview type, and focus area.");
         builder.AppendLine("- If previous turns exist, adapt to the candidate's prior answers without repeating the same question.");
         builder.AppendLine("- Set topic to a concise label aligned with the focus area.");
-        builder.AppendLine("- Keep text under 350 characters.");
+        builder.AppendLine(string.Format(CultureInfo.InvariantCulture, "- Keep text under {0} characters.", options.MaxQuestionChars));
 
         return builder.ToString();
     }

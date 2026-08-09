@@ -12,7 +12,11 @@ public static class InterviewServices
 {
     public static WebApplicationBuilder AddInterviewServices(this WebApplicationBuilder builder)
     {
-        var provider = builder.Configuration["Ai:Provider"];
+        var configuredAiOptions = builder.Configuration
+            .GetSection(AiOptions.SectionName)
+            .Get<AiOptions>() ?? new AiOptions();
+
+        var provider = configuredAiOptions.Provider;
 
         if (string.Equals(provider, AiProviders.AzureOpenAI, StringComparison.OrdinalIgnoreCase))
         {
