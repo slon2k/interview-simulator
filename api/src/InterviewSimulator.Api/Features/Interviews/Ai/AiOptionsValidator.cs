@@ -25,6 +25,11 @@ public sealed class AiOptionsValidator : IValidateOptions<AiOptions>
             failures.Add("Ai:MaxQuestionGenerationPreviousTurns must be greater than or equal to 0.");
         }
 
+        if (options.MaxQuestionGenerationPreviousTurns > AiOptions.PreviousTurnsLimit)
+        {
+            failures.Add($"Ai:MaxQuestionGenerationPreviousTurns must be less than or equal to {AiOptions.PreviousTurnsLimit}.");
+        }
+
         if (options.MaxEvaluationPreviousTurns < 0)
         {
             failures.Add("Ai:MaxEvaluationPreviousTurns must be greater than or equal to 0.");

@@ -4,6 +4,8 @@ public sealed class AiOptions
 {
     public const string SectionName = "Ai";
 
+    public const int PreviousTurnsLimit = 100;
+
     public string Provider { get; set; } = AiProviders.AzureOpenAI;
     public int MaxQuestionGenerationPreviousTurns { get; set; } = 3;
     public int MaxEvaluationPreviousTurns { get; set; } = 2;
