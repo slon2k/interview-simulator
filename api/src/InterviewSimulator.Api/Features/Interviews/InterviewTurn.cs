@@ -1,4 +1,5 @@
 using InterviewSimulator.Api.Features.Common;
+using InterviewSimulator.Api.Features.Interviews.Ai;
 
 namespace InterviewSimulator.Api.Features.Interviews;
 
@@ -15,6 +16,8 @@ public sealed class InterviewTurn
     public InterviewAnswer? Answer { get; private set; }
 
     public AnswerEvaluation? Evaluation { get; private set; }
+
+    public AiCallMetadata? QuestionGenerationMetadata { get; private set; }
 
     public DateTimeOffset CreatedAt { get; private init; }
 
@@ -76,6 +79,13 @@ public sealed class InterviewTurn
         UpdatedAt = updatedAt;
     }
 
+    public void RecordQuestionGenerationMetadata(AiCallMetadata metadata)
+    {
+        ArgumentNullException.ThrowIfNull(metadata, nameof(metadata));
+
+        QuestionGenerationMetadata = metadata;
+    }
+
     private InterviewTurn(
         Guid sessionId,
         string userId,
@@ -129,6 +139,7 @@ public sealed class InterviewTurn
         Evaluation: Evaluation,
         CreatedAt: CreatedAt,
         UpdatedAt: UpdatedAt,
+        QuestionGenerationMetadata: QuestionGenerationMetadata,
         ConcurrencyToken: ConcurrencyToken);
 
     public static InterviewTurn Restore(InterviewTurnState state)
@@ -146,6 +157,7 @@ public sealed class InterviewTurn
         {
             Answer = state.Answer,
             Evaluation = state.Evaluation,
+            QuestionGenerationMetadata = state.QuestionGenerationMetadata,
             UpdatedAt = state.UpdatedAt,
             ConcurrencyToken = state.ConcurrencyToken
         };
@@ -259,5 +271,6 @@ public sealed record InterviewTurnState(
     AnswerEvaluation? Evaluation,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
+    AiCallMetadata? QuestionGenerationMetadata = null,
     string? ConcurrencyToken = null);
 

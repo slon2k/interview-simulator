@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.Json.Serialization;
 
 using InterviewSimulator.Api.Features.Interviews;
+using InterviewSimulator.Api.Features.Interviews.Ai;
 using InterviewSimulator.Api.Infrastructure.Data;
 
 namespace InterviewSimulator.Api.Infrastructure.Interviews;
@@ -26,7 +27,9 @@ public sealed class CosmosTurnDocument : IUserCosmosDocument
 
     public CosmosEvaluationDocument? Evaluation { get; set; }
 
-    public CosmosAiMetadataDocument? AiMetadata { get; set; }
+    public CosmosAiMetadataDocument? QuestionGenerationMetadata { get; set; }
+
+    public CosmosAiMetadataDocument? AnswerEvaluationMetadata { get; set; }
 
     public DateTimeOffset CreatedAt { get; init; }
 
@@ -62,6 +65,16 @@ public sealed class CosmosTurnDocument : IUserCosmosDocument
                     Feedback = turn.Evaluation.Feedback,
                 }
                 : null,
+            QuestionGenerationMetadata = turn.QuestionGenerationMetadata is not null
+                ? new CosmosAiMetadataDocument
+                {
+                    Provider = turn.QuestionGenerationMetadata.Provider,
+                    Model = turn.QuestionGenerationMetadata.Model,
+                    PromptVersion = turn.QuestionGenerationMetadata.PromptVersion,
+                    PromptTokens = turn.QuestionGenerationMetadata.PromptTokens,
+                    CompletionTokens = turn.QuestionGenerationMetadata.CompletionTokens
+                }
+                : null,
             CreatedAt = turn.CreatedAt,
             UpdatedAt = turn.UpdatedAt,
             AnsweredAt = turn.Answer?.AnsweredAt,
@@ -77,6 +90,14 @@ public sealed class CosmosTurnDocument : IUserCosmosDocument
                 UserId: UserId,
                 TurnNumber: TurnNumber,
                 Question: new InterviewQuestion(Question.Text, Question.Topic),
+                QuestionGenerationMetadata: QuestionGenerationMetadata is not null
+                    ? new AiCallMetadata(
+                        PromptVersion: QuestionGenerationMetadata.PromptVersion ?? string.Empty,
+                        Provider: QuestionGenerationMetadata.Provider ?? string.Empty,
+                        Model: QuestionGenerationMetadata.Model,
+                        PromptTokens: QuestionGenerationMetadata.PromptTokens,
+                        CompletionTokens: QuestionGenerationMetadata.CompletionTokens)
+                    : null,
                 Answer: Answer is not null
                     ? new InterviewAnswer(Answer.Text, AnsweredAt ?? CreatedAt)
                     : null,

@@ -77,6 +77,11 @@ public static class StartInterview
                 topic: question.Topic),
             createdAt: timeProvider.GetUtcNow());
 
+        if (question.AiMetadata is not null)
+        {
+            turn.RecordQuestionGenerationMetadata(question.AiMetadata);
+        }
+
         await store.StartInterviewAsync(session, turn, cancellationToken);
 
         return Results.Ok(MapToResponse(session, turn));

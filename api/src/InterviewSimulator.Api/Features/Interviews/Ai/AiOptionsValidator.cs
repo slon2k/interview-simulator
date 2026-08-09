@@ -10,9 +10,24 @@ public sealed class AiOptionsValidator : IValidateOptions<AiOptions>
 
         var failures = new List<string>();
 
+        if (string.IsNullOrWhiteSpace(options.Provider))
+        {
+            failures.Add("Ai:Provider is required.");
+        }
+        else if (!string.Equals(options.Provider, AiProviders.AzureOpenAI, StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(options.Provider, AiProviders.Hardcoded, StringComparison.OrdinalIgnoreCase))
+        {
+            failures.Add($"Ai:Provider must be one of: {AiProviders.AzureOpenAI}, {AiProviders.Hardcoded}.");
+        }
+
         if (options.MaxQuestionGenerationPreviousTurns < 0)
         {
             failures.Add("Ai:MaxQuestionGenerationPreviousTurns must be greater than or equal to 0.");
+        }
+
+        if (options.MaxQuestionGenerationPreviousTurns > AiOptions.PreviousTurnsLimit)
+        {
+            failures.Add($"Ai:MaxQuestionGenerationPreviousTurns must be less than or equal to {AiOptions.PreviousTurnsLimit}.");
         }
 
         if (options.MaxEvaluationPreviousTurns < 0)

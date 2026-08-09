@@ -12,7 +12,21 @@ public static class InterviewServices
 {
     public static WebApplicationBuilder AddInterviewServices(this WebApplicationBuilder builder)
     {
-        builder.Services.AddScoped<IQuestionGenerator, HardcodedQuestionGenerator>();
+        var configuredAiOptions = builder.Configuration
+            .GetSection(AiOptions.SectionName)
+            .Get<AiOptions>() ?? new AiOptions();
+
+        var provider = configuredAiOptions.Provider;
+
+        if (string.Equals(provider, AiProviders.AzureOpenAI, StringComparison.OrdinalIgnoreCase))
+        {
+            builder.Services.AddScoped<IQuestionGenerator, AzureOpenAIQuestionGenerator>();
+        }
+        else
+        {
+            builder.Services.AddScoped<IQuestionGenerator, HardcodedQuestionGenerator>();
+        }
+
         builder.Services.AddValidatorsFromAssemblyContaining<Program>();
         builder.Services.ConfigureHttpJsonOptions(options =>
         {

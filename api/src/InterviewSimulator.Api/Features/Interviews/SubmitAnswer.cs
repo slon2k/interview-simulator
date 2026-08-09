@@ -108,6 +108,11 @@ public static class SubmitAnswer
                     topic: nextQuestion.Topic),
                 userId: userId,
                 createdAt: now);
+
+            if (nextQuestion.AiMetadata is not null)
+            {
+                nextTurn.RecordQuestionGenerationMetadata(nextQuestion.AiMetadata);
+            }
         }
 
         await store.SaveAnswerAsync(

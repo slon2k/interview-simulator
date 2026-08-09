@@ -20,11 +20,12 @@ public sealed class AiStructuredOutputRunner<TOutput>(
         var invalidOutputFailures = 0;
         var transientFailures = 0;
         var configuredOptions = aiOptions.Value;
-        var maxAttempts =
-            1 + configuredOptions.InvalidOutputRetryCount + configuredOptions.TransientRetryCount;
+        var attempt = 0;
 
-        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        while (true)
         {
+            attempt++;
+
             cancellationToken.ThrowIfCancellationRequested();
 
             try
@@ -43,10 +44,9 @@ public sealed class AiStructuredOutputRunner<TOutput>(
                     }
 
                     logger.LogWarning(
-                        "AI returned empty content for {OperationName}. Attempt {Attempt} of {MaxAttempts}.",
+                        "AI returned empty content for {OperationName}. Attempt {Attempt}.",
                         context.OperationName,
-                        attempt,
-                        maxAttempts);
+                        attempt);
 
                     continue;
                 }
@@ -73,10 +73,9 @@ public sealed class AiStructuredOutputRunner<TOutput>(
 
                     logger.LogWarning(
                         ex,
-                        "AI returned malformed JSON for {OperationName}. Attempt {Attempt} of {MaxAttempts}.",
+                        "AI returned malformed JSON for {OperationName}. Attempt {Attempt}.",
                         context.OperationName,
-                        attempt,
-                        maxAttempts);
+                        attempt);
 
                     continue;
                 }
@@ -93,10 +92,9 @@ public sealed class AiStructuredOutputRunner<TOutput>(
                     }
 
                     logger.LogWarning(
-                        "AI response deserialized to null for {OperationName}. Attempt {Attempt} of {MaxAttempts}.",
+                        "AI response deserialized to null for {OperationName}. Attempt {Attempt}.",
                         context.OperationName,
-                        attempt,
-                        maxAttempts);
+                        attempt);
 
                     continue;
                 }
@@ -118,10 +116,9 @@ public sealed class AiStructuredOutputRunner<TOutput>(
                     }
 
                     logger.LogWarning(
-                        "AI response validation failed for {OperationName}. Attempt {Attempt} of {MaxAttempts}. Errors: {Errors}",
+                        "AI response validation failed for {OperationName}. Attempt {Attempt}. Errors: {Errors}",
                         context.OperationName,
                         attempt,
-                        maxAttempts,
                         validationResult.Errors.Select(e => e.ErrorMessage));
 
                     continue;
@@ -147,15 +144,10 @@ public sealed class AiStructuredOutputRunner<TOutput>(
 
                 logger.LogWarning(
                     ex,
-                    "Transient AI provider failure for {OperationName}. Attempt {Attempt} of {MaxAttempts}.",
+                    "Transient AI provider failure for {OperationName}. Attempt {Attempt}.",
                     context.OperationName,
-                    attempt,
-                    maxAttempts);
+                    attempt);
             }
         }
-
-        throw new AiProviderUnavailableException(
-            context,
-            "AI operation failed after retry attempts.");
     }
 }
