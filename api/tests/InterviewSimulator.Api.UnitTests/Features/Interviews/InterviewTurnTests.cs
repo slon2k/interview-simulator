@@ -181,10 +181,10 @@ public sealed class InterviewTurn_RecordAnswer
     }
 }
 
-public sealed class InterviewTurn_Evaluate
+public sealed class InterviewTurn_RecordEvaluation
 {
     [Fact]
-    public void Evaluate_OnAnsweredTurn_RecordsEvaluation()
+    public void RecordEvaluation_OnAnsweredTurn_RecordsEvaluation()
     {
         var createdAt = DateTimeOffset.UtcNow;
         var turn = InterviewTurn.Create(
@@ -197,19 +197,22 @@ public sealed class InterviewTurn_Evaluate
         var answeredAt = createdAt.AddSeconds(5);
         turn.RecordAnswer("My answer", answeredAt);
 
-        var evaluation = new AnswerEvaluation(OverallScore: new Score(75), Feedback: "Good work!", Dimensions: []);
+        var evaluation = new AnswerEvaluation(
+            new Score(75),
+            new Feedback("Good work!"),
+            [new EvaluationDimension("clarity", "Clarity", new Score(75), new Feedback("Clear."))]);
         var evaluatedAt = createdAt.AddSeconds(10);
-        turn.Evaluate(evaluation, evaluatedAt);
+        turn.RecordEvaluation(evaluation, null, evaluatedAt);
 
         Assert.True(turn.IsEvaluated);
         Assert.NotNull(turn.Evaluation);
         Assert.Equal(75, turn.Evaluation.OverallScore.Value);
-        Assert.Equal("Good work!", turn.Evaluation.Feedback);
+        Assert.Equal("Good work!", turn.Evaluation.Feedback.Text);
         Assert.Equal(evaluatedAt, turn.UpdatedAt);
     }
 
     [Fact]
-    public void Evaluate_WithNullEvaluation_ThrowsArgumentNullException()
+    public void RecordEvaluation_WithNullEvaluation_ThrowsArgumentNullException()
     {
         var createdAt = DateTimeOffset.UtcNow;
         var turn = InterviewTurn.Create(
@@ -222,13 +225,13 @@ public sealed class InterviewTurn_Evaluate
         turn.RecordAnswer("Answer", createdAt.AddSeconds(5));
 
         var ex = Assert.Throws<ArgumentNullException>(() =>
-            turn.Evaluate(null!, createdAt.AddSeconds(10)));
+            turn.RecordEvaluation(null!, null, createdAt.AddSeconds(10)));
 
         Assert.Equal("evaluation", ex.ParamName);
     }
 
     [Fact]
-    public void Evaluate_OnUnansweredTurn_ThrowsDomainConflictException()
+    public void RecordEvaluation_OnUnansweredTurn_ThrowsDomainConflictException()
     {
         var createdAt = DateTimeOffset.UtcNow;
         var turn = InterviewTurn.Create(
@@ -238,15 +241,18 @@ public sealed class InterviewTurn_Evaluate
             question: new InterviewQuestion("Question?", "topic"),
             createdAt: createdAt);
 
-        var evaluation = new AnswerEvaluation(OverallScore: new Score(75), Feedback: "Good!", Dimensions: []);
+        var evaluation = new AnswerEvaluation(
+            new Score(75),
+            new Feedback("Good!"),
+            [new EvaluationDimension("clarity", "Clarity", new Score(75), new Feedback("Clear."))]);
         var ex = Assert.Throws<DomainConflictException>(() =>
-            turn.Evaluate(evaluation, createdAt.AddSeconds(5)));
+            turn.RecordEvaluation(evaluation, null, createdAt.AddSeconds(5)));
 
         Assert.Equal(InterviewTurn.Errors.CannotEvaluateUnansweredTurn.Code, ex.Code);
     }
 
     [Fact]
-    public void Evaluate_WhenAlreadyEvaluated_ThrowsDomainConflictException()
+    public void RecordEvaluation_WhenAlreadyEvaluated_ThrowsDomainConflictException()
     {
         var createdAt = DateTimeOffset.UtcNow;
         var turn = InterviewTurn.Create(
@@ -257,16 +263,22 @@ public sealed class InterviewTurn_Evaluate
             createdAt: createdAt);
 
         turn.RecordAnswer("Answer", createdAt.AddSeconds(5));
-        turn.Evaluate(new AnswerEvaluation(OverallScore: new Score(75), Feedback: "Good!", Dimensions: []), createdAt.AddSeconds(10));
+        turn.RecordEvaluation(
+            new AnswerEvaluation(new Score(75), new Feedback("Good!"), [new EvaluationDimension("clarity", "Clarity", new Score(75), new Feedback("Clear."))]),
+            null,
+            createdAt.AddSeconds(10));
 
         var ex = Assert.Throws<DomainConflictException>(() =>
-            turn.Evaluate(new AnswerEvaluation(OverallScore: new Score(80), Feedback: "Better!", Dimensions: []), createdAt.AddSeconds(15)));
+            turn.RecordEvaluation(
+                new AnswerEvaluation(new Score(80), new Feedback("Better!"), [new EvaluationDimension("clarity", "Clarity", new Score(80), new Feedback("Clear."))]),
+                null,
+                createdAt.AddSeconds(15)));
 
         Assert.Equal(InterviewTurn.Errors.TurnAlreadyEvaluated.Code, ex.Code);
     }
 
     [Fact]
-    public void Evaluate_BeforeAnswered_ThrowsArgumentException()
+    public void RecordEvaluation_BeforeAnswered_ThrowsArgumentException()
     {
         var createdAt = DateTimeOffset.UtcNow;
         var answeredAt = createdAt.AddSeconds(5);
@@ -279,9 +291,12 @@ public sealed class InterviewTurn_Evaluate
 
         turn.RecordAnswer("Answer", answeredAt);
 
-        var evaluation = new AnswerEvaluation(OverallScore: new Score(75), Feedback: "Good!", Dimensions: []);
+        var evaluation = new AnswerEvaluation(
+            new Score(75),
+            new Feedback("Good!"),
+            [new EvaluationDimension("clarity", "Clarity", new Score(75), new Feedback("Clear."))]);
         var ex = Assert.Throws<ArgumentException>(() =>
-            turn.Evaluate(evaluation, answeredAt.AddSeconds(-1)));
+            turn.RecordEvaluation(evaluation, null, answeredAt.AddSeconds(-1)));
 
         Assert.Contains("cannot be before answered", ex.Message);
     }
@@ -324,7 +339,10 @@ public sealed class InterviewTurn_StateProperties
 
         Assert.False(turn.IsEvaluated);
 
-        turn.Evaluate(new AnswerEvaluation(OverallScore: new Score(75), Feedback: "Good!", Dimensions: []), createdAt.AddSeconds(10));
+        turn.RecordEvaluation(
+            new AnswerEvaluation(new Score(75), new Feedback("Good!"), [new EvaluationDimension("clarity", "Clarity", new Score(75), new Feedback("Clear."))]),
+            null,
+            createdAt.AddSeconds(10));
 
         Assert.True(turn.IsEvaluated);
     }

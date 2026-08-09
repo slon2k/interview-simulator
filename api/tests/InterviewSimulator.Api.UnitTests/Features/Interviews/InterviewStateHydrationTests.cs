@@ -252,7 +252,10 @@ public sealed class InterviewTurn_StateHydration
 
         var answeredAt = createdAt.AddSeconds(5);
         turn.RecordAnswer("My answer", answeredAt);
-        turn.Evaluate(new AnswerEvaluation(OverallScore: new Score(80), Feedback: "Good!", Dimensions: []), createdAt.AddSeconds(10));
+        turn.RecordEvaluation(
+            new AnswerEvaluation(new Score(80), new Feedback("Good!"), [new EvaluationDimension("clarity", "Clarity", new Score(80), new Feedback("Clear."))]),
+            null,
+            createdAt.AddSeconds(10));
 
         var state = turn.ToState();
 
@@ -279,7 +282,10 @@ public sealed class InterviewTurn_StateHydration
             TurnNumber: 2,
             Question: new InterviewQuestion("Question?", "topic"),
             Answer: new InterviewAnswer(text: "Answer text", answeredAt: answeredAt),
-            Evaluation: new AnswerEvaluation(OverallScore: new Score(75), Feedback: "Good", Dimensions: []),
+            Evaluation: new AnswerEvaluation(
+                new Score(75),
+                new Feedback("Good"),
+                [new EvaluationDimension("clarity", "Clarity", new Score(75), new Feedback("Clear."))]),
             CreatedAt: createdAt,
             UpdatedAt: createdAt.AddSeconds(10));
 
@@ -306,7 +312,13 @@ public sealed class InterviewTurn_StateHydration
             createdAt: createdAt);
 
         turn1.RecordAnswer("Detailed answer", createdAt.AddSeconds(30));
-        turn1.Evaluate(new AnswerEvaluation(OverallScore: new Score(92), Feedback: "Excellent!", Dimensions: []), createdAt.AddSeconds(45));
+        turn1.RecordEvaluation(
+            new AnswerEvaluation(
+                new Score(92),
+                new Feedback("Excellent!"),
+                [new EvaluationDimension("clarity", "Clarity", new Score(92), new Feedback("Excellent."))]),
+            null,
+            createdAt.AddSeconds(45));
 
         var state = turn1.ToState();
         var turn2 = InterviewTurn.Restore(state);
@@ -345,7 +357,10 @@ public sealed class InterviewTurn_StateHydration
             TurnNumber: 1,
             Question: new InterviewQuestion("Question?", "topic"),
             Answer: null,
-            Evaluation: new AnswerEvaluation(OverallScore: new Score(75), Feedback: "Feedback", Dimensions: []), // Invalid: no answer
+            Evaluation: new AnswerEvaluation(
+                new Score(75),
+                new Feedback("Feedback"),
+                [new EvaluationDimension("clarity", "Clarity", new Score(75), new Feedback("Ok."))]), // Invalid: no answer
             CreatedAt: createdAt,
             UpdatedAt: createdAt);
 

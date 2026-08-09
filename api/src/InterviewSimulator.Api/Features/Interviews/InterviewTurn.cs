@@ -53,9 +53,9 @@ public sealed class InterviewTurn
         UpdatedAt = answeredAt;
     }
 
-    public void Evaluate(AnswerEvaluation evaluation, DateTimeOffset updatedAt)
+    public void RecordEvaluation(AnswerEvaluation evaluation, AiCallMetadata? metadata, DateTimeOffset updatedAt)
     {
-        ArgumentNullException.ThrowIfNull(evaluation, nameof(evaluation));
+        ArgumentNullException.ThrowIfNull(evaluation);
 
         if (!IsAnswered)
         {
@@ -78,13 +78,18 @@ public sealed class InterviewTurn
         }
 
         Evaluation = evaluation;
-        AnswerEvaluationMetadata = evaluation.AiMetadata;
+        AnswerEvaluationMetadata = metadata;
         UpdatedAt = updatedAt;
     }
 
     public void RecordQuestionGenerationMetadata(AiCallMetadata metadata)
     {
-        ArgumentNullException.ThrowIfNull(metadata, nameof(metadata));
+        ArgumentNullException.ThrowIfNull(metadata);
+
+        if (QuestionGenerationMetadata is not null)
+        {
+            throw new DomainConflictException(Errors.QuestionGenerationMetadataAlreadyRecorded);
+        }
 
         QuestionGenerationMetadata = metadata;
     }
@@ -201,6 +206,7 @@ public sealed class InterviewTurn
         public static DomainError TurnAlreadyAnswered => new("Interviews.InterviewTurn.TurnAlreadyAnswered", "Cannot record answer for a turn that has already been answered.");
         public static DomainError CannotEvaluateUnansweredTurn => new("Interviews.InterviewTurn.CannotEvaluateUnansweredTurn", "Cannot evaluate an unanswered turn.");
         public static DomainError TurnAlreadyEvaluated => new("Interviews.InterviewTurn.TurnAlreadyEvaluated", "Cannot evaluate a turn that has already been evaluated.");
+        public static DomainError QuestionGenerationMetadataAlreadyRecorded => new("Interviews.InterviewTurn.QuestionGenerationMetadataAlreadyRecorded", "Question generation metadata has already been recorded.");
     }
 }
 
@@ -244,18 +250,61 @@ public sealed record InterviewAnswer
         AnsweredAt = answeredAt;
     }
 }
-public sealed record AnswerEvaluation(
-    Score OverallScore,
-    string Feedback,
-    IReadOnlyList<EvaluationDimension> Dimensions,
-    AiCallMetadata? AiMetadata = null);
+public sealed record AnswerEvaluation
+{
+    public Score OverallScore { get; }
 
+    public Feedback Feedback { get; }
 
-public sealed record EvaluationDimension(
-    string Key,
-    string Label,
-    Score Score,
-    Feedback Feedback);
+    public IReadOnlyList<EvaluationDimension> Dimensions { get; }
+
+    public AnswerEvaluation(Score overallScore, Feedback feedback, IReadOnlyList<EvaluationDimension> dimensions)
+    {
+        ArgumentNullException.ThrowIfNull(dimensions);
+
+        if (dimensions.Count == 0)
+        {
+            throw new ArgumentException("Evaluation must contain at least one dimension.", nameof(dimensions));
+        }
+
+        OverallScore = overallScore;
+        Feedback = feedback;
+        Dimensions = dimensions;
+    }
+}
+
+public sealed record AnswerEvaluationResult(
+    AnswerEvaluation Evaluation,
+    AiCallMetadata? AiMetadata);
+
+public sealed record EvaluationDimension
+{
+    public string Key { get; }
+
+    public string Label { get; }
+
+    public Score Score { get; }
+
+    public Feedback Feedback { get; }
+
+    public EvaluationDimension(string key, string label, Score score, Feedback feedback)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            throw new ArgumentException("Dimension key cannot be null or whitespace.", nameof(key));
+        }
+
+        if (string.IsNullOrWhiteSpace(label))
+        {
+            throw new ArgumentException("Dimension label cannot be null or whitespace.", nameof(label));
+        }
+
+        Key = key;
+        Label = label;
+        Score = score;
+        Feedback = feedback;
+    }
+}
 
 public sealed record InterviewTurnState(
     Guid SessionId,

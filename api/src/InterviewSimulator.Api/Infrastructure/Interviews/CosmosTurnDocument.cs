@@ -27,8 +27,10 @@ public sealed class CosmosTurnDocument : IUserCosmosDocument
 
     public CosmosEvaluationDocument? Evaluation { get; set; }
 
+    [JsonPropertyName("questionAi")]
     public CosmosAiMetadataDocument? QuestionGenerationMetadata { get; set; }
 
+    [JsonPropertyName("evaluationAi")]
     public CosmosAiMetadataDocument? AnswerEvaluationMetadata { get; set; }
 
     public DateTimeOffset CreatedAt { get; init; }
@@ -72,26 +74,8 @@ public sealed class CosmosTurnDocument : IUserCosmosDocument
                     })]
                 }
                 : null,
-            QuestionGenerationMetadata = turn.QuestionGenerationMetadata is not null
-                ? new CosmosAiMetadataDocument
-                {
-                    Provider = turn.QuestionGenerationMetadata.Provider,
-                    Model = turn.QuestionGenerationMetadata.Model,
-                    PromptVersion = turn.QuestionGenerationMetadata.PromptVersion,
-                    PromptTokens = turn.QuestionGenerationMetadata.PromptTokens,
-                    CompletionTokens = turn.QuestionGenerationMetadata.CompletionTokens
-                }
-                : null,
-            AnswerEvaluationMetadata = turn.AnswerEvaluationMetadata is not null
-                ? new CosmosAiMetadataDocument
-                {
-                    Provider = turn.AnswerEvaluationMetadata.Provider,
-                    Model = turn.AnswerEvaluationMetadata.Model,
-                    PromptVersion = turn.AnswerEvaluationMetadata.PromptVersion,
-                    PromptTokens = turn.AnswerEvaluationMetadata.PromptTokens,
-                    CompletionTokens = turn.AnswerEvaluationMetadata.CompletionTokens
-                }
-                : null,
+            QuestionGenerationMetadata = FromDomainMetadata(turn.QuestionGenerationMetadata),
+            AnswerEvaluationMetadata = FromDomainMetadata(turn.AnswerEvaluationMetadata),
             CreatedAt = turn.CreatedAt,
             UpdatedAt = turn.UpdatedAt,
             AnsweredAt = turn.Answer?.AnsweredAt,
@@ -107,35 +91,20 @@ public sealed class CosmosTurnDocument : IUserCosmosDocument
                 UserId: UserId,
                 TurnNumber: TurnNumber,
                 Question: new InterviewQuestion(Question.Text, Question.Topic),
-                QuestionGenerationMetadata: QuestionGenerationMetadata is not null
-                    ? new AiCallMetadata(
-                        PromptVersion: QuestionGenerationMetadata.PromptVersion ?? string.Empty,
-                        Provider: QuestionGenerationMetadata.Provider ?? string.Empty,
-                        Model: QuestionGenerationMetadata.Model,
-                        PromptTokens: QuestionGenerationMetadata.PromptTokens,
-                        CompletionTokens: QuestionGenerationMetadata.CompletionTokens)
-                    : null,
-                AnswerEvaluationMetadata: AnswerEvaluationMetadata is not null
-                    ? new AiCallMetadata(
-                        PromptVersion: AnswerEvaluationMetadata.PromptVersion ?? string.Empty,
-                        Provider: AnswerEvaluationMetadata.Provider ?? string.Empty,
-                        Model: AnswerEvaluationMetadata.Model,
-                        PromptTokens: AnswerEvaluationMetadata.PromptTokens,
-                        CompletionTokens: AnswerEvaluationMetadata.CompletionTokens)
-                    : null,
+                QuestionGenerationMetadata: ToDomainMetadata(QuestionGenerationMetadata),
+                AnswerEvaluationMetadata: ToDomainMetadata(AnswerEvaluationMetadata),
                 Answer: Answer is not null
                     ? new InterviewAnswer(Answer.Text, AnsweredAt ?? CreatedAt)
                     : null,
                 Evaluation: Evaluation is not null
                     ? new AnswerEvaluation(
                         new Score(Evaluation.OverallScore),
-                        Evaluation.Feedback,
-                        [.. Evaluation.Dimensions.Select(d => new EvaluationDimension(
-                            Key: d.Key,
-                            Label: d.Label,
-                            Score: new Score(d.Score),
-                            Feedback: new Feedback(d.Feedback)
-                        ))])
+                        new Feedback(Evaluation.Feedback),
+                        [.. (Evaluation.Dimensions ?? []).Select(d => new EvaluationDimension(
+                            d.Key,
+                            d.Label,
+                            new Score(d.Score),
+                            new Feedback(d.Feedback)))])
                     : null,
                 CreatedAt: CreatedAt,
                 UpdatedAt: UpdatedAt,
@@ -160,6 +129,44 @@ public sealed class CosmosTurnDocument : IUserCosmosDocument
     private static string FormatSessionId(Guid sessionId) => sessionId == Guid.Empty
         ? throw new ArgumentException("Session ID cannot be empty.", nameof(sessionId))
         : sessionId.ToString("D", CultureInfo.InvariantCulture);
+
+    private static CosmosAiMetadataDocument? FromDomainMetadata(AiCallMetadata? metadata)
+    {
+        if (metadata is null)
+        {
+            return null;
+        }
+
+        return new CosmosAiMetadataDocument
+        {
+            Provider = metadata.Provider,
+            Model = metadata.Model,
+            PromptVersion = metadata.PromptVersion,
+            PromptTokens = metadata.PromptTokens,
+            CompletionTokens = metadata.CompletionTokens
+        };
+    }
+
+    private static AiCallMetadata? ToDomainMetadata(CosmosAiMetadataDocument? document)
+    {
+        if (document is null)
+        {
+            return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(document.PromptVersion) ||
+            string.IsNullOrWhiteSpace(document.Provider))
+        {
+            return null;
+        }
+
+        return new AiCallMetadata(
+            PromptVersion: document.PromptVersion,
+            Provider: document.Provider,
+            Model: document.Model,
+            PromptTokens: document.PromptTokens,
+            CompletionTokens: document.CompletionTokens);
+    }
 }
 
 public sealed class CosmosQuestionDocument

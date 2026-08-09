@@ -69,7 +69,13 @@ public sealed class CosmosTurnDocument_Mapping
             createdAt: createdAt);
 
         turn.RecordAnswer("Microservices allow independent scaling...", answeredAt);
-        turn.Evaluate(new AnswerEvaluation(OverallScore: new Score(88), Feedback: "Good understanding", Dimensions: []), evaluatedAt);
+        turn.RecordEvaluation(
+            new AnswerEvaluation(
+                new Score(88),
+                new Feedback("Good understanding"),
+                [new EvaluationDimension("depth", "Depth", new Score(88), new Feedback("Thorough."))]),
+            null,
+            evaluatedAt);
 
         var doc = CosmosTurnDocument.FromDomain(turn);
 
@@ -120,7 +126,17 @@ public sealed class CosmosTurnDocument_Mapping
             Evaluation = new CosmosEvaluationDocument
             {
                 OverallScore = 88,
-                Feedback = "Good understanding"
+                Feedback = "Good understanding",
+                Dimensions =
+                [
+                    new CosmosEvaluationDimensionDocument
+                    {
+                        Key = "depth",
+                        Label = "Depth",
+                        Score = 88,
+                        Feedback = "Thorough."
+                    }
+                ]
             },
             AnsweredAt = answeredAt,
             CreatedAt = createdAt,
@@ -139,7 +155,7 @@ public sealed class CosmosTurnDocument_Mapping
         Assert.Equal(answeredAt, turn.Answer.AnsweredAt);
         Assert.True(turn.IsEvaluated);
         Assert.Equal(88, turn.Evaluation!.OverallScore.Value);
-        Assert.Equal("Good understanding", turn.Evaluation.Feedback);
+        Assert.Equal("Good understanding", turn.Evaluation.Feedback.Text);
         Assert.Equal(createdAt, turn.CreatedAt);
         Assert.Equal(evaluatedAt, turn.UpdatedAt);
     }
@@ -159,7 +175,13 @@ public sealed class CosmosTurnDocument_Mapping
             createdAt: createdAt);
 
         originalTurn.RecordAnswer("I use TDD with xUnit", createdAt.AddSeconds(45));
-        originalTurn.Evaluate(new AnswerEvaluation(OverallScore: new Score(92), Feedback: "Excellent testing practices", Dimensions: []), createdAt.AddSeconds(90));
+        originalTurn.RecordEvaluation(
+            new AnswerEvaluation(
+                new Score(92),
+                new Feedback("Excellent testing practices"),
+                [new EvaluationDimension("depth", "Depth", new Score(92), new Feedback("Thorough."))]),
+            null,
+            createdAt.AddSeconds(90));
 
         var doc = CosmosTurnDocument.FromDomain(originalTurn);
         var restoredTurn = doc.ToDomain();
