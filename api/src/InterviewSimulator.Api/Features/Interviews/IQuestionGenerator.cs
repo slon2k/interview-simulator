@@ -1,3 +1,5 @@
+using InterviewSimulator.Api.Features.Interviews.Ai;
+
 namespace InterviewSimulator.Api.Features.Interviews;
 
 public interface IQuestionGenerator
@@ -18,7 +20,8 @@ public sealed record GenerateQuestionRequest(
 
 public sealed record GeneratedQuestion(
     string Text,
-    string Topic);
+    string Topic,
+    AiCallMetadata? AiMetadata = null);
 
 public sealed record PreviousInterviewTurn(
     int TurnNumber,

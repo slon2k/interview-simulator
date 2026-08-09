@@ -1,5 +1,7 @@
 using System.Globalization;
 
+using InterviewSimulator.Api.Features.Interviews.Ai;
+
 namespace InterviewSimulator.Api.Features.Interviews;
 
 public sealed class HardcodedQuestionGenerator : IQuestionGenerator
@@ -66,10 +68,18 @@ public sealed class HardcodedQuestionGenerator : IQuestionGenerator
 
         var followUpPrefix = BuildFollowUpPrefix(request);
         var questionText = string.Concat(followUpPrefix, coreQuestion);
+        var aiMetadata = new AiCallMetadata(
+            PromptVersion: PromptVersions.HardcodedQuestionGeneration,
+            Provider: AiProviders.Hardcoded,
+            Model: null,
+            PromptTokens: null,
+            CompletionTokens: null);
 
         return Task.FromResult(new GeneratedQuestion(
             Text: questionText,
-            Topic: focusArea));
+            Topic: focusArea,
+            AiMetadata: aiMetadata
+            ));
     }
 
     private static string[] GetTemplates(InterviewType interviewType)
