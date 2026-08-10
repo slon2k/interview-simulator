@@ -19,6 +19,8 @@ public sealed class InterviewTurn
 
     public AiCallMetadata? QuestionGenerationMetadata { get; private set; }
 
+    public AiCallMetadata? AnswerEvaluationMetadata { get; private set; }
+
     public DateTimeOffset CreatedAt { get; private init; }
 
     public DateTimeOffset UpdatedAt { get; private set; }
@@ -51,9 +53,9 @@ public sealed class InterviewTurn
         UpdatedAt = answeredAt;
     }
 
-    public void Evaluate(AnswerEvaluation evaluation, DateTimeOffset updatedAt)
+    public void RecordEvaluation(AnswerEvaluation evaluation, AiCallMetadata? metadata, DateTimeOffset updatedAt)
     {
-        ArgumentNullException.ThrowIfNull(evaluation, nameof(evaluation));
+        ArgumentNullException.ThrowIfNull(evaluation);
 
         if (!IsAnswered)
         {
@@ -76,12 +78,18 @@ public sealed class InterviewTurn
         }
 
         Evaluation = evaluation;
+        AnswerEvaluationMetadata = metadata;
         UpdatedAt = updatedAt;
     }
 
     public void RecordQuestionGenerationMetadata(AiCallMetadata metadata)
     {
-        ArgumentNullException.ThrowIfNull(metadata, nameof(metadata));
+        ArgumentNullException.ThrowIfNull(metadata);
+
+        if (QuestionGenerationMetadata is not null)
+        {
+            throw new DomainConflictException(Errors.QuestionGenerationMetadataAlreadyRecorded);
+        }
 
         QuestionGenerationMetadata = metadata;
     }
@@ -140,6 +148,7 @@ public sealed class InterviewTurn
         CreatedAt: CreatedAt,
         UpdatedAt: UpdatedAt,
         QuestionGenerationMetadata: QuestionGenerationMetadata,
+        AnswerEvaluationMetadata: AnswerEvaluationMetadata,
         ConcurrencyToken: ConcurrencyToken);
 
     public static InterviewTurn Restore(InterviewTurnState state)
@@ -158,6 +167,7 @@ public sealed class InterviewTurn
             Answer = state.Answer,
             Evaluation = state.Evaluation,
             QuestionGenerationMetadata = state.QuestionGenerationMetadata,
+            AnswerEvaluationMetadata = state.AnswerEvaluationMetadata,
             UpdatedAt = state.UpdatedAt,
             ConcurrencyToken = state.ConcurrencyToken
         };
@@ -189,6 +199,11 @@ public sealed class InterviewTurn
         {
             throw new ArgumentException("Answer timestamp cannot be before created timestamp.", nameof(state));
         }
+
+        if (state.Evaluation is null && state.AnswerEvaluationMetadata is not null)
+        {
+            throw new ArgumentException("Cannot have answer evaluation metadata without evaluation.", nameof(state));
+        }
     }
 
     public static class Errors
@@ -196,6 +211,7 @@ public sealed class InterviewTurn
         public static DomainError TurnAlreadyAnswered => new("Interviews.InterviewTurn.TurnAlreadyAnswered", "Cannot record answer for a turn that has already been answered.");
         public static DomainError CannotEvaluateUnansweredTurn => new("Interviews.InterviewTurn.CannotEvaluateUnansweredTurn", "Cannot evaluate an unanswered turn.");
         public static DomainError TurnAlreadyEvaluated => new("Interviews.InterviewTurn.TurnAlreadyEvaluated", "Cannot evaluate a turn that has already been evaluated.");
+        public static DomainError QuestionGenerationMetadataAlreadyRecorded => new("Interviews.InterviewTurn.QuestionGenerationMetadataAlreadyRecorded", "Question generation metadata has already been recorded.");
     }
 }
 
@@ -241,22 +257,65 @@ public sealed record InterviewAnswer
 }
 public sealed record AnswerEvaluation
 {
-    public int Score { get; }
+    public Score OverallScore { get; }
 
-    public string Feedback { get; }
+    public Feedback Feedback { get; }
 
-    public AnswerEvaluation(int score, string feedback)
+    public IReadOnlyList<EvaluationDimension> Dimensions { get; }
+
+    public AnswerEvaluation(Score overallScore, Feedback feedback, IReadOnlyList<EvaluationDimension> dimensions)
     {
-        if (score < 0 || score > 100)
+        ArgumentNullException.ThrowIfNull(dimensions);
+
+        if (dimensions.Count == 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(score), "Score must be between 0 and 100.");
+            throw new ArgumentException("Evaluation must contain at least one dimension.", nameof(dimensions));
         }
 
-        if (string.IsNullOrWhiteSpace(feedback))
+        var dimensionKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var dimension in dimensions)
         {
-            throw new ArgumentException("Feedback cannot be null or whitespace.", nameof(feedback));
+            if (!dimensionKeys.Add(dimension.Key))
+            {
+                throw new ArgumentException($"Duplicate dimension key found: {dimension.Key}", nameof(dimensions));
+            }
         }
 
+        OverallScore = overallScore;
+        Feedback = feedback;
+        Dimensions = dimensions;
+    }
+}
+
+public sealed record AnswerEvaluationResult(
+    AnswerEvaluation Evaluation,
+    AiCallMetadata? AiMetadata);
+
+public sealed record EvaluationDimension
+{
+    public string Key { get; }
+
+    public string Label { get; }
+
+    public Score Score { get; }
+
+    public Feedback Feedback { get; }
+
+    public EvaluationDimension(string key, string label, Score score, Feedback feedback)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            throw new ArgumentException("Dimension key cannot be null or whitespace.", nameof(key));
+        }
+
+        if (string.IsNullOrWhiteSpace(label))
+        {
+            throw new ArgumentException("Dimension label cannot be null or whitespace.", nameof(label));
+        }
+
+        Key = key.Trim();
+        Label = label.Trim();
         Score = score;
         Feedback = feedback;
     }
@@ -272,5 +331,39 @@ public sealed record InterviewTurnState(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     AiCallMetadata? QuestionGenerationMetadata = null,
+    AiCallMetadata? AnswerEvaluationMetadata = null,
     string? ConcurrencyToken = null);
 
+public readonly record struct Score
+{
+    public int Value { get; }
+
+    public Score(int value)
+    {
+        if (value < 0 || value > 100)
+        {
+            throw new ArgumentOutOfRangeException(nameof(value), "Score must be between 0 and 100.");
+        }
+
+        Value = value;
+    }
+
+    public static implicit operator int(Score score) => score.Value;
+}
+
+public readonly record struct Feedback
+{
+    public string Text { get; }
+
+    public Feedback(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            throw new ArgumentException("Feedback text cannot be null or whitespace.", nameof(text));
+        }
+
+        Text = text.Trim();
+    }
+
+    public static implicit operator string(Feedback feedback) => feedback.Text;
+}
