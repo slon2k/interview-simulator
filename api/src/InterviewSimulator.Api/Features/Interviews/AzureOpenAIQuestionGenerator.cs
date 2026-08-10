@@ -50,7 +50,7 @@ public sealed class AzureOpenAIQuestionGenerator(
             throw new ArgumentException("Turn number cannot exceed question count.", nameof(request));
         }
 
-        var prompt = QuestionPromptBuilder.BuildPrompt(
+        var prompt = PromptBuilder.BuildQuestionPrompt(
             targetRole,
             request.Seniority,
             request.InterviewType,

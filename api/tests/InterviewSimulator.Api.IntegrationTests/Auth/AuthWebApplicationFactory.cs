@@ -1,6 +1,7 @@
 using InterviewSimulator.Api.Features.Identity.Access;
 using InterviewSimulator.Api.Features.Identity.CurrentUser;
 using InterviewSimulator.Api.Features.Identity.Profile;
+using InterviewSimulator.Api.Features.Interviews;
 using InterviewSimulator.Api.Infrastructure.Data;
 using InterviewSimulator.Api.Options;
 
@@ -45,6 +46,7 @@ public sealed class AuthWebApplicationFactory : WebApplicationFactory<Program>
             // Replace identity stores with test implementations (Cosmos is disabled, so these are normally no-ops).
             services.AddScoped<IUserProfileStore>(_ => new TestUserProfileStore());
             services.AddScoped<IUserAccessReader>(_ => new TestUserAccessReader());
+            services.AddScoped<IAnswerEvaluator, HardcodedAnswerEvaluator>();
 
             services.AddAuthentication()
                 .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(

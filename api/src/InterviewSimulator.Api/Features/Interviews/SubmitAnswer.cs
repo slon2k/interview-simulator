@@ -33,6 +33,7 @@ public static class SubmitAnswer
         Request request,
         IInterviewStore store,
         IQuestionGenerator questionGenerator,
+        IAnswerEvaluator answerEvaluator,
         ClaimsPrincipal user,
         TimeProvider timeProvider,
         CancellationToken cancellationToken)
@@ -61,16 +62,43 @@ public static class SubmitAnswer
         {
             return Errors.TurnNotFound.ToProblemResult();
         }
+        var previousTurns = await store.ListTurnsAsync(userId, interviewId, cancellationToken);
+
+        var evaluateAnswerRequest = new EvaluateAnswerRequest(
+            TargetRole: session.TargetRole,
+            Seniority: session.Seniority,
+            InterviewType: session.InterviewType,
+            FocusArea: session.FocusArea,
+            TurnNumber: request.TurnNumber,
+            QuestionCount: session.QuestionCount,
+            QuestionText: currentTurn.Question.Text,
+            QuestionTopic: currentTurn.Question.Topic,
+            AnswerText: request.Answer,
+            PreviousTurns: [.. previousTurns
+                .Where(turn => turn.TurnNumber < request.TurnNumber)
+                .Select(turn => new PreviousInterviewTurn(
+                    TurnNumber: turn.TurnNumber,
+                    QuestionText: turn.Question.Text,
+                    QuestionTopic: turn.Question.Topic,
+                    AnswerText: turn.Answer?.Text ?? string.Empty))]);
+
+        var evaluationResult = await answerEvaluator.EvaluateAnswerAsync(
+            evaluateAnswerRequest,
+            cancellationToken);
+
         var now = timeProvider.GetUtcNow();
 
         session.RecordAnswer(now);
         currentTurn.RecordAnswer(request.Answer, now);
+        currentTurn.RecordEvaluation(
+            evaluation: evaluationResult.Evaluation,
+            metadata: evaluationResult.AiMetadata,
+            updatedAt: now);
 
         InterviewTurn? nextTurn = null;
 
         if (session.Status == InterviewStatus.Active)
         {
-            var previousTurns = await store.ListTurnsAsync(userId, interviewId, cancellationToken);
             var nextTurnNumber = session.AnsweredCount + 1;
             var turnsForGeneration = previousTurns
                 .Where(turn => turn.TurnNumber != currentTurn.TurnNumber)
