@@ -124,11 +124,6 @@ public static class SubmitAnswer
                 generateQuestionRequest,
                 cancellationToken);
 
-            if (nextQuestion is null)
-            {
-                return Errors.NextQuestionGenerationFailed.ToProblemResult();
-            }
-
             nextTurn = InterviewTurn.Create(
                 sessionId: interviewId,
                 turnNumber: nextTurnNumber,

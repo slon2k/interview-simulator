@@ -55,7 +55,7 @@ public static class PersistenceServices
             {
                 Serializer = new SystemTextJsonCosmosSerializer(new JsonSerializerOptions
                 {
-                    PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                     PropertyNameCaseInsensitive = true
                 })
             };
