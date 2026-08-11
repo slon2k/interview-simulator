@@ -248,6 +248,7 @@ public sealed class InterviewTurn_StateHydration
             userId: "user123",
             turnNumber: 1,
             question: new InterviewQuestion("Question?", "topic"),
+            questionGenerationMetadata: null,
             createdAt: createdAt);
 
         var answeredAt = createdAt.AddSeconds(5);
@@ -309,6 +310,7 @@ public sealed class InterviewTurn_StateHydration
             userId: "user123",
             turnNumber: 3,
             question: new InterviewQuestion("Hard question?", "advanced-topic"),
+            questionGenerationMetadata: null,
             createdAt: createdAt);
 
         turn1.RecordAnswer("Detailed answer", createdAt.AddSeconds(30));

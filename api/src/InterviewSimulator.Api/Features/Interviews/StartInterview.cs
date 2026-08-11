@@ -75,12 +75,8 @@ public static class StartInterview
             question: new InterviewQuestion(
                 text: question.Text,
                 topic: question.Topic),
+            questionGenerationMetadata: question.AiMetadata,
             createdAt: timeProvider.GetUtcNow());
-
-        if (question.AiMetadata is not null)
-        {
-            turn.RecordQuestionGenerationMetadata(question.AiMetadata);
-        }
 
         await store.StartInterviewAsync(session, turn, cancellationToken);
 

@@ -175,6 +175,7 @@ public sealed class InterviewStateTransitionTests(AuthWebApplicationFactory fact
                 userId: userId,
                 turnNumber: 1,
                 question: new InterviewQuestion("Question 1", "Topic 1"),
+                questionGenerationMetadata: null,
                 createdAt: createdAt.AddSeconds(2));
 
             _turns[(session.Id, 1)] = firstTurn;

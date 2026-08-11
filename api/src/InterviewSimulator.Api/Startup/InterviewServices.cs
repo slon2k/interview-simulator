@@ -27,6 +27,14 @@ public static class InterviewServices
             builder.Services.AddScoped<IQuestionGenerator, HardcodedQuestionGenerator>();
         }
 
+        if (string.Equals(provider, AiProviders.AzureOpenAI, StringComparison.OrdinalIgnoreCase))
+        {
+            builder.Services.AddScoped<IAnswerEvaluator, AzureOpenAIAnswerEvaluator>();
+        }
+        else
+        {
+            builder.Services.AddScoped<IAnswerEvaluator, HardcodedAnswerEvaluator>();
+        }
         builder.Services.AddValidatorsFromAssemblyContaining<Program>();
         builder.Services.ConfigureHttpJsonOptions(options =>
         {

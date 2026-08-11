@@ -10,7 +10,7 @@ public sealed class QuestionPromptBuilderTests
     {
         var options = CreateOptions();
 
-        var prompt = QuestionPromptBuilder.BuildPrompt(
+        var prompt = PromptBuilder.BuildQuestionPrompt(
             targetRole: "Backend Engineer",
             seniority: SeniorityLevel.Senior,
             interviewType: InterviewType.Technical,
@@ -39,7 +39,7 @@ public sealed class QuestionPromptBuilderTests
             CreateTurn(3, "q3", "topic-3", "a3")
         };
 
-        var prompt = QuestionPromptBuilder.BuildPrompt(
+        var prompt = PromptBuilder.BuildQuestionPrompt(
             targetRole: "Backend Engineer",
             seniority: SeniorityLevel.Middle,
             interviewType: InterviewType.Technical,
@@ -63,7 +63,7 @@ public sealed class QuestionPromptBuilderTests
             CreateTurn(1, "question", "topic", "123456789")
         };
 
-        var prompt = QuestionPromptBuilder.BuildPrompt(
+        var prompt = PromptBuilder.BuildQuestionPrompt(
             targetRole: "Backend Engineer",
             seniority: SeniorityLevel.Middle,
             interviewType: InterviewType.Technical,

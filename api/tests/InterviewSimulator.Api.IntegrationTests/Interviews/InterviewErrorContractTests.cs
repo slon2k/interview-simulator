@@ -72,6 +72,7 @@ public sealed class InterviewErrorContractTests(AuthWebApplicationFactory factor
             userId: activeSession.UserId,
             turnNumber: 1,
             question: new InterviewQuestion("Question?", "Topic"),
+            questionGenerationMetadata: null,
             createdAt: createdAt.AddSeconds(2));
         answeredTurn.RecordAnswer("Already answered", createdAt.AddSeconds(3));
 

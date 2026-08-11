@@ -82,23 +82,12 @@ public sealed class InterviewTurn
         UpdatedAt = updatedAt;
     }
 
-    public void RecordQuestionGenerationMetadata(AiCallMetadata metadata)
-    {
-        ArgumentNullException.ThrowIfNull(metadata);
-
-        if (QuestionGenerationMetadata is not null)
-        {
-            throw new DomainConflictException(Errors.QuestionGenerationMetadataAlreadyRecorded);
-        }
-
-        QuestionGenerationMetadata = metadata;
-    }
-
     private InterviewTurn(
         Guid sessionId,
         string userId,
         int turnNumber,
         InterviewQuestion question,
+        AiCallMetadata? questionGenerationMetadata,
         DateTimeOffset createdAt)
     {
         if (sessionId == Guid.Empty)
@@ -122,6 +111,7 @@ public sealed class InterviewTurn
         UserId = userId;
         TurnNumber = turnNumber;
         Question = question;
+        QuestionGenerationMetadata = questionGenerationMetadata;
         CreatedAt = createdAt;
         UpdatedAt = createdAt;
     }
@@ -131,11 +121,13 @@ public sealed class InterviewTurn
         string userId,
         int turnNumber,
         InterviewQuestion question,
+        AiCallMetadata? questionGenerationMetadata,
         DateTimeOffset createdAt) => new(
             sessionId: sessionId,
             userId: userId,
             turnNumber: turnNumber,
             question: question,
+            questionGenerationMetadata: questionGenerationMetadata,
             createdAt: createdAt);
 
     public InterviewTurnState ToState() => new(
@@ -162,11 +154,11 @@ public sealed class InterviewTurn
             userId: state.UserId,
             turnNumber: state.TurnNumber,
             question: state.Question,
+            questionGenerationMetadata: state.QuestionGenerationMetadata,
             createdAt: state.CreatedAt)
         {
             Answer = state.Answer,
             Evaluation = state.Evaluation,
-            QuestionGenerationMetadata = state.QuestionGenerationMetadata,
             AnswerEvaluationMetadata = state.AnswerEvaluationMetadata,
             UpdatedAt = state.UpdatedAt,
             ConcurrencyToken = state.ConcurrencyToken
