@@ -14,11 +14,12 @@ Each decision captures context, selected option, consequences, and alternatives 
 | ADR 0002 | Cosmos DB for Primary Persistence                  | Accepted |
 | ADR 0003 | GitHub OAuth as Initial Identity Provider          | Accepted |
 | ADR 0004 | Cookie Session Auth in ASP.NET Core                | Accepted |
-| ADR 0005 | Session-Centric API Resource Model                 | Accepted |
+| ADR 0005 | API Resource Model Naming                          | Accepted |
 | ADR 0006 | Deterministic Cosmos IDs and Partitioning Strategy | Accepted |
 | ADR 0007 | IaC and CI/CD Baseline from Phase 1                | Accepted |
 | ADR 0008 | Config-Based Invite Allowlist for MVP              | Accepted |
 | ADR 0009 | Error Handling and ProblemDetails Standardization  | Accepted |
+| ADR 0010 | AI Boundary, Prompt Versioning, and Atomicity      | Accepted |
 
 ---
 
@@ -185,7 +186,7 @@ Apply anti-forgery protections for state-changing, cookie-authenticated endpoint
 
 ---
 
-## ADR 0005: Session-Centric API Resource Model
+## ADR 0005: API Resource Model Naming
 
 ## Status
 
@@ -197,13 +198,14 @@ Earlier planning mixed interview and session route naming. Consistent API naming
 
 ## Decision
 
-Standardize on session-centric routes:
+Standardize on interview-centric routes:
 
-- `POST /api/sessions`
-- `POST /api/sessions/{sessionId}/turns`
-- `POST /api/sessions/{sessionId}/complete`
-- `GET /api/sessions`
-- `GET /api/sessions/{sessionId}`
+- `POST /api/interviews`
+- `POST /api/interviews/{id}/start`
+- `POST /api/interviews/{id}/answers`
+- `POST /api/interviews/{id}/complete`
+- `GET /api/interviews`
+- `GET /api/interviews/{id}`
 
 ## Consequences
 
@@ -221,6 +223,51 @@ Standardize on session-centric routes:
 
 - Interview-centric route naming
 - Mixed naming across endpoints
+
+---
+
+## ADR 0010: AI Boundary, Prompt Versioning, and Atomicity
+
+## Status
+
+Accepted
+
+## Context
+
+Milestone 05 introduces AI-backed question generation and rubric-based answer evaluation. The project needs a stable boundary for AI calls, prompt version traceability, resumable failure behavior, and deterministic persistence semantics.
+
+## Decision
+
+Adopt these AI boundary decisions:
+
+- AI calls in `start` and `submit` are synchronous and complete before persistence writes.
+- Prompt versions are source-controlled constants and are recorded in per-turn metadata.
+- `AiStructuredOutputRunner` is the standard path for AI call execution, parse/validate, and retry behavior.
+- Typed AI exceptions map to `503 Service Unavailable` via centralized exception mapping.
+- Question generation metadata and answer evaluation metadata are persisted separately on turn documents (`questionAi` and `evaluationAi`).
+- Submit is atomic: on AI failure during evaluation or next-question generation, no partial turn/session persistence occurs.
+- Public interview contract stays minimal in M05; per-turn history/evaluation payloads are deferred to Milestone 06.
+
+## Consequences
+
+### Benefits
+
+- Failures are resumable and do not corrupt interview progression.
+- Historical runs remain interpretable across prompt revisions.
+- API and domain code stay decoupled from provider-specific details.
+- Persistence semantics are explicit and testable.
+
+### Trade-offs
+
+- Synchronous AI calls increase request latency and couple user wait time to AI dependency health.
+- Strict atomicity discards successful intermediate AI results when later AI steps fail.
+- Extra metadata storage increases turn document size.
+
+## Alternatives Considered
+
+- Persist partial submit state and reconcile asynchronously
+- Return per-turn evaluation directly in M05 interview read contract
+- Use provider-specific SDK calls directly in endpoint handlers
 
 ---
 

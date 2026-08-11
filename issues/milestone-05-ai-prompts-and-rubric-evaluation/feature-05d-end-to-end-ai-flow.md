@@ -7,7 +7,7 @@ Status: Planned
 
 ## Summary
 
-Verify that the full interview flow works end-to-end with faked AI boundaries in CI, confirm the stub path is credential-free, add degradation tests for all AI failure points, and update architecture documentation and ADRs to reflect the AI boundary introduced in M05.
+Verify that the full interview flow works end-to-end with faked AI boundaries in CI, confirm the stub path is credential-free, add degradation tests for all AI failure points with explicit no-partial-save guarantees, and update architecture documentation and ADRs to reflect the AI boundary introduced in M05.
 
 ## Problem and User Value
 
@@ -15,7 +15,7 @@ Verify that the full interview flow works end-to-end with faked AI boundaries in
 
 ## Scope
 
-- Add an end-to-end integration test (stub AI boundary) covering: setup → answer 3 questions with evaluation → complete
+- Add an end-to-end integration test (stub AI boundary) covering: setup → answer 3 questions with evaluation persisted on turns → complete
 - Add degradation tests for all three AI failure points in the flow
 - Confirm stub path keeps CI credential-free
 - Confirm question generation prompt versions are recorded on all turns
@@ -34,15 +34,17 @@ Verify that the full interview flow works end-to-end with faked AI boundaries in
 
 ## Acceptance Criteria
 
-- [ ] End-to-end integration test: create → start → answer × 3 (each response includes `lastEvaluation`) → complete
+- [ ] End-to-end integration test: create → start → answer × 3 → complete
 - [ ] Every answered turn in the E2E test has `EvaluationAiMetadata.PromptVersion` set
 - [ ] Every turn in the E2E test has `QuestionGenerationMetadata.PromptVersion` set
 - [ ] Stub-configured flow runs in CI without Azure OpenAI credentials
 - [ ] Degradation test: start generation failure leaves session in `Created` state; session can be started again
 - [ ] Degradation test: answer evaluation failure leaves current turn unanswered and session `Active`; the same answer can be resubmitted successfully
 - [ ] Degradation test: evaluation success + next-question generation failure leaves current turn unanswered and session `Active`; resubmit succeeds
+- [ ] On all AI failure paths, no partial turn/session persistence occurs (`SaveAnswerAsync` is not called for submit failures)
 - [ ] `docs/architecture.md` updated with AI boundary section
 - [ ] ADR 0010 added for AI boundary decisions
+- [ ] ADR route naming is consistent with current interview endpoints
 - [ ] `docs/milestones.md` M05 acceptance criteria checked off
 - [ ] All existing tests pass
 
@@ -53,8 +55,9 @@ Verify that the full interview flow works end-to-end with faked AI boundaries in
 - [ ] Add `api/tests/InterviewSimulator.Api.IntegrationTests/Interviews/InterviewAiFlowEndToEndTests.cs`
   - Uses stub AI boundary (`StubAnswerEvaluator` + `SequencedQuestionGenerator` from `AuthWebApplicationFactory`)
   - Creates a session, starts it, submits 3 answers, completes it
-  - Asserts each answer response includes `lastEvaluation.dimensions` with correct count for the interview type
-  - Asserts `lastEvaluation.overallScore` is in 0–100 range
+  - Asserts each submit succeeds and flow reaches completion deterministically with stubs
+  - Asserts persisted answered turns include evaluation with expected dimension count for interview type
+  - Asserts persisted evaluations have overall score in 0-100 range
   - Asserts final session status is `Completed` and `answeredCount == 3`
 
 ### Prompt version recording test
@@ -66,9 +69,10 @@ Verify that the full interview flow works end-to-end with faked AI boundaries in
 ### Degradation tests
 
 - [ ] Add degradation test cases (can be in `SubmitAnswerEvaluationTests.cs` or a dedicated file)
-  - Start generation failure: `IQuestionGenerator` throws `AiGenerationFailedException`; response is 503; `GET /api/interviews/{id}` returns `Status = Created`; retrying `POST /start` succeeds
-  - Answer evaluation failure: `IAnswerEvaluator` throws `AiEvaluationFailedException`; response is 503; `GET /api/interviews/{id}` returns `Status = Active` with `answeredCount` unchanged; resubmitting the same answer succeeds
-  - Evaluation success + generation failure: `IAnswerEvaluator` succeeds but `IQuestionGenerator` throws; response is 503; session/turn state unchanged; resubmit succeeds
+  - Start generation failure: `IQuestionGenerator` throws a typed `AiException` (for example `AiProviderUnavailableException`); response is 503; `GET /api/interviews/{id}` returns `Status = Created`; retrying `POST /start` succeeds
+  - Answer evaluation failure: `IAnswerEvaluator` throws a typed `AiException` (for example `AiProviderUnavailableException`); response is 503; `GET /api/interviews/{id}` returns `Status = Active` with `answeredCount` unchanged; resubmitting the same answer succeeds
+  - Evaluation success + generation failure: evaluator succeeds but generator throws a typed `AiException`; response is 503; session/turn state unchanged; resubmit succeeds
+  - Submit failure atomicity: assert `SaveAnswerAsync` is not called and the current turn remains unanswered/unevaluated
 
 ### Documentation
 
@@ -80,7 +84,9 @@ Verify that the full interview flow works end-to-end with faked AI boundaries in
   - Context: M05 introduces real AI calls; needs consistent versioning, validation, and failure handling
   - Decision: synchronous AI calls complete before Cosmos writes; prompts versioned as code constants; `AiStructuredOutputRunner` handles retry and parsing; typed AI exceptions map to 503; generation and evaluation metadata stored separately on turn documents; `OverallScore` computed by app from dimension average
   - Consequences: AI failures are always resumable; historical sessions are interpretable across prompt changes; Azure-specific details do not leak into endpoint code
+  - Reconcile ADR route naming to interview endpoints (`/api/interviews/*`) so documentation matches implemented API
 - [ ] Update `docs/milestones.md` — check off M05 acceptance criteria
+  - Ensure M05 criteria explicitly mention resumable AI failures and no-partial-save behavior
 
 ### Manual real-AI verification (non-CI)
 
@@ -94,6 +100,7 @@ Verify that the full interview flow works end-to-end with faked AI boundaries in
 - [ ] E2E test passes with faked AI boundary; no live Azure OpenAI credentials required
 - [ ] All three degradation scenarios produce 503 and leave session state unchanged
 - [ ] Retry after each degradation scenario succeeds
+- [ ] Submit failure scenarios verify no partial persistence of answer/evaluation
 - [ ] `docs/architecture.md` describes the full AI boundary
 - [ ] ADR 0010 is present in `docs/decisions.md` decision index
 - [ ] Full test suite passes

@@ -69,9 +69,15 @@ public static class PromptBuilder
 
         builder.AppendLine();
         builder.AppendLine("Instructions:");
-        builder.AppendLine("- Generate exactly one next interview question for this turn.");
-        builder.AppendLine("- Keep the question specific to role, seniority, interview type, and focus area.");
-        builder.AppendLine("- If previous turns exist, adapt to the candidate's prior answers without repeating the same question.");
+        builder.AppendLine("- Generate exactly one focused interview question for this turn.");
+        builder.AppendLine("- The question should feel like something an interviewer would ask verbally, not like a take-home assignment.");
+        builder.AppendLine("- Ask about one main concept or scenario only.");
+        builder.AppendLine("- Do not include a checklist of topics the candidate must cover.");
+        builder.AppendLine("- Do not ask multiple sub-questions joined by semicolons or long comma-separated lists.");
+        builder.AppendLine("- Avoid phrases like: \"Be specific about...\", \"cover A, B, C...\", or \"explain X, Y, Z...\".");
+        builder.AppendLine("- Prefer one or two concise sentences.");
+        builder.AppendLine("- If previous turns exist, use them only to avoid repetition and choose a relevant follow-up.");
+        builder.AppendLine("- Do not summarize or restate the candidate's previous answers.");
         builder.AppendLine("- Set topic to a concise label aligned with the focus area.");
         builder.AppendLine(string.Format(CultureInfo.InvariantCulture, "- Keep text under {0} characters.", options.MaxQuestionChars));
 
