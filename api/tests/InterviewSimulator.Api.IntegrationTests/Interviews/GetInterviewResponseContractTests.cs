@@ -166,6 +166,7 @@ public sealed class GetInterviewResponseContractTests(AuthWebApplicationFactory 
                 userId: userId,
                 turnNumber: 1,
                 question: new InterviewQuestion("Question 1", "Topic 1"),
+                questionGenerationMetadata: null,
                 createdAt: startedAt);
             answeredTurn.RecordAnswer("Answer 1", answeredAt);
 
@@ -174,6 +175,7 @@ public sealed class GetInterviewResponseContractTests(AuthWebApplicationFactory 
                 userId: userId,
                 turnNumber: 2,
                 question: new InterviewQuestion("Question 2", "Topic 2"),
+                questionGenerationMetadata: null,
                 createdAt: answeredAt.AddSeconds(1));
 
             _turns[(session.Id, 1)] = answeredTurn;

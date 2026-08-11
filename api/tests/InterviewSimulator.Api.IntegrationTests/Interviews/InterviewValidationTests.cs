@@ -225,6 +225,7 @@ public sealed class InterviewValidationTests(AuthWebApplicationFactory factory) 
                 userId: session.UserId,
                 turnNumber: 1,
                 question: new InterviewQuestion("Question 1", "Topic 1"),
+                questionGenerationMetadata: null,
                 createdAt: createdAt.AddSeconds(2));
 
             _turns[(session.Id, 1)] = turn;

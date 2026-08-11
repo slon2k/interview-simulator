@@ -66,6 +66,7 @@ public sealed class CosmosTurnDocument_Mapping
             userId: userId,
             turnNumber: 2,
             question: new InterviewQuestion("Why use microservices?", "architecture"),
+            questionGenerationMetadata: null,
             createdAt: createdAt);
 
         turn.RecordAnswer("Microservices allow independent scaling...", answeredAt);
@@ -172,6 +173,7 @@ public sealed class CosmosTurnDocument_Mapping
             userId: userId,
             turnNumber: 3,
             question: new InterviewQuestion("Describe your approach to testing", "testing"),
+            questionGenerationMetadata: null,
             createdAt: createdAt);
 
         originalTurn.RecordAnswer("I use TDD with xUnit", createdAt.AddSeconds(45));
@@ -204,6 +206,7 @@ public sealed class CosmosTurnDocument_Mapping
             userId: "user123",
             turnNumber: 1,
             question: new InterviewQuestion("Question?", "topic"),
+            questionGenerationMetadata: null,
             createdAt: DateTimeOffset.UtcNow);
 
         var doc = CosmosTurnDocument.FromDomain(turn);
@@ -255,6 +258,7 @@ public sealed class CosmosTurnDocument_Mapping
             userId: userId,
             turnNumber: 1,
             question: new InterviewQuestion("Q1", "t1"),
+            questionGenerationMetadata: null,
             createdAt: DateTimeOffset.UtcNow);
 
         var doc1 = CosmosTurnDocument.FromDomain(turn1);
@@ -266,6 +270,7 @@ public sealed class CosmosTurnDocument_Mapping
             userId: userId,
             turnNumber: 10,
             question: new InterviewQuestion("Q10", "t10"),
+            questionGenerationMetadata: null,
             createdAt: DateTimeOffset.UtcNow);
 
         var doc10 = CosmosTurnDocument.FromDomain(turn10);
@@ -277,6 +282,7 @@ public sealed class CosmosTurnDocument_Mapping
             userId: userId,
             turnNumber: 100,
             question: new InterviewQuestion("Q100", "t100"),
+            questionGenerationMetadata: null,
             createdAt: DateTimeOffset.UtcNow);
 
         var doc100 = CosmosTurnDocument.FromDomain(turn100);
@@ -301,6 +307,7 @@ public sealed class CosmosTurnDocument_Mapping
             userId: "user123",
             turnNumber: 2,
             question: new InterviewQuestion("Question?", "topic"),
+            questionGenerationMetadata: null,
             createdAt: createdAt);
 
         turn.RecordAnswer("My answer", answeredAt);
@@ -399,6 +406,7 @@ public sealed class CosmosDocumentIds
             userId: "user123",
             turnNumber: turnNumber,
             question: new InterviewQuestion("Q", "t"),
+            questionGenerationMetadata: null,
             createdAt: DateTimeOffset.UtcNow);
 
         var doc = CosmosTurnDocument.FromDomain(turn);

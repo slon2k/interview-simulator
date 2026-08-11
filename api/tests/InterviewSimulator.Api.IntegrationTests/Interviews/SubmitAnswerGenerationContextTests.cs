@@ -122,6 +122,7 @@ public sealed class SubmitAnswerGenerationContextTests(AuthWebApplicationFactory
                 userId: userId,
                 turnNumber: 1,
                 question: new InterviewQuestion("Question 1", "Topic 1"),
+                questionGenerationMetadata: null,
                 createdAt: startedAt.AddSeconds(1));
 
             _sessions[session.Id] = session.ToState();
@@ -152,6 +153,7 @@ public sealed class SubmitAnswerGenerationContextTests(AuthWebApplicationFactory
                 userId: userId,
                 turnNumber: 1,
                 question: new InterviewQuestion("Question 1", "Topic 1"),
+                questionGenerationMetadata: null,
                 createdAt: startedAt.AddSeconds(1));
             firstTurn.RecordAnswer("Answer 1", firstAnsweredAt);
 
@@ -160,6 +162,7 @@ public sealed class SubmitAnswerGenerationContextTests(AuthWebApplicationFactory
                 userId: userId,
                 turnNumber: 2,
                 question: new InterviewQuestion("Question 2", "Topic 2"),
+                questionGenerationMetadata: null,
                 createdAt: firstAnsweredAt.AddSeconds(1));
 
             _sessions[session.Id] = session.ToState();

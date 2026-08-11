@@ -23,7 +23,8 @@ public static class SubmitAnswer
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict)
-            .ProducesProblem(StatusCodes.Status500InternalServerError);
+            .ProducesProblem(StatusCodes.Status500InternalServerError)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
 
         return endpoints;
     }
@@ -62,7 +63,7 @@ public static class SubmitAnswer
         {
             return Errors.TurnNotFound.ToProblemResult();
         }
-        var previousTurns = await store.ListTurnsAsync(userId, interviewId, cancellationToken);
+        var turns = await store.ListTurnsAsync(userId, interviewId, cancellationToken);
 
         var evaluateAnswerRequest = new EvaluateAnswerRequest(
             TargetRole: session.TargetRole,
@@ -74,7 +75,7 @@ public static class SubmitAnswer
             QuestionText: currentTurn.Question.Text,
             QuestionTopic: currentTurn.Question.Topic,
             AnswerText: request.Answer,
-            PreviousTurns: [.. previousTurns
+            PreviousTurns: [.. turns
                 .Where(turn => turn.TurnNumber < request.TurnNumber)
                 .Select(turn => new PreviousInterviewTurn(
                     TurnNumber: turn.TurnNumber,
@@ -100,7 +101,7 @@ public static class SubmitAnswer
         if (session.Status == InterviewStatus.Active)
         {
             var nextTurnNumber = session.AnsweredCount + 1;
-            var turnsForGeneration = previousTurns
+            var turnsForGeneration = turns
                 .Where(turn => turn.TurnNumber != currentTurn.TurnNumber)
                 .Append(currentTurn)
                 .OrderBy(turn => turn.TurnNumber)
@@ -134,13 +135,9 @@ public static class SubmitAnswer
                 question: new InterviewQuestion(
                     text: nextQuestion.Text,
                     topic: nextQuestion.Topic),
+                questionGenerationMetadata: nextQuestion.AiMetadata,
                 userId: userId,
                 createdAt: now);
-
-            if (nextQuestion.AiMetadata is not null)
-            {
-                nextTurn.RecordQuestionGenerationMetadata(nextQuestion.AiMetadata);
-            }
         }
 
         await store.SaveAnswerAsync(

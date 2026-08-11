@@ -19,6 +19,7 @@ public sealed class InterviewTurn_Create
             userId: userId,
             turnNumber: turnNumber,
             question: question,
+            questionGenerationMetadata: null,
             createdAt: createdAt);
 
         Assert.Equal(sessionId, turn.SessionId);
@@ -44,6 +45,7 @@ public sealed class InterviewTurn_Create
                 userId: "user123",
                 turnNumber: 1,
                 question: question,
+                questionGenerationMetadata: null,
                 createdAt: DateTimeOffset.UtcNow));
 
         Assert.Equal("sessionId", ex.ParamName);
@@ -63,6 +65,7 @@ public sealed class InterviewTurn_Create
                 userId: userId!,
                 turnNumber: 1,
                 question: question,
+                questionGenerationMetadata: null,
                 createdAt: DateTimeOffset.UtcNow));
 
         Assert.Equal("userId", ex.ParamName);
@@ -81,6 +84,7 @@ public sealed class InterviewTurn_Create
                 userId: "user123",
                 turnNumber: turnNumber,
                 question: question,
+                questionGenerationMetadata: null,
                 createdAt: DateTimeOffset.UtcNow));
 
         Assert.Equal("turnNumber", ex.ParamName);
@@ -95,6 +99,7 @@ public sealed class InterviewTurn_Create
                 userId: "user123",
                 turnNumber: 1,
                 question: null!,
+                questionGenerationMetadata: null,
                 createdAt: DateTimeOffset.UtcNow));
 
         Assert.Equal("question", ex.ParamName);
@@ -112,6 +117,7 @@ public sealed class InterviewTurn_RecordAnswer
             userId: "user123",
             turnNumber: 1,
             question: new InterviewQuestion("Question?", "topic"),
+            questionGenerationMetadata: null,
             createdAt: createdAt);
 
         var answerText = "This is my answer";
@@ -136,6 +142,7 @@ public sealed class InterviewTurn_RecordAnswer
             userId: "user123",
             turnNumber: 1,
             question: new InterviewQuestion("Question?", "topic"),
+            questionGenerationMetadata: null,
             createdAt: DateTimeOffset.UtcNow);
 
         var ex = Assert.Throws<ArgumentException>(() =>
@@ -153,6 +160,7 @@ public sealed class InterviewTurn_RecordAnswer
             userId: "user123",
             turnNumber: 1,
             question: new InterviewQuestion("Question?", "topic"),
+            questionGenerationMetadata: null,
             createdAt: createdAt);
 
         turn.RecordAnswer("First answer", createdAt.AddSeconds(5));
@@ -172,6 +180,7 @@ public sealed class InterviewTurn_RecordAnswer
             userId: "user123",
             turnNumber: 1,
             question: new InterviewQuestion("Question?", "topic"),
+            questionGenerationMetadata: null,
             createdAt: createdAt);
 
         var ex = Assert.Throws<ArgumentException>(() =>
@@ -192,6 +201,7 @@ public sealed class InterviewTurn_RecordEvaluation
             userId: "user123",
             turnNumber: 1,
             question: new InterviewQuestion("Question?", "topic"),
+            questionGenerationMetadata: null,
             createdAt: createdAt);
 
         var answeredAt = createdAt.AddSeconds(5);
@@ -220,6 +230,7 @@ public sealed class InterviewTurn_RecordEvaluation
             userId: "user123",
             turnNumber: 1,
             question: new InterviewQuestion("Question?", "topic"),
+            questionGenerationMetadata: null,
             createdAt: createdAt);
 
         turn.RecordAnswer("Answer", createdAt.AddSeconds(5));
@@ -239,6 +250,7 @@ public sealed class InterviewTurn_RecordEvaluation
             userId: "user123",
             turnNumber: 1,
             question: new InterviewQuestion("Question?", "topic"),
+            questionGenerationMetadata: null,
             createdAt: createdAt);
 
         var evaluation = new AnswerEvaluation(
@@ -260,6 +272,7 @@ public sealed class InterviewTurn_RecordEvaluation
             userId: "user123",
             turnNumber: 1,
             question: new InterviewQuestion("Question?", "topic"),
+            questionGenerationMetadata: null,
             createdAt: createdAt);
 
         turn.RecordAnswer("Answer", createdAt.AddSeconds(5));
@@ -287,6 +300,7 @@ public sealed class InterviewTurn_RecordEvaluation
             userId: "user123",
             turnNumber: 1,
             question: new InterviewQuestion("Question?", "topic"),
+            questionGenerationMetadata: null,
             createdAt: createdAt);
 
         turn.RecordAnswer("Answer", answeredAt);
@@ -313,6 +327,7 @@ public sealed class InterviewTurn_StateProperties
             userId: "user123",
             turnNumber: 1,
             question: new InterviewQuestion("Question?", "topic"),
+            questionGenerationMetadata: null,
             createdAt: createdAt);
 
         Assert.False(turn.IsAnswered);
@@ -331,6 +346,7 @@ public sealed class InterviewTurn_StateProperties
             userId: "user123",
             turnNumber: 1,
             question: new InterviewQuestion("Question?", "topic"),
+            questionGenerationMetadata: null,
             createdAt: createdAt);
 
         Assert.False(turn.IsEvaluated);
