@@ -106,7 +106,10 @@ public static class PromptBuilder
         var dimensionShape = string.Join(
             ",",
             rubric.Dimensions.Select(d =>
-                string.Format(CultureInfo.InvariantCulture, "{{\"key\":\"{0}\",\"score\":<0-100>,\"feedback\":\"<feedback>\"}}", d.Key)));
+                string.Format(
+                    CultureInfo.InvariantCulture,
+                    "{{\"key\":\"{0}\",\"score\":0,\"feedback\":\"<feedback>\"}}",
+                    d.Key)));
 
         builder.AppendLine("You are an expert interview answer evaluator.");
         builder.AppendLine("Evaluate the candidate's answer and return only a valid JSON object with this exact shape:");

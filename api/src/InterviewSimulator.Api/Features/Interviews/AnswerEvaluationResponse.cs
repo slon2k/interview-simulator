@@ -29,7 +29,9 @@ public sealed class AnswerEvaluationResponseValidator : AbstractValidator<Answer
 
         RuleFor(x => x.Dimensions)
             .NotEmpty()
-            .WithMessage("dimensions must be a non-empty array.");
+            .WithMessage("dimensions must be a non-empty array.")
+            .Must(HaveUniqueKeys)
+            .WithMessage("dimension keys must be unique.");
 
         RuleForEach(x => x.Dimensions).ChildRules(dimension =>
         {
@@ -48,4 +50,18 @@ public sealed class AnswerEvaluationResponseValidator : AbstractValidator<Answer
                 .WithMessage("dimension feedback is required.");
         });
     }
+
+    private static bool HaveUniqueKeys(IReadOnlyList<AnswerEvaluationResponseDimension>? dimensions)
+    {
+        var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var dimension in dimensions ?? [])
+        {
+            if (!keys.Add(dimension.Key ?? string.Empty))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }
