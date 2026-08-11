@@ -143,6 +143,21 @@ Infrastructure failures are translated at repository boundaries into stable appl
 
 For the canonical mapping rules, status code table, and error code conventions, see [ADR 0009 in docs/decisions.md](decisions.md).
 
+### AI Boundary (M05)
+
+Milestone 05 introduces an explicit AI boundary for question generation and answer evaluation.
+
+Boundary rules:
+
+- Endpoint handlers depend on small interfaces (`IQuestionGenerator`, `IAnswerEvaluator`), not provider SDK types.
+- AI calls are completed before persistence writes in start/submit flows.
+- Prompt versions are source-controlled constants and are recorded per turn.
+- Question and evaluation metadata are persisted separately (`questionAi` and `evaluationAi`).
+- Typed AI failures are mapped to `503 Service Unavailable` through centralized exception handling.
+- Submit behavior is atomic: if evaluation or next-question generation fails, no partial answer/evaluation write is persisted.
+
+This boundary keeps provider-specific behavior isolated and makes AI failures resumable without corrupting interview progression.
+
 ### Cosmos DB
 
 Cosmos DB stores user interview data.
