@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 using Azure.Identity;
 
 using InterviewSimulator.Api.Features.Identity.Access;
@@ -51,10 +53,11 @@ public static class PersistenceServices
 
             var clientOptions = new CosmosClientOptions
             {
-                SerializerOptions = new CosmosSerializationOptions
+                Serializer = new SystemTextJsonCosmosSerializer(new JsonSerializerOptions
                 {
-                    PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase
-                }
+                    PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+                    PropertyNameCaseInsensitive = true
+                })
             };
 
             if (!string.IsNullOrWhiteSpace(options.ConnectionString))
