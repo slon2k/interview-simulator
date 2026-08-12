@@ -3,7 +3,7 @@
 Phase: 2  
 Milestone: 05 - AI prompts and rubric evaluation  
 Type: Feature  
-Status: Planned
+Status: Completed
 
 ## Summary
 
@@ -43,21 +43,21 @@ M04 records answers but returns no feedback. The core value of an interview simu
 
 ## Acceptance Criteria
 
-- [ ] `IAnswerEvaluator` interface and `EvaluateAnswerRequest` are defined
-- [ ] Technical, Behavioral, and SystemDesign rubrics exist with stable dimension keys and display labels
-- [ ] `AzureOpenAIAnswerEvaluator` and `StubAnswerEvaluator` exist
-- [ ] Rubric selection is driven by the session's interview type
-- [ ] `AnswerEvaluation` carries per-dimension scores (`Key`, `Label`, `Score 0-100`, `Feedback`)
-- [ ] `OverallScore` is computed as the rounded integer average of dimension scores by the app (not from AI)
-- [ ] `CosmosEvaluationDocument` stores dimensions; old documents without dimensions are still readable
-- [ ] Evaluation metadata is stored separately from generation metadata (`evaluationAi` JSON property)
-- [ ] `InterviewResponse.LastEvaluation` carries `TurnNumber`, `OverallScore`, `MaxScore = 100`, `Feedback`, and all dimension scores
-- [ ] `InterviewResponse.Feedback` (session-level `FeedbackContract`) remains null in M05; reserved for M06
-- [ ] `SubmitAnswer` calls evaluation before `SaveAnswerAsync`; on AI failure `SaveAnswerAsync` is not called
-- [ ] Next-question generation failure after successful evaluation also prevents `SaveAnswerAsync` being called
-- [ ] CI does not require live Azure OpenAI credentials
-- [ ] `AuthWebApplicationFactory` registers `StubAnswerEvaluator` for `IAnswerEvaluator`
-- [ ] Unit and integration tests pass
+- [x] `IAnswerEvaluator` interface and `EvaluateAnswerRequest` are defined
+- [x] Technical, Behavioral, and SystemDesign rubrics exist with stable dimension keys and display labels
+- [x] `AzureOpenAIAnswerEvaluator` and stub evaluator exist (`HardcodedAnswerEvaluator` serves as the stub)
+- [x] Rubric selection is driven by the session's interview type
+- [x] `AnswerEvaluation` carries per-dimension scores (`Key`, `Label`, `Score 0-100`, `Feedback`)
+- [x] `OverallScore` is computed as the rounded integer average of dimension scores by the app (not from AI)
+- [x] `CosmosEvaluationDocument` stores dimensions; old documents without dimensions are still readable
+- [x] Evaluation metadata is stored separately from generation metadata (`evaluationAi` JSON property)
+- [ ] `InterviewResponse.LastEvaluation` carries `TurnNumber`, `OverallScore`, `MaxScore = 100`, `Feedback`, and all dimension scores — **deferred to M06; decided to keep interview response contract minimal in M05**
+- [x] `InterviewResponse.Feedback` (session-level `FeedbackContract`) remains null in M05; reserved for M06
+- [x] `SubmitAnswer` calls evaluation before `SaveAnswerAsync`; on AI failure `SaveAnswerAsync` is not called
+- [x] Next-question generation failure after successful evaluation also prevents `SaveAnswerAsync` being called
+- [x] CI does not require live Azure OpenAI credentials
+- [x] `AuthWebApplicationFactory` registers stub evaluator for `IAnswerEvaluator`
+- [x] Unit and integration tests pass
 
 ## SubmitAnswer flow (canonical — no AI result, no Cosmos write)
 

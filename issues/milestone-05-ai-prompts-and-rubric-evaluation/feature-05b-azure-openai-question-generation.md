@@ -3,7 +3,7 @@
 Phase: 2  
 Milestone: 05 - AI prompts and rubric evaluation  
 Type: Feature  
-Status: Planned
+Status: Completed
 
 ## Summary
 
@@ -43,18 +43,18 @@ This feature makes questions:
 
 ## Acceptance Criteria
 
-- [ ] A real Azure OpenAI implementation of `IQuestionGenerator` exists
-- [ ] `HardcodedQuestionGenerator` remains and is the default when `Ai:Provider = Hardcoded`
-- [ ] `Ai:Provider = AzureOpenAI` selects `AzureOpenAIQuestionGenerator`
-- [ ] Generated questions reflect role, seniority, topic, and interview type
-- [ ] Prior turns are included as context, capped at `AiOptions.MaxQuestionGenerationPreviousTurns`
-- [ ] Answer text in context is truncated at `AiOptions.MaxAnswerChars`
-- [ ] The question prompt version is recorded on the persisted turn (`QuestionGenerationMetadata`)
-- [ ] `CosmosTurnDocument` stores generation metadata separately from evaluation metadata (`questionAi` JSON property)
-- [ ] Generation failures throw typed AI exceptions; `StartInterview` and `SubmitAnswer` leave session state unchanged
-- [ ] CI does not require live Azure OpenAI credentials
-- [ ] Unit tests cover prompt construction, context window capping, answer truncation, and config selection
-- [ ] Existing tests pass
+- [x] A real Azure OpenAI implementation of `IQuestionGenerator` exists
+- [x] `HardcodedQuestionGenerator` remains and is the default when `Ai:Provider = Hardcoded`
+- [x] `Ai:Provider = AzureOpenAI` selects `AzureOpenAIQuestionGenerator`
+- [x] Generated questions reflect role, seniority, topic, and interview type
+- [x] Prior turns are included as context, capped at `AiOptions.MaxQuestionGenerationPreviousTurns`
+- [x] Answer text in context is truncated at `AiOptions.MaxAnswerChars`
+- [x] The question prompt version is recorded on the persisted turn (`QuestionGenerationMetadata`)
+- [x] `CosmosTurnDocument` stores generation metadata separately from evaluation metadata (`questionAi` JSON property)
+- [x] Generation failures throw typed AI exceptions; `StartInterview` and `SubmitAnswer` leave session state unchanged
+- [x] CI does not require live Azure OpenAI credentials
+- [x] Unit tests cover prompt construction, context window capping, answer truncation, and config selection
+- [x] Existing tests pass
 
 ## Tasks
 

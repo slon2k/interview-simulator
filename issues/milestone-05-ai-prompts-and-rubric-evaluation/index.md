@@ -10,7 +10,7 @@ M04 proved the full session lifecycle works end-to-end with deterministic stubs 
 
 **M05 uses synchronous AI calls.** AI generation and evaluation complete before Cosmos persistence. If any AI operation fails, no interview state is modified and the user may retry.
 
-The endpoint set remains unchanged. The interview response contract is extended additively with `lastEvaluation`.
+The endpoint set remains unchanged. The interview response contract remains minimal in M05; per-turn evaluation payloads are deferred to M06.
 
 ## Feature Issues
 

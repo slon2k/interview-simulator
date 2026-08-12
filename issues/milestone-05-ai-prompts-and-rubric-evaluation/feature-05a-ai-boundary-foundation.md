@@ -3,7 +3,7 @@
 Phase: 2  
 Milestone: 05 - AI prompts and rubric evaluation  
 Type: Feature  
-Status: Planned
+Status: Completed
 
 ## Summary
 
@@ -40,16 +40,16 @@ Centralising this in one layer means:
 
 ## Acceptance Criteria
 
-- [ ] `PromptVersions` declares constants for all six prompt identifiers
-- [ ] `AiOptions` config section is validated on startup
-- [ ] `AiStructuredOutputRunner.RunAsync<T>` retries on malformed JSON up to `InvalidOutputRetryCount`
-- [ ] `AiStructuredOutputRunner.RunAsync<T>` retries on transient provider failure up to `TransientRetryCount`
-- [ ] Auth/config failures and cancellations are not retried
-- [ ] Azure `RequestFailedException` is caught and wrapped inside the runner; it does not reach the global handler
-- [ ] All four typed AI exceptions map to 503 ProblemDetails with a `traceId` and user-safe `detail`
-- [ ] Raw Azure exception details are not exposed in ProblemDetails
-- [ ] Unit tests cover all validation and retry cases listed in Tasks
-- [ ] Existing tests pass
+- [x] `PromptVersions` declares constants for all six prompt identifiers
+- [x] `AiOptions` config section is validated on startup
+- [x] `AiStructuredOutputRunner.RunAsync<T>` retries on malformed JSON up to `InvalidOutputRetryCount`
+- [x] `AiStructuredOutputRunner.RunAsync<T>` retries on transient provider failure up to `TransientRetryCount`
+- [x] Auth/config failures and cancellations are not retried
+- [x] Azure `RequestFailedException` is caught and wrapped inside the runner; it does not reach the global handler
+- [x] All four typed AI exceptions map to 503 ProblemDetails with a `traceId` and user-safe `detail`
+- [x] Raw Azure exception details are not exposed in ProblemDetails
+- [x] Unit tests cover all validation and retry cases listed in Tasks
+- [x] Existing tests pass
 
 ## Tasks
 
