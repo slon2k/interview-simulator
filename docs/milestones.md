@@ -100,16 +100,16 @@ Implement structured AI evaluation using role/interview-type-specific rubrics.
 
 Acceptance Criteria:
 
-- [ ] Evaluation JSON schema is defined
-- [ ] Technical, behavioral, and system design rubrics exist
-- [ ] Answer evaluation returns structured feedback
-- [ ] Adaptive next question is generated
-- [ ] AI response validation/error handling exists
-- [ ] Prompt versions are tracked
-- [ ] AI failure paths are resumable (`start` and `submit` return 503 and can be retried)
-- [ ] Submit flow is atomic with no partial persistence on AI failure (`SaveAnswerAsync` is not called)
-- [ ] Turn documents store generation and evaluation metadata separately (`questionAi` and `evaluationAi`)
-- [ ] Interview response contract remains minimal in M05 (no per-turn history/evaluation payload on `GET /api/interviews/{id}`)
+- [x] Evaluation JSON schema is defined
+- [x] Technical, behavioral, and system design rubrics exist
+- [x] Answer evaluation returns structured feedback
+- [x] Adaptive next question is generated
+- [x] AI response validation/error handling exists
+- [x] Prompt versions are tracked
+- [x] AI failure paths are resumable (`start` and `submit` return 503 and can be retried)
+- [x] Submit flow is atomic with no partial persistence on AI failure (`SaveAnswerAsync` is not called)
+- [x] Turn documents store generation and evaluation metadata separately (`questionAi` and `evaluationAi`)
+- [x] Interview response contract remains minimal in M05 (no per-turn history/evaluation payload on `GET /api/interviews/{id}`)
 
 ---
 

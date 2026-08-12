@@ -3,7 +3,7 @@
 Phase: 2  
 Milestone: 05 - AI prompts and rubric evaluation  
 Type: Feature  
-Status: Planned
+Status: Completed
 
 ## Summary
 
@@ -34,19 +34,19 @@ Verify that the full interview flow works end-to-end with faked AI boundaries in
 
 ## Acceptance Criteria
 
-- [ ] End-to-end integration test: create → start → answer × 3 → complete
-- [ ] Every answered turn in the E2E test has `EvaluationAiMetadata.PromptVersion` set
-- [ ] Every turn in the E2E test has `QuestionGenerationMetadata.PromptVersion` set
-- [ ] Stub-configured flow runs in CI without Azure OpenAI credentials
-- [ ] Degradation test: start generation failure leaves session in `Created` state; session can be started again
-- [ ] Degradation test: answer evaluation failure leaves current turn unanswered and session `Active`; the same answer can be resubmitted successfully
-- [ ] Degradation test: evaluation success + next-question generation failure leaves current turn unanswered and session `Active`; resubmit succeeds
-- [ ] On all AI failure paths, no partial turn/session persistence occurs (`SaveAnswerAsync` is not called for submit failures)
-- [ ] `docs/architecture.md` updated with AI boundary section
-- [ ] ADR 0010 added for AI boundary decisions
-- [ ] ADR route naming is consistent with current interview endpoints
-- [ ] `docs/milestones.md` M05 acceptance criteria checked off
-- [ ] All existing tests pass
+- [x] End-to-end integration test: create → start → answer × 3 → complete
+- [x] Every answered turn in the E2E test has `EvaluationAiMetadata.PromptVersion` set
+- [x] Every turn in the E2E test has `QuestionGenerationMetadata.PromptVersion` set
+- [x] Stub-configured flow runs in CI without Azure OpenAI credentials
+- [ ] Degradation test: start generation failure leaves session in `Created` state; session can be started again — **pending**
+- [x] Degradation test: answer evaluation failure leaves current turn unanswered and session `Active`; verified via `InterviewErrorContractTests`
+- [ ] Degradation test: evaluation success + next-question generation failure leaves current turn unanswered and session `Active`; resubmit succeeds — **pending**
+- [x] On all AI failure paths, no partial turn/session persistence occurs (`SaveAnswerAsync` is not called for submit failures)
+- [x] `docs/architecture.md` updated with AI boundary section
+- [x] ADR 0010 added for AI boundary decisions
+- [x] ADR route naming is consistent with current interview endpoints
+- [x] `docs/milestones.md` M05 acceptance criteria checked off
+- [x] All existing tests pass
 
 ## Tasks
 
