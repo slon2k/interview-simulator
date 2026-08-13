@@ -7,7 +7,7 @@ Status: Planned
 
 ## Summary
 
-Add the read path that returns a completed interview in full — setup metadata plus every turn with its question, answer, per-dimension scores, and feedback — so the history and detail UI can render it. M04 deliberately kept the detail endpoint shallow; this feature completes it.
+Introduce the domain and storage shape for session-level results and summaries, then add the detail read path. M04 deliberately kept the detail endpoint shallow; this feature completes it and lays the foundation that 06b builds on.
 
 ## Problem and User Value
 
@@ -15,12 +15,23 @@ M04 stored full turn history but `GET /api/interviews/{id}` only returned enough
 
 ## Scope
 
-- Return full turn history for a session:
-  - question, answer, per-dimension scores, feedback, prompt versions
-- Load session + ordered turns via a dedicated query class following the `ISessionHistoryQueries` pattern (not the point-read `IRepository<T>`)
+### Domain and storage shape (prerequisite for 06b)
+
+- Refactor `InterviewFeedback(int Score, string? Summary)` into two separate session properties:
+  - `SessionResult(int OverallScore)` — deterministic aggregate, stored after every answered turn
+  - `InterviewSummary(string Text, DateTimeOffset CreatedAt)` — AI narrative placeholder, populated by 06b
+  - `AiCallMetadata? SummaryMetadata` — AI metadata placeholder, populated by 06b
+  - Update `InterviewSession`, `InterviewSessionState`, `CosmosSessionDocument`, `InterviewContractsMapping`, and all affected tests
+- Compute `SessionResult` in `SubmitAnswer` from in-memory turns after each answer; persist on session via `SaveAnswerAsync` (no extra DB read)
+- `SessionResult` is null when a session has 0 answered turns
+- `aggregateScore int?` on `InterviewResponse`: null for `Created`/`Active`; null for `Completed` with 0 evaluated turns; otherwise `SessionResult.OverallScore`
+
+### Detail read
+
+- Add a dedicated `GET /api/interviews/{id}/detail` endpoint (existing shallow endpoint is unchanged)
+- Load session + ordered turns via a dedicated query class (not the point-read `IRepository<T>`)
 - Scope all reads to the authenticated user's partition
-- Return the session summary field (populated by 06b) if present
-- Decide and document whether detail is served by extending `GET /api/interviews/{id}` or a dedicated detail endpoint
+- Return `summary` and `summaryAi` fields when present (populated by 06b)
 - Add response DTOs for the detailed view
 - Add unit tests for query mapping and ordering
 - Add integration tests for happy path and authorization
@@ -34,33 +45,50 @@ M04 stored full turn history but `GET /api/interviews/{id}` only returned enough
 
 ## Acceptance Criteria
 
-- [ ] A detail read returns full ordered turn history for a session
+### Domain and storage
+
+- [ ] `InterviewFeedback` is removed; `InterviewSession` has `SessionResult?`, `InterviewSummary?`, and `AiCallMetadata? SummaryMetadata` as separate properties
+- [ ] `CosmosSessionDocument` persists `result`, `summary`, and `summaryAi` as separate nullable fields
+- [ ] `SubmitAnswer` computes `SessionResult` from in-memory turns after every answer and saves it on the session
+- [ ] `SessionResult` is null when a session has 0 answered turns
+- [ ] `aggregateScore int?` is included in `InterviewResponse`: null for `Created`/`Active`; null for `Completed` with 0 evaluated turns; otherwise `SessionResult.OverallScore`
+
+### Detail read
+
+- [ ] `GET /api/interviews/{id}/detail` returns full ordered turn history for any session
 - [ ] Each turn includes question, answer, per-dimension scores, and feedback
 - [ ] Per-dimension scores are read from stored M05 output (no AI re-call)
-- [ ] The response includes the persisted summary when present
-- [ ] Turns are returned in correct order (by turn number)
+- [ ] The response includes `summary` and `summaryAi` when present
+- [ ] Turns are returned in correct order by turn number
 - [ ] Reads are scoped to the authenticated user; users cannot read others' sessions
 - [ ] Anonymous requests return `401`; non-invited authenticated requests return `403`
 - [ ] The detail read uses a query class, not the point-read repository
-- [ ] Approach (extend `{id}` vs dedicated endpoint) is documented
+- [x] Approach documented: dedicated `GET /api/interviews/{id}/detail`; shallow endpoint gains `aggregateScore int?`
 - [ ] Unit tests cover query mapping and ordering
 - [ ] Integration tests cover happy path and authorization
 - [ ] Existing tests continue to pass
 
 ## Tasks
 
+### [ ] Domain and storage refactor (do first)
+
+- [ ] Refactor `InterviewFeedback` → `SessionResult` + `InterviewSummary` + `SummaryMetadata` across domain, state, Cosmos, and contract layers
+- [ ] Add `SessionResult` computation to `SubmitAnswer` (use in-memory turns, no extra DB read)
+- [ ] Add `aggregateScore int?` to `InterviewResponse` and its mapping
+
 ### [ ] Detail read implementation
 
 - [ ] Define detailed session/turn response DTOs
-- [ ] Add session detail query (session + ordered turns)
-- [ ] Wire query registration in `Startup/Persistence.cs`
-- [ ] Implement detail endpoint / extend existing endpoint
-- [ ] Include summary field in response
+- [ ] Add session detail query (session + ordered turns, ordered by turn number)
+- [ ] Wire query registration in `Startup/InterviewServices.cs`
+- [ ] Implement `GET /api/interviews/{id}/detail`
+- [ ] Include `summary` (text + createdAt) and `summaryAi` in detail response when present
 
 ### [ ] Tests
 
-- [ ] Unit tests for mapping and ordering
-- [ ] Integration tests for happy path and authorization
+- [ ] Unit tests for `SessionResult` computation and `aggregateScore` mapping
+- [ ] Unit tests for detail response mapping and ordering
+- [ ] Integration tests for detail read happy path and authorization
 
 ## Verification
 
@@ -77,11 +105,11 @@ M04 stored full turn history but `GET /api/interviews/{id}` only returned enough
 Depends on:
 
 - 04a - Interview API (turn persistence) ✅
-- 05b - Rubric-based answer evaluation (stored per-dimension scores)
+- 05c - Rubric-based answer evaluation (stored per-dimension scores) ✅
 
 Blocks:
 
-- 06b - Session summary generation (shares detail read for summary input)
+- 06b - Session summary generation (uses the session detail query; domain types introduced here)
 - 06c - History and session detail UI
 
 ## Risks and Open Questions
@@ -92,7 +120,7 @@ Blocks:
 
 ### Open Questions
 
-- Extend `GET /api/interviews/{id}` with a detail projection, or add `GET /api/interviews/{id}/detail`? Default assumption: a detail projection on the existing resource, documented in the API notes.
+Decided: `GET /api/interviews/{id}/detail` is a dedicated endpoint. The existing `GET /api/interviews/{id}` gains `aggregateScore int?` only. Two endpoints, two purposes.
 
 ## Notes
 

@@ -18,29 +18,50 @@ M04 deliberately kept `GET /api/interviews/{id}` shallow — it did not return f
 ## Key Decisions
 
 - **Read path, not new writes**: M06 surfaces data M04/M05 already persisted. It must not re-run evaluation to display scores/feedback — it reads the stored per-dimension scores.
-- **Detail read is a query, not a point read**: loading a full session (session + ordered turns) uses a dedicated query class following the `ISessionHistoryQueries` pattern, not the point-read `IRepository<T>`. Queries are scoped to the user's partition.
+- **Detail endpoint**: dedicated `GET /api/interviews/{id}/detail`; the existing `GET /api/interviews/{id}` remains the shallow resume/status endpoint and gains `aggregateScore int?` (null for non-completed).
+- **Detail read is a query, not a point read**: loading a full session (session + ordered turns) uses a dedicated query class, not the point-read `IRepository<T>`. Queries are scoped to the user's partition.
+- **`InterviewFeedback` refactor (first task in 06b)**: the existing `InterviewFeedback(int Score, string? Summary)` domain type is split into two separate session properties:
+  - `SessionResult(int OverallScore)` — deterministic aggregate, stored after every answer
+  - `InterviewSummary(string Text, DateTimeOffset CreatedAt)` — AI narrative, best-effort
+  - `AiCallMetadata? SummaryMetadata` — prompt version and provider metadata, following the M05 pattern (`summaryAi` on `CosmosSessionDocument`)
+- **Score stored after every answer**: `SubmitAnswer` computes `SessionResult` from in-memory turns (already loaded for AI context) and saves it on the session document on every answer. This means early completion (`POST /api/interviews/{id}/complete`) never needs to load turns — the score is already current.
+- **Score for early-completed sessions with no answers**: `SessionResult` is null when no turns have been answered.
+- **`aggregateScore` on `InterviewResponse`**: additive field, null for `Created`/`Active`, populated for `Completed`. List and shallow reads both return it without loading turns.
 - **Summary is generated once, on completion**: a completed session gets one persisted summary. It reuses the M05 AI boundary (prompt versioning, response validation, graceful failure). Viewing history never triggers a new AI call.
-- **Summary failure is non-fatal**: if summary generation fails, the session is still completed and reviewable; the summary can be regenerated. Completion is never blocked by summary generation.
-- **Persistence unchanged**: summary is stored on the existing `CosmosSessionDocument`; turn history reads from `CosmosTurnDocument`. No new container.
+- **Summary failure is non-fatal**: if summary generation fails, the session is still completed and reviewable with its score; the summary can be regenerated via `POST /api/interviews/{id}/summary`. Completion is never blocked by summary generation.
+- **Persistence unchanged**: summary and result are stored on the existing `CosmosSessionDocument`; turn history reads from `CosmosTurnDocument`. No new container.
+- **Prompt version in AI metadata, not in summary**: consistent with M05 pattern:
+  ```
+  turn.QuestionGenerationMetadata → questionAi.promptVersion
+  turn.AnswerEvaluationMetadata   → evaluationAi.promptVersion
+  session.SummaryMetadata         → summaryAi.promptVersion
+  ```
 
 ## Read Shape
 
-Detail read returns the full reviewable session:
+Detail read (`GET /api/interviews/{id}/detail`) returns the full reviewable session:
 
 ```text
-session (setup, status, completedAt, summary)
-  + ordered turns:
-      question
-      answer
-      per-dimension scores
-      feedback
-      prompt versions
+session:
+  setup (role, seniority, type, focusArea)
+  status, completedAt
+  aggregateScore          ← null when 0 answers, integer average otherwise
+  summary?                ← { text, createdAt } when present
+  summaryAi?              ← { promptVersion, provider } when present
+
+turns (ordered by turnNumber):
+  question    { text, topic }
+  answer      { text }
+  evaluation  { overallScore, feedback, dimensions[] }
+  questionAi  { promptVersion }
+  evaluationAi { promptVersion }
 ```
 
 ## Exit Criteria
 
 - All 4 features shipped and merged
-- `GET /api/interviews/{id}` (or a detail endpoint) returns full turn history for completed sessions
+- `GET /api/interviews/{id}/detail` returns full turn history for any session
+- `GET /api/interviews/{id}` and list endpoint include `aggregateScore` for completed sessions
 - Completed sessions carry a persisted AI summary
 - History page lists a user's completed sessions
 - Session detail page shows questions, answers, per-dimension scores, and feedback
