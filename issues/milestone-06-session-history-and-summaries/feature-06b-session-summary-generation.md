@@ -15,14 +15,15 @@ After finishing an interview, a user benefits from a short overall assessment: s
 
 ## Scope
 
-- Add a single-purpose summarizer abstraction (e.g. `ISessionSummarizer`) with an Azure OpenAI implementation and a stub for tests/CI
-- Trigger summary generation when a session transitions to `completed`
+- Add a single-purpose summarizer abstraction (`ISessionSummarizer`) with an Azure OpenAI implementation and a stub for tests/CI
+- Trigger summary generation after session is saved as Completed (best-effort second save via `UpdateSessionAsync`)
 - Build the summary prompt from stored turn evaluations (per-dimension scores + feedback), not by re-evaluating answers
-- Persist the summary on the existing `CosmosSessionDocument`
+- Persist summary as `InterviewSummary` and `SummaryMetadata` on `CosmosSessionDocument` (`summary` and `summaryAi` fields)
+- Prompt version stored in `summaryAi.promptVersion`, not inside `InterviewSummary`
 - Reuse the M05 AI boundary: prompt versioning, response validation, graceful failure handling
-- Ensure summary failure does not block or reverse completion (session stays completed and reviewable)
-- Support regeneration of a summary for a completed session
-- Record the summary prompt version on the session
+- Ensure summary failure does not block or reverse completion (session stays completed and reviewable with its score)
+- Support regeneration via `POST /api/interviews/{id}/summary` (requires `Completed` status; replaces existing summary)
+- Register `ISessionSummarizer` stub in `AuthWebApplicationFactory`
 - Add unit tests for prompt construction and failure handling
 - Add integration tests behind a faked AI boundary
 
@@ -36,13 +37,13 @@ After finishing an interview, a user benefits from a short overall assessment: s
 ## Acceptance Criteria
 
 - [ ] An `ISessionSummarizer` abstraction exists with real and stub implementations
-- [ ] Completing a session generates and persists a summary
+- [ ] `ISessionSummarizer` stub registered in `AuthWebApplicationFactory`
+- [ ] Completing a session generates and persists a summary (best-effort after `SaveAnswerAsync`)
+- [ ] Summary generation is a separate `UpdateSessionAsync` call; failure does not roll back completion or score
 - [ ] The summary is built from stored per-turn evaluations (no per-answer re-evaluation)
-- [ ] The summary is persisted on `CosmosSessionDocument`
-- [ ] The summary prompt version is recorded
+- [ ] Summary prompt version is stored in `summaryAi.promptVersion` on `CosmosSessionDocument`
 - [ ] Summary generation reuses the M05 validation/error-handling boundary
-- [ ] Summary generation failure does not block or reverse completion
-- [ ] A completed session without a summary can have one (re)generated
+- [ ] A completed session without a summary can have one (re)generated via `POST /api/interviews/{id}/summary`
 - [ ] Viewing a session never triggers summary generation
 - [ ] CI does not require live Azure OpenAI credentials
 - [ ] Unit tests cover prompt construction and failure handling
@@ -54,11 +55,11 @@ After finishing an interview, a user benefits from a short overall assessment: s
 ### [ ] Summarizer implementation
 
 - [ ] Add `ISessionSummarizer` interface
-- [ ] Add Azure OpenAI-backed summarizer + stub
+- [ ] Add Azure OpenAI-backed summarizer + stub; register stub in `AuthWebApplicationFactory`
 - [ ] Build summary prompt from stored evaluations
-- [ ] Trigger on completion; persist summary + prompt version
-- [ ] Handle failure without blocking completion
-- [ ] Support regeneration
+- [ ] Trigger summary after `SaveAnswerAsync` completes (best-effort `UpdateSessionAsync`)
+- [ ] Handle summary failure without blocking completion or affecting score
+- [ ] Add `POST /api/interviews/{id}/summary` for regeneration (requires `Completed`; replaces existing summary)
 
 ### [ ] Tests
 
@@ -79,9 +80,9 @@ After finishing an interview, a user benefits from a short overall assessment: s
 
 Depends on:
 
-- 05b - Rubric-based answer evaluation (stored per-dimension scores as summary input)
-- 05c - Prompt versioning and AI response validation/error handling (reused boundary)
-- 06a - Session detail read API (shared read of stored evaluations)
+- 05c - Rubric-based answer evaluation (stored per-dimension scores as summary input) ✅
+- 05a - Prompt versioning and AI response validation/error handling (reused boundary) ✅
+- 06a - Session detail read API (provides `SessionResult`/`InterviewSummary` domain types and session detail query)
 
 Blocks:
 
@@ -95,7 +96,7 @@ Blocks:
 
 ### Open Questions
 
-- Generate summary synchronously on completion, or asynchronously after completion returns? Default assumption for MVP: synchronous best-effort with graceful failure. Revisit if latency is poor. Candidate for a short note in the docs.
+Decided: synchronous best-effort. Score is committed first via `SaveAnswerAsync`; summary attempt follows as a separate `UpdateSessionAsync`. Summary failure is logged and ignored — the HTTP response returns the completed session with its score regardless.
 
 ## Notes
 
