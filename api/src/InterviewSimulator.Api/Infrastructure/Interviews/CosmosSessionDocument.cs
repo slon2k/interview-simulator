@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.Json.Serialization;
 
 using InterviewSimulator.Api.Features.Interviews;
+using InterviewSimulator.Api.Features.Interviews.Ai;
 using InterviewSimulator.Api.Infrastructure.Data;
 
 namespace InterviewSimulator.Api.Infrastructure.Interviews;
@@ -32,7 +33,12 @@ public sealed class CosmosSessionDocument : IUserCosmosDocument
 
     public int AnsweredCount { get; set; }
 
-    public CosmosSessionFeedbackDocument? Feedback { get; set; }
+    public CosmosSessionResultDocument? SessionResult { get; set; }
+
+    public CosmosInterviewSummaryDocument? Summary { get; set; }
+
+    [JsonPropertyName("summaryAi")]
+    public CosmosAiMetadataDocument? SummaryMetadata { get; set; }
 
     public DateTimeOffset CreatedAt { get; init; }
 
@@ -66,11 +72,10 @@ public sealed class CosmosSessionDocument : IUserCosmosDocument
             AnsweredCount = session.AnsweredCount,
             Status = session.Status.ToString(),
             ETag = session.ConcurrencyToken,
-            Feedback = session.Feedback is not null
-                ? new CosmosSessionFeedbackDocument
+            SessionResult = session.SessionResult is not null
+                ? new CosmosSessionResultDocument
                 {
-                    Score = session.Feedback.Score,
-                    Summary = session.Feedback.Summary
+                    TotalScore = session.SessionResult.OverallScore,
                 }
                 : null
         };
@@ -86,16 +91,39 @@ public sealed class CosmosSessionDocument : IUserCosmosDocument
         Status: Enum.Parse<InterviewStatus>(Status),
         QuestionCount: QuestionCount,
         AnsweredCount: AnsweredCount,
-        Feedback: Feedback is not null
-            ? new InterviewFeedback(
-                Score: Feedback.Score,
-                Summary: Feedback.Summary)
+        SessionResult: SessionResult is not null
+            ? new SessionResult(new Score(SessionResult.TotalScore))
             : null,
+        InterviewSummary: Summary is not null
+            ? new InterviewSummary(Summary.Text, Summary.CreatedAt)
+            : null,
+        SummaryMetadata: ToDomainMetadata(SummaryMetadata),
         CreatedAt: CreatedAt,
         UpdatedAt: UpdatedAt,
         StartedAt: StartedAt,
         CompletedAt: CompletedAt,
         ConcurrencyToken: ETag));
+
+    private static AiCallMetadata? ToDomainMetadata(CosmosAiMetadataDocument? document)
+    {
+        if (document is null)
+        {
+            return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(document.PromptVersion) ||
+            string.IsNullOrWhiteSpace(document.Provider))
+        {
+            return null;
+        }
+
+        return new AiCallMetadata(
+            PromptVersion: document.PromptVersion,
+            Provider: document.Provider,
+            Model: document.Model,
+            PromptTokens: document.PromptTokens,
+            CompletionTokens: document.CompletionTokens);
+    }
 
     public static string ToCosmosId(Guid sessionId) => $"session|{FormatSessionId(sessionId)}";
 
@@ -104,9 +132,14 @@ public sealed class CosmosSessionDocument : IUserCosmosDocument
         : sessionId.ToString("D", CultureInfo.InvariantCulture);
 }
 
-public sealed class CosmosSessionFeedbackDocument
+public sealed class CosmosSessionResultDocument
 {
-    public int Score { get; set; }
+    public int TotalScore { get; set; }
+}
 
-    public string? Summary { get; set; }
+public sealed class CosmosInterviewSummaryDocument
+{
+    public string Text { get; set; } = string.Empty;
+
+    public DateTimeOffset CreatedAt { get; set; }
 }

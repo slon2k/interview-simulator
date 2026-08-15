@@ -146,7 +146,7 @@ public sealed class SubmitAnswerGenerationContextTests(AuthWebApplicationFactory
                 createdAt: createdAt,
                 questionCount: 3);
             session.Start(startedAt);
-            session.RecordAnswer(firstAnsweredAt);
+            session.RecordAnswer(new SessionResult(new Score(90)), firstAnsweredAt);
 
             var firstTurn = InterviewTurn.Create(
                 sessionId: session.Id,

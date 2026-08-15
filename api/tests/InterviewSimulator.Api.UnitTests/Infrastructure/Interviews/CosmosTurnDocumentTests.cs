@@ -387,7 +387,9 @@ public sealed class CosmosDocumentIds
             CompletedAt: null,
             QuestionCount: 5,
             AnsweredCount: 0,
-            Feedback: null));
+            SessionResult: null,
+            InterviewSummary: null,
+            SummaryMetadata: null));
 
         var doc = CosmosSessionDocument.FromDomain(restoredSession);
 

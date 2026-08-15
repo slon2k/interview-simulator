@@ -22,7 +22,9 @@ public sealed class CosmosSessionDocument_Mapping
             CompletedAt: null,
             QuestionCount: 5,
             AnsweredCount: 0,
-            Feedback: null,
+            SessionResult: null,
+            InterviewSummary: null,
+            SummaryMetadata: null,
             ConcurrencyToken: "etag-session-1"));
 
         var doc = CosmosSessionDocument.FromDomain(session);
@@ -89,7 +91,9 @@ public sealed class CosmosSessionDocument_Mapping
             CompletedAt: completedAt,
             QuestionCount: 5,
             AnsweredCount: 5,
-            Feedback: new InterviewFeedback(Score: 85, Summary: "Great interview")));
+            SessionResult: new SessionResult(new Score(85)),
+            InterviewSummary: null,
+            SummaryMetadata: null));
 
         var doc = CosmosSessionDocument.FromDomain(sessionWithId);
 
@@ -108,9 +112,8 @@ public sealed class CosmosSessionDocument_Mapping
         Assert.Equal(completedAt, doc.CompletedAt);
         Assert.Equal(5, doc.QuestionCount);
         Assert.Equal(5, doc.AnsweredCount);
-        Assert.NotNull(doc.Feedback);
-        Assert.Equal(85, doc.Feedback.Score);
-        Assert.Equal("Great interview", doc.Feedback.Summary);
+        Assert.NotNull(doc.SessionResult);
+        Assert.Equal(85, doc.SessionResult.TotalScore);
     }
 
     [Fact]
@@ -140,10 +143,9 @@ public sealed class CosmosSessionDocument_Mapping
             CompletedAt = completedAt,
             QuestionCount = 5,
             AnsweredCount = 5,
-            Feedback = new CosmosSessionFeedbackDocument
+            SessionResult = new CosmosSessionResultDocument
             {
-                Score = 85,
-                Summary = "Great interview"
+                TotalScore = 85
             }
         };
 
@@ -157,14 +159,13 @@ public sealed class CosmosSessionDocument_Mapping
         Assert.Equal(SeniorityLevel.Middle, session.Seniority);
         Assert.Equal(InterviewType.Technical, session.InterviewType);
         Assert.Equal(createdAt, session.CreatedAt);
-        Assert.Equal(completedAt, session.UpdatedAt);
+        Assert.Equal(completedAt, session.CompletedAt);
         Assert.Equal(startedAt, session.StartedAt);
         Assert.Equal(completedAt, session.CompletedAt);
         Assert.Equal(5, session.QuestionCount);
         Assert.Equal(5, session.AnsweredCount);
-        Assert.NotNull(session.Feedback);
-        Assert.Equal(85, session.Feedback.Score);
-        Assert.Equal("Great interview", session.Feedback.Summary);
+        Assert.NotNull(session.SessionResult);
+        Assert.Equal(85, session.SessionResult.OverallScore);
     }
 
     [Fact]
@@ -183,10 +184,10 @@ public sealed class CosmosSessionDocument_Mapping
             questionCount: 3);
 
         originalSession.Start(createdAt.AddSeconds(5));
-        originalSession.RecordAnswer(createdAt.AddSeconds(30));
-        originalSession.RecordAnswer(createdAt.AddSeconds(60));
-        originalSession.RecordAnswer(createdAt.AddSeconds(90));
-        originalSession.Evaluate(new InterviewFeedback(Score: 92, Summary: "Excellent"), createdAt.AddSeconds(100));
+
+        originalSession.RecordAnswer(new SessionResult(new Score(90)), createdAt.AddSeconds(30));
+        originalSession.RecordAnswer(new SessionResult(new Score(80)), createdAt.AddSeconds(60));
+        originalSession.RecordAnswer(new SessionResult(new Score(85)), createdAt.AddSeconds(90));
 
         // Map to document and back
         var doc = CosmosSessionDocument.FromDomain(originalSession);
@@ -202,8 +203,7 @@ public sealed class CosmosSessionDocument_Mapping
         Assert.Equal(originalSession.InterviewType, restoredSession.InterviewType);
         Assert.Equal(originalSession.QuestionCount, restoredSession.QuestionCount);
         Assert.Equal(originalSession.AnsweredCount, restoredSession.AnsweredCount);
-        Assert.Equal(originalSession.Feedback?.Score, restoredSession.Feedback?.Score);
-        Assert.Equal(originalSession.Feedback?.Summary, restoredSession.Feedback?.Summary);
+        Assert.Equal(originalSession.SessionResult?.OverallScore, restoredSession.SessionResult?.OverallScore);
     }
 
     [Fact]
@@ -220,7 +220,7 @@ public sealed class CosmosSessionDocument_Mapping
 
         var doc = CosmosSessionDocument.FromDomain(session);
 
-        Assert.Null(doc.Feedback);
+        Assert.Null(doc.SessionResult);
     }
 
     [Fact]
@@ -244,12 +244,12 @@ public sealed class CosmosSessionDocument_Mapping
             CompletedAt = null,
             QuestionCount = 5,
             AnsweredCount = 0,
-            Feedback = null
+            SessionResult = null
         };
 
         var session = doc.ToDomain();
 
-        Assert.Null(session.Feedback);
+        Assert.Null(session.SessionResult);
     }
 
     [Theory]

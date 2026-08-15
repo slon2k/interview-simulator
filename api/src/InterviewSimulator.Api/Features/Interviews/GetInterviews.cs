@@ -71,9 +71,7 @@ public static class GetInterviews
         DateTimeOffset? CompletedAt,
         int? TotalScore);
 
-    private static Response MapToResponse(InterviewSession session)
-    {
-        return new Response(
+    private static Response MapToResponse(InterviewSession session) => new(
             Id: session.Id,
             UserId: session.UserId,
             Status: session.Status.ToContract(),
@@ -86,8 +84,9 @@ public static class GetInterviews
             CreatedAt: session.CreatedAt,
             StartedAt: session.StartedAt,
             CompletedAt: session.CompletedAt,
-            TotalScore: session.Feedback?.Score);
-    }
+            TotalScore: session.Status == InterviewStatus.Completed
+                ? session.SessionResult?.OverallScore
+                : null);
 
     public class Validator : AbstractValidator<Request>
     {

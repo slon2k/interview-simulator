@@ -326,22 +326,7 @@ public sealed record InterviewTurnState(
     AiCallMetadata? AnswerEvaluationMetadata = null,
     string? ConcurrencyToken = null);
 
-public readonly record struct Score
-{
-    public int Value { get; }
 
-    public Score(int value)
-    {
-        if (value < 0 || value > 100)
-        {
-            throw new ArgumentOutOfRangeException(nameof(value), "Score must be between 0 and 100.");
-        }
-
-        Value = value;
-    }
-
-    public static implicit operator int(Score score) => score.Value;
-}
 
 public readonly record struct Feedback
 {

@@ -38,7 +38,7 @@ public sealed class InterviewSession_Create
         Assert.Null(session.CompletedAt);
         Assert.Equal(questionCount, session.QuestionCount);
         Assert.Equal(0, session.AnsweredCount);
-        Assert.Null(session.Feedback);
+        Assert.Null(session.SessionResult);
     }
 
     [Theory]
@@ -198,7 +198,8 @@ public sealed class InterviewSession_RecordAnswer
 
         session.Start(createdAt.AddSeconds(1));
 
-        var isComplete = session.RecordAnswer(createdAt.AddSeconds(2));
+        var result = new SessionResult(new Score(90));
+        var isComplete = session.RecordAnswer(result, createdAt.AddSeconds(2));
 
         Assert.False(isComplete);
         Assert.Equal(1, session.AnsweredCount);
@@ -221,7 +222,8 @@ public sealed class InterviewSession_RecordAnswer
         session.Start(createdAt.AddSeconds(1));
 
         var completedAt = createdAt.AddSeconds(2);
-        var isComplete = session.RecordAnswer(completedAt);
+        var result = new SessionResult(new Score(100));
+        var isComplete = session.RecordAnswer(result, completedAt);
 
         Assert.True(isComplete);
         Assert.Equal(1, session.AnsweredCount);
@@ -243,7 +245,7 @@ public sealed class InterviewSession_RecordAnswer
             questionCount: 1);
 
         var ex = Assert.Throws<DomainConflictException>(() =>
-            session.RecordAnswer(createdAt.AddSeconds(1)));
+            session.RecordAnswer(new SessionResult(new Score(90)), createdAt.AddSeconds(1)));
 
         Assert.Equal(InterviewSession.Errors.SessionNotActive.Code, ex.Code);
     }
@@ -262,12 +264,13 @@ public sealed class InterviewSession_RecordAnswer
             questionCount: 1);
 
         session.Start(createdAt.AddSeconds(1));
-        session.RecordAnswer(createdAt.AddSeconds(2));
+        var result = new SessionResult(new Score(90));
+        session.RecordAnswer(result, createdAt.AddSeconds(2));
 
         // Session auto-completes when all answers are recorded,
         // so it's no longer active and throws "not active" error
         var ex = Assert.Throws<DomainConflictException>(() =>
-            session.RecordAnswer(createdAt.AddSeconds(3)));
+            session.RecordAnswer(new SessionResult(new Score(90)), createdAt.AddSeconds(3)));
 
         // After last answer, session auto-completes and is no longer active
         Assert.Equal(InterviewStatus.Completed, session.Status);
@@ -290,7 +293,7 @@ public sealed class InterviewSession_RecordAnswer
         session.Start(createdAt.AddSeconds(1));
 
         var ex = Assert.Throws<DomainConflictException>(() =>
-            session.RecordAnswer(createdAt));
+            session.RecordAnswer(new SessionResult(new Score(90)), createdAt));
 
         Assert.Equal(InterviewSession.Errors.AnsweredBeforeStartedAt.Code, ex.Code);
     }
@@ -379,15 +382,14 @@ public sealed class InterviewSession_Evaluate
             questionCount: 1);
 
         session.Start(createdAt.AddSeconds(1));
-        session.RecordAnswer(createdAt.AddSeconds(2));
+        session.RecordAnswer(new SessionResult(new Score(90)), createdAt.AddSeconds(2));
 
-        var feedback = new InterviewFeedback(Score: 85, Summary: "Good performance");
+        var feedback = new SessionResult(new Score(85));
         var evaluatedAt = createdAt.AddSeconds(3);
-        session.Evaluate(feedback, evaluatedAt);
+        session.RecordResult(feedback, evaluatedAt);
 
-        Assert.NotNull(session.Feedback);
-        Assert.Equal(85, session.Feedback.Score);
-        Assert.Equal("Good performance", session.Feedback.Summary);
+        Assert.NotNull(session.SessionResult);
+        Assert.Equal(85, session.SessionResult.OverallScore);
         Assert.Equal(evaluatedAt, session.UpdatedAt);
     }
 
@@ -406,11 +408,11 @@ public sealed class InterviewSession_Evaluate
 
         session.Start(createdAt.AddSeconds(1));
 
-        var feedback = new InterviewFeedback(Score: 85, Summary: "Good performance");
+        var feedback = new SessionResult(new Score(85));
         var ex = Assert.Throws<DomainConflictException>(() =>
-            session.Evaluate(feedback, createdAt.AddSeconds(2)));
+            session.RecordResult(feedback, createdAt.AddSeconds(2)));
 
-        Assert.Equal(InterviewSession.Errors.SessionNotCompletedForEvaluation.Code, ex.Code);
+        Assert.Equal(InterviewSession.Errors.SessionNotCompleted.Code, ex.Code);
     }
 
     [Fact]
@@ -428,11 +430,12 @@ public sealed class InterviewSession_Evaluate
 
         session.Start(createdAt.AddSeconds(1));
         var completedAt = createdAt.AddSeconds(2);
-        session.RecordAnswer(completedAt);
+        session.RecordAnswer(new SessionResult(new Score(90)), completedAt);
+        session.Complete(completedAt);
 
-        var feedback = new InterviewFeedback(Score: 85, Summary: "Good performance");
+        var feedback = new SessionResult(new Score(85));
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            session.Evaluate(feedback, completedAt.AddSeconds(-1)));
+            session.RecordResult(feedback, completedAt.AddSeconds(-1)));
 
         Assert.Contains("cannot be before completed", ex.Message);
     }
