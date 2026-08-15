@@ -1,4 +1,5 @@
 using InterviewSimulator.Api.Features.Interviews;
+using InterviewSimulator.Api.Features.Interviews.Ai;
 using InterviewSimulator.Api.Infrastructure.Interviews;
 
 namespace InterviewSimulator.Api.UnitTests.Infrastructure.Interviews;
@@ -112,8 +113,8 @@ public sealed class CosmosSessionDocument_Mapping
         Assert.Equal(completedAt, doc.CompletedAt);
         Assert.Equal(5, doc.QuestionCount);
         Assert.Equal(5, doc.AnsweredCount);
-        Assert.NotNull(doc.SessionResult);
-        Assert.Equal(85, doc.SessionResult.TotalScore);
+        Assert.NotNull(doc.Result);
+        Assert.Equal(85, doc.Result.TotalScore);
     }
 
     [Fact]
@@ -143,7 +144,7 @@ public sealed class CosmosSessionDocument_Mapping
             CompletedAt = completedAt,
             QuestionCount = 5,
             AnsweredCount = 5,
-            SessionResult = new CosmosSessionResultDocument
+            Result = new CosmosSessionResultDocument
             {
                 TotalScore = 85
             }
@@ -166,6 +167,53 @@ public sealed class CosmosSessionDocument_Mapping
         Assert.Equal(5, session.AnsweredCount);
         Assert.NotNull(session.SessionResult);
         Assert.Equal(85, session.SessionResult.OverallScore);
+    }
+
+    [Fact]
+    public void SummaryAndMetadata_RoundTripThroughCosmosDocument()
+    {
+        var sessionId = Guid.NewGuid();
+        var createdAt = DateTimeOffset.UtcNow;
+        var summaryCreatedAt = createdAt.AddMinutes(5);
+        var session = InterviewSession.Restore(new InterviewSessionState(
+            Id: sessionId,
+            UserId: "user123",
+            Status: InterviewStatus.Completed,
+            TargetRole: "Software Engineer",
+            FocusArea: "Backend",
+            Seniority: SeniorityLevel.Middle,
+            InterviewType: InterviewType.Technical,
+            CreatedAt: createdAt,
+            UpdatedAt: summaryCreatedAt,
+            StartedAt: createdAt.AddSeconds(1),
+            CompletedAt: createdAt.AddMinutes(1),
+            QuestionCount: 5,
+            AnsweredCount: 5,
+            SessionResult: new SessionResult(new Score(85)),
+            InterviewSummary: new InterviewSummary("Strong implementation with clear tradeoffs.", summaryCreatedAt),
+            SummaryMetadata: new AiCallMetadata(
+                PromptVersion: "summary-v1",
+                Provider: "AzureOpenAI",
+                Model: "gpt-4o-mini",
+                PromptTokens: 120,
+                CompletionTokens: 80)));
+
+        var document = CosmosSessionDocument.FromDomain(session);
+
+        Assert.NotNull(document.Summary);
+        Assert.Equal("Strong implementation with clear tradeoffs.", document.Summary.Text);
+        Assert.Equal(summaryCreatedAt, document.Summary.CreatedAt);
+        Assert.NotNull(document.SummaryMetadata);
+        Assert.Equal("summary-v1", document.SummaryMetadata.PromptVersion);
+        Assert.Equal("AzureOpenAI", document.SummaryMetadata.Provider);
+        Assert.Equal("gpt-4o-mini", document.SummaryMetadata.Model);
+        Assert.Equal(120, document.SummaryMetadata.PromptTokens);
+        Assert.Equal(80, document.SummaryMetadata.CompletionTokens);
+
+        var restoredSession = document.ToDomain();
+
+        Assert.Equal(session.InterviewSummary, restoredSession.InterviewSummary);
+        Assert.Equal(session.SummaryMetadata, restoredSession.SummaryMetadata);
     }
 
     [Fact]
@@ -220,7 +268,7 @@ public sealed class CosmosSessionDocument_Mapping
 
         var doc = CosmosSessionDocument.FromDomain(session);
 
-        Assert.Null(doc.SessionResult);
+        Assert.Null(doc.Result);
     }
 
     [Fact]
@@ -244,7 +292,7 @@ public sealed class CosmosSessionDocument_Mapping
             CompletedAt = null,
             QuestionCount = 5,
             AnsweredCount = 0,
-            SessionResult = null
+            Result = null
         };
 
         var session = doc.ToDomain();

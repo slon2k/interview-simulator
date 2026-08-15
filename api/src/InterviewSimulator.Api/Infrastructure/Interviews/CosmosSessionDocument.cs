@@ -33,7 +33,7 @@ public sealed class CosmosSessionDocument : IUserCosmosDocument
 
     public int AnsweredCount { get; set; }
 
-    public CosmosSessionResultDocument? SessionResult { get; set; }
+    public CosmosSessionResultDocument? Result { get; set; }
 
     public CosmosInterviewSummaryDocument? Summary { get; set; }
 
@@ -72,12 +72,29 @@ public sealed class CosmosSessionDocument : IUserCosmosDocument
             AnsweredCount = session.AnsweredCount,
             Status = session.Status.ToString(),
             ETag = session.ConcurrencyToken,
-            SessionResult = session.SessionResult is not null
+            Result = session.SessionResult is not null
                 ? new CosmosSessionResultDocument
                 {
                     TotalScore = session.SessionResult.OverallScore,
                 }
-                : null
+                : null,
+            Summary = session.InterviewSummary is not null
+                ? new CosmosInterviewSummaryDocument
+                {
+                    Text = session.InterviewSummary.Text,
+                    CreatedAt = session.InterviewSummary.CreatedAt,
+                }
+                : null,
+            SummaryMetadata = session.SummaryMetadata is not null
+                ? new CosmosAiMetadataDocument
+                {
+                    PromptVersion = session.SummaryMetadata.PromptVersion,
+                    Provider = session.SummaryMetadata.Provider,
+                    Model = session.SummaryMetadata.Model,
+                    PromptTokens = session.SummaryMetadata.PromptTokens,
+                    CompletionTokens = session.SummaryMetadata.CompletionTokens,
+                }
+                : null,
         };
     }
 
@@ -91,8 +108,8 @@ public sealed class CosmosSessionDocument : IUserCosmosDocument
         Status: Enum.Parse<InterviewStatus>(Status),
         QuestionCount: QuestionCount,
         AnsweredCount: AnsweredCount,
-        SessionResult: SessionResult is not null
-            ? new SessionResult(new Score(SessionResult.TotalScore))
+        SessionResult: Result is not null
+            ? new SessionResult(new Score(Result.TotalScore))
             : null,
         InterviewSummary: Summary is not null
             ? new InterviewSummary(Summary.Text, Summary.CreatedAt)
