@@ -175,27 +175,6 @@ public sealed class InterviewSession
         UpdatedAt = completedAt;
     }
 
-    public void RecordResult(SessionResult sessionResult, DateTimeOffset updatedAt)
-    {
-        if (Status != InterviewStatus.Completed)
-        {
-            throw new DomainConflictException(Errors.SessionNotCompleted);
-        }
-
-        if (CompletedAt is null)
-        {
-            throw new DomainConflictException(Errors.ActiveInterviewMissingStartedAt);
-        }
-
-        if (updatedAt < CompletedAt.Value)
-        {
-            throw new InvalidOperationException("Updated timestamp cannot be before completed timestamp.");
-        }
-
-        SessionResult = sessionResult;
-        UpdatedAt = updatedAt;
-    }
-
     public void RecordSummary(
         InterviewSummary interviewSummary,
         AiCallMetadata aiCallMetadata,
@@ -316,6 +295,11 @@ public sealed class InterviewSession
         if (state.AnsweredCount > state.QuestionCount)
         {
             throw new InvalidOperationException("Persisted answered count cannot exceed question count.");
+        }
+
+        if (state.AnsweredCount == 0 && state.SessionResult is not null)
+        {
+            throw new InvalidOperationException("Persisted session with no answered questions cannot have a result.");
         }
 
         if (state.UpdatedAt < state.CreatedAt)

@@ -193,6 +193,34 @@ public sealed class InterviewSession_StateHydration
     }
 
     [Fact]
+    public void Restore_WithResultAndNoAnsweredQuestions_ThrowsInvalidOperationException()
+    {
+        var createdAt = DateTimeOffset.UtcNow;
+        var state = new InterviewSessionState(
+            Id: Guid.NewGuid(),
+            UserId: "user123",
+            Status: InterviewStatus.Created,
+            TargetRole: "role",
+            FocusArea: "area",
+            Seniority: SeniorityLevel.Junior,
+            InterviewType: InterviewType.Technical,
+            CreatedAt: createdAt,
+            UpdatedAt: createdAt,
+            StartedAt: null,
+            CompletedAt: null,
+            QuestionCount: 5,
+            AnsweredCount: 0,
+            SessionResult: new SessionResult(new Score(80)),
+            InterviewSummary: null,
+            SummaryMetadata: null);
+
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            InterviewSession.Restore(state));
+
+        Assert.Contains("no answered questions cannot have a result", ex.Message);
+    }
+
+    [Fact]
     public void Restore_CreatedSessionWithStartedAt_ThrowsInvalidOperationException()
     {
         var createdAt = DateTimeOffset.UtcNow;

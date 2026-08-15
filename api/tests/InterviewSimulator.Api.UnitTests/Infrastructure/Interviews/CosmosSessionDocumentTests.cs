@@ -255,7 +255,7 @@ public sealed class CosmosSessionDocument_Mapping
     }
 
     [Fact]
-    public void FromDomain_WithNullFeedback_MapsCorrectly()
+    public void FromDomain_WithNullSessionResult_MapsCorrectly()
     {
         var session = InterviewSession.Create(
             userId: "user123",
@@ -272,7 +272,7 @@ public sealed class CosmosSessionDocument_Mapping
     }
 
     [Fact]
-    public void ToDomain_WithNullFeedback_MapsCorrectly()
+    public void ToDomain_WithNullSessionResult_MapsCorrectly()
     {
         var doc = new CosmosSessionDocument
         {
