@@ -18,8 +18,8 @@ public sealed class InterviewSession_StateHydration
             questionCount: 5);
 
         session.Start(createdAt.AddSeconds(1));
-        session.RecordAnswer(createdAt.AddSeconds(2));
-        session.RecordAnswer(createdAt.AddSeconds(3));
+        session.RecordAnswer(new SessionResult(new Score(95)), createdAt.AddSeconds(2));
+        session.RecordAnswer(new SessionResult(new Score(90)), createdAt.AddSeconds(3));
 
         var state = session.ToState();
 
@@ -36,7 +36,7 @@ public sealed class InterviewSession_StateHydration
         Assert.Equal(session.CompletedAt, state.CompletedAt);
         Assert.Equal(session.QuestionCount, state.QuestionCount);
         Assert.Equal(session.AnsweredCount, state.AnsweredCount);
-        Assert.Equal(session.Feedback, state.Feedback);
+        Assert.Equal(session.SessionResult, state.SessionResult);
     }
 
     [Fact]
@@ -60,7 +60,9 @@ public sealed class InterviewSession_StateHydration
             CompletedAt: null,
             QuestionCount: 3,
             AnsweredCount: 1,
-            Feedback: null);
+            SessionResult: null,
+            InterviewSummary: null,
+            SummaryMetadata: null);
 
         var session = InterviewSession.Restore(state);
 
@@ -77,7 +79,7 @@ public sealed class InterviewSession_StateHydration
         Assert.Null(session.CompletedAt);
         Assert.Equal(3, session.QuestionCount);
         Assert.Equal(1, session.AnsweredCount);
-        Assert.Null(session.Feedback);
+        Assert.Null(session.SessionResult);
     }
 
     [Fact]
@@ -96,7 +98,7 @@ public sealed class InterviewSession_StateHydration
         session1.Start(createdAt.AddSeconds(5));
         for (int i = 0; i < 3; i++)
         {
-            session1.RecordAnswer(createdAt.AddSeconds(6 + i));
+            session1.RecordAnswer(new SessionResult(new Score(90)), createdAt.AddSeconds(6 + i));
         }
 
         var state = session1.ToState();
@@ -124,7 +126,9 @@ public sealed class InterviewSession_StateHydration
             CompletedAt: null,
             QuestionCount: 5,
             AnsweredCount: 0,
-            Feedback: null);
+            SessionResult: null,
+            InterviewSummary: null,
+            SummaryMetadata: null);
 
         var ex = Assert.Throws<InvalidOperationException>(() =>
             InterviewSession.Restore(state));
@@ -150,7 +154,9 @@ public sealed class InterviewSession_StateHydration
             CompletedAt: null,
             QuestionCount: 5,
             AnsweredCount: 0,
-            Feedback: null);
+            SessionResult: null,
+            InterviewSummary: null,
+            SummaryMetadata: null);
 
         var ex = Assert.Throws<InvalidOperationException>(() =>
             InterviewSession.Restore(state));
@@ -176,12 +182,42 @@ public sealed class InterviewSession_StateHydration
             CompletedAt: null,
             QuestionCount: 5,
             AnsweredCount: 10,
-            Feedback: null);
+            SessionResult: null,
+            InterviewSummary: null,
+            SummaryMetadata: null);
 
         var ex = Assert.Throws<InvalidOperationException>(() =>
             InterviewSession.Restore(state));
 
         Assert.Contains("cannot exceed question count", ex.Message);
+    }
+
+    [Fact]
+    public void Restore_WithResultAndNoAnsweredQuestions_ThrowsInvalidOperationException()
+    {
+        var createdAt = DateTimeOffset.UtcNow;
+        var state = new InterviewSessionState(
+            Id: Guid.NewGuid(),
+            UserId: "user123",
+            Status: InterviewStatus.Created,
+            TargetRole: "role",
+            FocusArea: "area",
+            Seniority: SeniorityLevel.Junior,
+            InterviewType: InterviewType.Technical,
+            CreatedAt: createdAt,
+            UpdatedAt: createdAt,
+            StartedAt: null,
+            CompletedAt: null,
+            QuestionCount: 5,
+            AnsweredCount: 0,
+            SessionResult: new SessionResult(new Score(80)),
+            InterviewSummary: null,
+            SummaryMetadata: null);
+
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            InterviewSession.Restore(state));
+
+        Assert.Contains("no answered questions cannot have a result", ex.Message);
     }
 
     [Fact]
@@ -202,7 +238,9 @@ public sealed class InterviewSession_StateHydration
             CompletedAt: null,
             QuestionCount: 5,
             AnsweredCount: 0,
-            Feedback: null);
+            SessionResult: null,
+            InterviewSummary: null,
+            SummaryMetadata: null);
 
         var ex = Assert.Throws<InvalidOperationException>(() =>
             InterviewSession.Restore(state));
@@ -228,7 +266,9 @@ public sealed class InterviewSession_StateHydration
             CompletedAt: createdAt.AddSeconds(10),
             QuestionCount: 5,
             AnsweredCount: 5,
-            Feedback: null);
+            SessionResult: null,
+            InterviewSummary: null,
+            SummaryMetadata: null);
 
         var ex = Assert.Throws<InvalidOperationException>(() =>
             InterviewSession.Restore(state));

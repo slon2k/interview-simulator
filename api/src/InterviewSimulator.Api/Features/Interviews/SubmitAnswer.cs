@@ -89,23 +89,30 @@ public static class SubmitAnswer
 
         var now = timeProvider.GetUtcNow();
 
-        session.RecordAnswer(now);
         currentTurn.RecordAnswer(request.Answer, now);
         currentTurn.RecordEvaluation(
             evaluation: evaluationResult.Evaluation,
             metadata: evaluationResult.AiMetadata,
             updatedAt: now);
 
+        var turnsForGeneration = turns
+            .Where(turn => turn.TurnNumber != currentTurn.TurnNumber)
+            .Append(currentTurn)
+            .OrderBy(turn => turn.TurnNumber)
+            .ToArray();
+
+        Score totalScore = new(
+            (int)turnsForGeneration
+                .Where(turn => turn.Evaluation != null)
+                .Average(turn => turn.Evaluation!.OverallScore));
+
+        session.RecordAnswer(new SessionResult(totalScore), now);
+
         InterviewTurn? nextTurn = null;
 
         if (session.Status == InterviewStatus.Active)
         {
             var nextTurnNumber = session.AnsweredCount + 1;
-            var turnsForGeneration = turns
-                .Where(turn => turn.TurnNumber != currentTurn.TurnNumber)
-                .Append(currentTurn)
-                .OrderBy(turn => turn.TurnNumber)
-                .ToArray();
 
             var generateQuestionRequest = new GenerateQuestionRequest(
                 TargetRole: session.TargetRole,
@@ -157,11 +164,9 @@ public static class SubmitAnswer
         CreatedAt: session.CreatedAt,
         StartedAt: session.StartedAt,
         CompletedAt: session.CompletedAt,
-        Feedback: session.Feedback is not null
-            ? new FeedbackContract(
-                Score: session.Feedback.Score,
-                Summary: session.Feedback.Summary)
-            : null,
+        TotalScore: session.Status == InterviewStatus.Completed
+                ? session.SessionResult?.OverallScore
+                : null,
         CurrentQuestion: nextTurn is not null
             ? new QuestionContract(
                 Text: nextTurn.Question.Text,

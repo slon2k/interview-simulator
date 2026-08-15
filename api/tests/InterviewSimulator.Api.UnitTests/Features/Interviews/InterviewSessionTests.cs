@@ -1,5 +1,6 @@
 using InterviewSimulator.Api.Features.Interviews;
 using InterviewSimulator.Api.Features.Common;
+using InterviewSimulator.Api.Features.Interviews.Ai;
 
 namespace InterviewSimulator.Api.UnitTests.Features.Interviews;
 
@@ -38,7 +39,7 @@ public sealed class InterviewSession_Create
         Assert.Null(session.CompletedAt);
         Assert.Equal(questionCount, session.QuestionCount);
         Assert.Equal(0, session.AnsweredCount);
-        Assert.Null(session.Feedback);
+        Assert.Null(session.SessionResult);
     }
 
     [Theory]
@@ -198,7 +199,8 @@ public sealed class InterviewSession_RecordAnswer
 
         session.Start(createdAt.AddSeconds(1));
 
-        var isComplete = session.RecordAnswer(createdAt.AddSeconds(2));
+        var result = new SessionResult(new Score(90));
+        var isComplete = session.RecordAnswer(result, createdAt.AddSeconds(2));
 
         Assert.False(isComplete);
         Assert.Equal(1, session.AnsweredCount);
@@ -221,7 +223,8 @@ public sealed class InterviewSession_RecordAnswer
         session.Start(createdAt.AddSeconds(1));
 
         var completedAt = createdAt.AddSeconds(2);
-        var isComplete = session.RecordAnswer(completedAt);
+        var result = new SessionResult(new Score(100));
+        var isComplete = session.RecordAnswer(result, completedAt);
 
         Assert.True(isComplete);
         Assert.Equal(1, session.AnsweredCount);
@@ -243,7 +246,7 @@ public sealed class InterviewSession_RecordAnswer
             questionCount: 1);
 
         var ex = Assert.Throws<DomainConflictException>(() =>
-            session.RecordAnswer(createdAt.AddSeconds(1)));
+            session.RecordAnswer(new SessionResult(new Score(90)), createdAt.AddSeconds(1)));
 
         Assert.Equal(InterviewSession.Errors.SessionNotActive.Code, ex.Code);
     }
@@ -262,12 +265,13 @@ public sealed class InterviewSession_RecordAnswer
             questionCount: 1);
 
         session.Start(createdAt.AddSeconds(1));
-        session.RecordAnswer(createdAt.AddSeconds(2));
+        var result = new SessionResult(new Score(90));
+        session.RecordAnswer(result, createdAt.AddSeconds(2));
 
         // Session auto-completes when all answers are recorded,
         // so it's no longer active and throws "not active" error
         var ex = Assert.Throws<DomainConflictException>(() =>
-            session.RecordAnswer(createdAt.AddSeconds(3)));
+            session.RecordAnswer(new SessionResult(new Score(90)), createdAt.AddSeconds(3)));
 
         // After last answer, session auto-completes and is no longer active
         Assert.Equal(InterviewStatus.Completed, session.Status);
@@ -290,7 +294,7 @@ public sealed class InterviewSession_RecordAnswer
         session.Start(createdAt.AddSeconds(1));
 
         var ex = Assert.Throws<DomainConflictException>(() =>
-            session.RecordAnswer(createdAt));
+            session.RecordAnswer(new SessionResult(new Score(90)), createdAt));
 
         Assert.Equal(InterviewSession.Errors.AnsweredBeforeStartedAt.Code, ex.Code);
     }
@@ -363,10 +367,10 @@ public sealed class InterviewSession_Complete
     }
 }
 
-public sealed class InterviewSession_Evaluate
+public sealed class InterviewSession_Summary
 {
     [Fact]
-    public void Evaluate_OnCompletedSession_RecordsFeedback()
+    public void RecordSummary_OnCompletedSession_RecordsSummary()
     {
         var createdAt = DateTimeOffset.UtcNow;
         var session = InterviewSession.Create(
@@ -379,61 +383,13 @@ public sealed class InterviewSession_Evaluate
             questionCount: 1);
 
         session.Start(createdAt.AddSeconds(1));
-        session.RecordAnswer(createdAt.AddSeconds(2));
+        session.RecordAnswer(new SessionResult(new Score(90)), createdAt.AddSeconds(2));
 
-        var feedback = new InterviewFeedback(Score: 85, Summary: "Good performance");
-        var evaluatedAt = createdAt.AddSeconds(3);
-        session.Evaluate(feedback, evaluatedAt);
+        var summary = new InterviewSummary("Strong answer.", createdAt.AddSeconds(3));
+        var metadata = new AiCallMetadata("summary-v1", "AzureOpenAI", "gpt-4o-mini", 10, 20);
+        session.RecordSummary(summary, metadata, createdAt.AddSeconds(3));
 
-        Assert.NotNull(session.Feedback);
-        Assert.Equal(85, session.Feedback.Score);
-        Assert.Equal("Good performance", session.Feedback.Summary);
-        Assert.Equal(evaluatedAt, session.UpdatedAt);
-    }
-
-    [Fact]
-    public void Evaluate_OnActiveSession_ThrowsDomainConflictException()
-    {
-        var createdAt = DateTimeOffset.UtcNow;
-        var session = InterviewSession.Create(
-            userId: "user123",
-            targetRole: "role",
-            focusArea: "area",
-            seniority: SeniorityLevel.Junior,
-            interviewType: InterviewType.Technical,
-            createdAt: createdAt,
-            questionCount: 1);
-
-        session.Start(createdAt.AddSeconds(1));
-
-        var feedback = new InterviewFeedback(Score: 85, Summary: "Good performance");
-        var ex = Assert.Throws<DomainConflictException>(() =>
-            session.Evaluate(feedback, createdAt.AddSeconds(2)));
-
-        Assert.Equal(InterviewSession.Errors.SessionNotCompletedForEvaluation.Code, ex.Code);
-    }
-
-    [Fact]
-    public void Evaluate_WithTimestampBeforeCompleted_ThrowsInvalidOperationException()
-    {
-        var createdAt = DateTimeOffset.UtcNow;
-        var session = InterviewSession.Create(
-            userId: "user123",
-            targetRole: "role",
-            focusArea: "area",
-            seniority: SeniorityLevel.Junior,
-            interviewType: InterviewType.Technical,
-            createdAt: createdAt,
-            questionCount: 1);
-
-        session.Start(createdAt.AddSeconds(1));
-        var completedAt = createdAt.AddSeconds(2);
-        session.RecordAnswer(completedAt);
-
-        var feedback = new InterviewFeedback(Score: 85, Summary: "Good performance");
-        var ex = Assert.Throws<InvalidOperationException>(() =>
-            session.Evaluate(feedback, completedAt.AddSeconds(-1)));
-
-        Assert.Contains("cannot be before completed", ex.Message);
+        Assert.Equal(summary, session.InterviewSummary);
+        Assert.Equal(metadata, session.SummaryMetadata);
     }
 }

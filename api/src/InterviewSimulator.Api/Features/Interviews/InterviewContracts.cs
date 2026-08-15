@@ -23,8 +23,6 @@ public enum InterviewStatusContract
 
 public record QuestionContract(string Text, string Topic, int TurnNumber);
 
-public record FeedbackContract(int Score, string? Summary);
-
 public record InterviewResponse(
     Guid Id,
     string UserId,
@@ -38,5 +36,5 @@ public record InterviewResponse(
     DateTimeOffset CreatedAt,
     DateTimeOffset? StartedAt,
     DateTimeOffset? CompletedAt,
-    FeedbackContract? Feedback,
-    QuestionContract? CurrentQuestion);
+    int? TotalScore,
+    QuestionContract? CurrentQuestion );

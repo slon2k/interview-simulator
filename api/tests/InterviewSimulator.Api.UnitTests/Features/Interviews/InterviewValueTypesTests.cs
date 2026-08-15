@@ -173,30 +173,26 @@ public sealed class Feedback_Constructor
     public void Constructor_WithValidArguments_CreatesFeedback()
     {
         var totalScore = 82;
-        var summary = "Overall good performance.";
 
-        var feedback = new InterviewFeedback(Score: totalScore, Summary: summary);
+        var feedback = new SessionResult(new Score(totalScore));
 
-        Assert.Equal(totalScore, feedback.Score);
-        Assert.Equal(summary, feedback.Summary);
+        Assert.Equal(totalScore, feedback.OverallScore);
     }
 
     [Fact]
     public void Constructor_WithNullSummary_Succeeds()
     {
-        var feedback = new InterviewFeedback(Score: 75, Summary: null);
+        var feedback = new SessionResult(new Score(75));
 
-        Assert.Equal(75, feedback.Score);
-        Assert.Null(feedback.Summary);
+        Assert.Equal(75, feedback.OverallScore);
     }
 
     [Fact]
     public void Constructor_WithEmptySummary_Succeeds()
     {
-        var feedback = new InterviewFeedback(Score: 75, Summary: "");
+        var feedback = new SessionResult(new Score(75));
 
-        Assert.Equal(75, feedback.Score);
-        Assert.Equal("", feedback.Summary);
+        Assert.Equal(75, feedback.OverallScore);
     }
 
     [Theory]
@@ -205,9 +201,9 @@ public sealed class Feedback_Constructor
     [InlineData(100)]
     public void Constructor_WithVariousScores_Succeeds(int score)
     {
-        var feedback = new InterviewFeedback(Score: score, Summary: "Summary");
+        var feedback = new SessionResult(new Score(score));
 
-        Assert.Equal(score, feedback.Score);
+        Assert.Equal(score, feedback.OverallScore);
     }
 }
 

@@ -13,7 +13,7 @@ namespace InterviewSimulator.Api.IntegrationTests.Interviews;
 public sealed class GetInterviewResponseContractTests(AuthWebApplicationFactory factory) : IClassFixture<AuthWebApplicationFactory>
 {
     [Fact]
-    public async Task GetInterview_WhenCreated_ReturnsCreatedShapeWithoutCurrentQuestionOrFeedback()
+    public async Task GetInterview_WhenCreated_ReturnsCreatedShapeWithoutCurrentQuestionOrTotalScore()
     {
         var store = new GetInterviewContractStore();
         var sessionId = store.SeedCreatedSession("github|100");
@@ -32,11 +32,11 @@ public sealed class GetInterviewResponseContractTests(AuthWebApplicationFactory 
         Assert.Equal(JsonValueKind.Null, root.GetProperty("startedAt").ValueKind);
         Assert.Equal(JsonValueKind.Null, root.GetProperty("completedAt").ValueKind);
         Assert.Equal(JsonValueKind.Null, root.GetProperty("currentQuestion").ValueKind);
-        Assert.Equal(JsonValueKind.Null, root.GetProperty("feedback").ValueKind);
+        Assert.Equal(JsonValueKind.Null, root.GetProperty("totalScore").ValueKind);
     }
 
     [Fact]
-    public async Task GetInterview_WhenActive_ReturnsCurrentQuestionAndNoFeedback()
+    public async Task GetInterview_WhenActive_ReturnsCurrentQuestionAndNoTotalScore()
     {
         var store = new GetInterviewContractStore();
         var sessionId = store.SeedActiveSessionWithCurrentTurn("github|100");
@@ -56,14 +56,14 @@ public sealed class GetInterviewResponseContractTests(AuthWebApplicationFactory 
         Assert.Equal(JsonValueKind.Null, root.GetProperty("completedAt").ValueKind);
         Assert.Equal("Question 2", root.GetProperty("currentQuestion").GetProperty("text").GetString());
         Assert.Equal("Topic 2", root.GetProperty("currentQuestion").GetProperty("topic").GetString());
-        Assert.Equal(JsonValueKind.Null, root.GetProperty("feedback").ValueKind);
+        Assert.Equal(JsonValueKind.Null, root.GetProperty("totalScore").ValueKind);
     }
 
     [Fact]
-    public async Task GetInterview_WhenCompleted_ReturnsFeedbackAndNoCurrentQuestion()
+    public async Task GetInterview_WhenCompleted_ReturnsTotalScoreAndNoCurrentQuestion()
     {
         var store = new GetInterviewContractStore();
-        var sessionId = store.SeedCompletedSessionWithFeedback("github|100");
+        var sessionId = store.SeedCompletedSession("github|100");
         using var client = CreateClientWithStore(store);
 
         using var request = CreateAuthenticatedRequest(HttpMethod.Get, $"/api/interviews/{sessionId}", "github|100", "invited-user");
@@ -79,8 +79,7 @@ public sealed class GetInterviewResponseContractTests(AuthWebApplicationFactory 
         Assert.Equal(JsonValueKind.String, root.GetProperty("startedAt").ValueKind);
         Assert.Equal(JsonValueKind.String, root.GetProperty("completedAt").ValueKind);
         Assert.Equal(JsonValueKind.Null, root.GetProperty("currentQuestion").ValueKind);
-        Assert.Equal(85, root.GetProperty("feedback").GetProperty("score").GetInt32());
-        Assert.Equal("Strong and concise answers.", root.GetProperty("feedback").GetProperty("summary").GetString());
+        Assert.Equal(85, root.GetProperty("totalScore").GetInt32());
     }
 
     private HttpClient CreateClientWithStore(GetInterviewContractStore store)
@@ -158,7 +157,7 @@ public sealed class GetInterviewResponseContractTests(AuthWebApplicationFactory 
                 questionCount: 3);
 
             session.Start(startedAt);
-            session.RecordAnswer(answeredAt);
+            session.RecordAnswer(new SessionResult(new Score(90)), answeredAt);
             _sessions[session.Id] = session;
 
             var answeredTurn = InterviewTurn.Create(
@@ -184,12 +183,11 @@ public sealed class GetInterviewResponseContractTests(AuthWebApplicationFactory 
             return session.Id;
         }
 
-        public Guid SeedCompletedSessionWithFeedback(string userId)
+        public Guid SeedCompletedSession(string userId)
         {
             var createdAt = DateTimeOffset.UtcNow.AddMinutes(-30);
             var startedAt = createdAt.AddMinutes(1);
             var completedAt = startedAt.AddMinutes(5);
-            var evaluatedAt = completedAt.AddMinutes(1);
 
             var session = InterviewSession.Create(
                 userId: userId,
@@ -201,9 +199,8 @@ public sealed class GetInterviewResponseContractTests(AuthWebApplicationFactory 
                 questionCount: 2);
 
             session.Start(startedAt);
-            session.RecordAnswer(startedAt.AddMinutes(1));
-            session.RecordAnswer(completedAt);
-            session.Evaluate(new InterviewFeedback(Score: 85, Summary: "Strong and concise answers."), evaluatedAt);
+            session.RecordAnswer(new SessionResult(new Score(80)), startedAt.AddMinutes(1));
+            session.RecordAnswer(new SessionResult(new Score(85)), completedAt);
 
             _sessions[session.Id] = session;
             return session.Id;

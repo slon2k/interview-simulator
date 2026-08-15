@@ -62,10 +62,8 @@ public static class GetInterview
             }
         }
 
-        var feedback = interview.Feedback is not null
-            ? new FeedbackContract(
-                Score: interview.Feedback.Score,
-                Summary: interview.Feedback.Summary)
+        var totalScore = interview.Status == InterviewStatus.Completed
+            ? interview.SessionResult?.OverallScore
             : null;
 
         return Results.Ok(new InterviewResponse(
@@ -81,7 +79,7 @@ public static class GetInterview
             CreatedAt: interview.CreatedAt,
             StartedAt: interview.StartedAt,
             CompletedAt: interview.CompletedAt,
-            Feedback: feedback,
+            TotalScore: totalScore,
             CurrentQuestion: currentQuestion));
     }
 

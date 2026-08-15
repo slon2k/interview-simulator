@@ -1,4 +1,5 @@
 using InterviewSimulator.Api.Features.Common;
+using InterviewSimulator.Api.Features.Interviews.Ai;
 
 namespace InterviewSimulator.Api.Features.Interviews;
 
@@ -30,7 +31,11 @@ public sealed class InterviewSession
 
     public int AnsweredCount { get; private set; }
 
-    public InterviewFeedback? Feedback { get; private set; }
+    public SessionResult? SessionResult { get; private set; }
+
+    public InterviewSummary? InterviewSummary { get; private set; }
+
+    public AiCallMetadata? SummaryMetadata { get; private set; }
 
     public string? ConcurrencyToken { get; private set; }
 
@@ -105,6 +110,11 @@ public sealed class InterviewSession
 
     public void Complete(DateTimeOffset completedAt)
     {
+        if (Status == InterviewStatus.Completed)
+        {
+            return; // Idempotent: Allow completing an already-completed session
+        }
+
         if (Status != InterviewStatus.Active)
         {
             throw new DomainConflictException(Errors.SessionNotActive);
@@ -123,7 +133,7 @@ public sealed class InterviewSession
         MarkCompleted(completedAt);
     }
 
-    public bool RecordAnswer(DateTimeOffset answeredAt)
+    public bool RecordAnswer(SessionResult result, DateTimeOffset answeredAt)
     {
         if (Status != InterviewStatus.Active)
         {
@@ -146,6 +156,7 @@ public sealed class InterviewSession
         }
 
         AnsweredCount++;
+        SessionResult = result;
 
         if (AnsweredCount == QuestionCount)
         {
@@ -164,11 +175,14 @@ public sealed class InterviewSession
         UpdatedAt = completedAt;
     }
 
-    public void Evaluate(InterviewFeedback feedback, DateTimeOffset updatedAt)
+    public void RecordSummary(
+        InterviewSummary interviewSummary,
+        AiCallMetadata aiCallMetadata,
+        DateTimeOffset updatedAt)
     {
         if (Status != InterviewStatus.Completed)
         {
-            throw new DomainConflictException(Errors.SessionNotCompletedForEvaluation);
+            throw new DomainConflictException(Errors.SessionNotCompleted);
         }
 
         if (updatedAt < CreatedAt)
@@ -176,15 +190,11 @@ public sealed class InterviewSession
             throw new InvalidOperationException("Updated timestamp cannot be before created timestamp.");
         }
 
-        var completedAt = CompletedAt
-            ?? throw new InvalidOperationException("Completed interview must have a completed timestamp.");
+        ArgumentNullException.ThrowIfNull(interviewSummary);
+        ArgumentNullException.ThrowIfNull(aiCallMetadata);
 
-        if (updatedAt < completedAt)
-        {
-            throw new InvalidOperationException("Updated timestamp cannot be before completed timestamp.");
-        }
-
-        Feedback = feedback;
+        InterviewSummary = interviewSummary;
+        SummaryMetadata = aiCallMetadata;
         UpdatedAt = updatedAt;
     }
 
@@ -209,7 +219,9 @@ public sealed class InterviewSession
             CompletedAt = state.CompletedAt,
             QuestionCount = state.QuestionCount,
             AnsweredCount = state.AnsweredCount,
-            Feedback = state.Feedback,
+            SessionResult = state.SessionResult,
+            InterviewSummary = state.InterviewSummary,
+            SummaryMetadata = state.SummaryMetadata,
             ConcurrencyToken = state.ConcurrencyToken
         };
     }
@@ -228,7 +240,9 @@ public sealed class InterviewSession
         CompletedAt: CompletedAt,
         QuestionCount: QuestionCount,
         AnsweredCount: AnsweredCount,
-        Feedback: Feedback,
+        SessionResult: SessionResult,
+        InterviewSummary: InterviewSummary,
+        SummaryMetadata: SummaryMetadata,
         ConcurrencyToken: ConcurrencyToken);
 
     private static void ValidateRestoredState(InterviewSessionState state)
@@ -281,6 +295,11 @@ public sealed class InterviewSession
         if (state.AnsweredCount > state.QuestionCount)
         {
             throw new InvalidOperationException("Persisted answered count cannot exceed question count.");
+        }
+
+        if (state.AnsweredCount == 0 && state.SessionResult is not null)
+        {
+            throw new InvalidOperationException("Persisted session with no answered questions cannot have a result.");
         }
 
         if (state.UpdatedAt < state.CreatedAt)
@@ -350,13 +369,13 @@ public sealed class InterviewSession
         public static DomainError CompletedBeforeStartedAt => new("Interviews.InterviewSession.CompletedBeforeStartedAt", "Completed timestamp cannot be before started timestamp.");
         public static DomainError AnsweredBeyondQuestionCount => new("Interviews.InterviewSession.AnsweredBeyondQuestionCount", "Cannot answer beyond the total question count.");
         public static DomainError AnsweredBeforeStartedAt => new("Interviews.InterviewSession.AnsweredBeforeStartedAt", "Answered timestamp cannot be before started timestamp.");
-        public static DomainError SessionNotCompletedForEvaluation => new("Interviews.InterviewSession.SessionNotCompletedForEvaluation", "Cannot record feedback for an interview session that is not completed.");
+        public static DomainError SessionNotCompleted => new("Interviews.InterviewSession.SessionNotCompleted", "Cannot record summary for an interview session that is not completed.");
     }
 }
 
-public record InterviewFeedback(
-    int Score,
-    string? Summary);
+public record SessionResult(Score OverallScore);
+
+public record InterviewSummary(string Text, DateTimeOffset CreatedAt);
 
 public enum InterviewStatus
 {
@@ -379,6 +398,23 @@ public enum SeniorityLevel
     Senior = 3,
 }
 
+public readonly record struct Score
+{
+    public int Value { get; }
+
+    public Score(int value)
+    {
+        if (value < 0 || value > 100)
+        {
+            throw new ArgumentOutOfRangeException(nameof(value), "Score must be between 0 and 100.");
+        }
+
+        Value = value;
+    }
+
+    public static implicit operator int(Score score) => score.Value;
+}
+
 public sealed record InterviewSessionState(
     Guid Id,
     string UserId,
@@ -393,6 +429,8 @@ public sealed record InterviewSessionState(
     DateTimeOffset? CompletedAt,
     int QuestionCount,
     int AnsweredCount,
-    InterviewFeedback? Feedback,
+    SessionResult? SessionResult,
+    InterviewSummary? InterviewSummary,
+    AiCallMetadata? SummaryMetadata,
     string? ConcurrencyToken = null);
 
