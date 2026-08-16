@@ -58,7 +58,7 @@ M04 stored full turn history but `GET /api/interviews/{id}` only returned enough
 - [ ] `GET /api/interviews/{id}/detail` returns full ordered turn history for any session
 - [ ] Each turn includes question, answer, per-dimension scores, and feedback
 - [ ] Per-dimension scores are read from stored M05 output (no AI re-call)
-- [ ] The response includes `summary` and `summaryAi` when present
+- [ ] The response includes `summary` when present
 - [ ] Turns are returned in correct order by turn number
 - [ ] Reads are scoped to the authenticated user; users cannot read others' sessions
 - [ ] Anonymous requests return `401`; non-invited authenticated requests return `403`
@@ -82,7 +82,7 @@ M04 stored full turn history but `GET /api/interviews/{id}` only returned enough
 - [ ] Add session detail query (session + ordered turns, ordered by turn number)
 - [ ] Wire query registration in `Startup/InterviewServices.cs`
 - [ ] Implement `GET /api/interviews/{id}/detail`
-- [ ] Include `summary` (text + createdAt) and `summaryAi` in detail response when present
+- [ ] Include `summary` (text + createdAt) in detail response when present
 
 ### [ ] Tests
 
