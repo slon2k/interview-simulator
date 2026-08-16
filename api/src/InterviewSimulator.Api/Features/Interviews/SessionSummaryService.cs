@@ -16,7 +16,10 @@ public sealed class SessionSummaryService(IInterviewStore store, ISessionSummari
             FocusArea: session.FocusArea,
             Seniority: session.Seniority,
             InterviewType: session.InterviewType,
-            Turns: [.. turns.Select(MapTurn)]);
+            Turns: [.. turns
+                .Where(t => t.Evaluation != null && t.Answer != null)
+                .OrderBy(t => t.TurnNumber)
+                .Select(MapTurn)]);
 
         var summary = await summarizer.GenerateSummaryAsync(summaryRequest, cancellationToken) ?? throw new InvalidOperationException($"Failed to generate summary for session {sessionId} for user {userId}");
         var updatedAt = timeProvider.GetUtcNow();
