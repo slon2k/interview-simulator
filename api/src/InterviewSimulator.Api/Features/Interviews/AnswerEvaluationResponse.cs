@@ -47,7 +47,9 @@ public sealed class AnswerEvaluationResponseValidator : AbstractValidator<Answer
 
             dimension.RuleFor(d => d.Feedback)
                 .NotEmpty()
-                .WithMessage("dimension feedback is required.");
+                .WithMessage("dimension feedback is required.")
+                .MaximumLength(options.Value.MaxFeedbackChars)
+                .WithMessage($"dimension feedback must be at most {options.Value.MaxFeedbackChars} characters long.");
         });
     }
 

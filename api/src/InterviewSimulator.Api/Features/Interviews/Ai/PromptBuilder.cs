@@ -161,7 +161,11 @@ public static class PromptBuilder
         builder.AppendLine("- Highlight strengths, weaknesses, and a headline takeaway.");
         builder.AppendLine("- Use the stored evaluation scores and feedback as the only source of truth.");
         builder.AppendLine("- Keep the summary concise and actionable.");
-        builder.AppendLine(string.Format(CultureInfo.InvariantCulture, "- Keep summary under {0} characters.", SessionSummaryResponse.SummaryMaxLength));
+        builder.AppendLine(string.Format(
+            CultureInfo.InvariantCulture,
+            "- The summary value must be no more than {0} characters, including spaces.",
+            options.MaxSummaryChars));
+        builder.AppendLine("- Finish the complete JSON object before stopping.");
 
         return builder.ToString();
     }
@@ -263,7 +267,11 @@ public static class PromptBuilder
         builder.AppendLine("- Score each rubric dimension from 0 to 100 (0 = no evidence, 50 = adequate, 100 = exceptional).");
         builder.AppendLine("- Provide concise, actionable feedback per dimension.");
         builder.AppendLine("- Provide concise overall feedback summarising strengths and areas for improvement.");
-        builder.AppendLine(string.Format(CultureInfo.InvariantCulture, "- Keep each feedback field under {0} characters.", options.MaxFeedbackChars));
+        builder.AppendLine(string.Format(
+            CultureInfo.InvariantCulture,
+            "- Every feedback value, including overall feedback and dimension feedback, must be no more than {0} characters, including spaces.",
+            options.MaxFeedbackChars));
+        builder.AppendLine("- Finish the complete JSON object before stopping.");
         builder.AppendLine("- Return exactly the dimension keys listed in the rubric, in the same order.");
 
         return builder.ToString();

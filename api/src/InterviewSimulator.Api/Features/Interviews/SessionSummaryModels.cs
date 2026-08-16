@@ -34,19 +34,17 @@ public sealed record SessionSummaryResult(
     AiCallMetadata AiMetadata);
 
 public sealed record SessionSummaryResponse(
-    [property: JsonPropertyName("summary")] string? Summary)
-{
-    public const int SummaryMaxLength = 800;
-}
+    [property: JsonPropertyName("summary")] string? Summary);
 
 public sealed class SessionSummaryResponseValidator : AbstractValidator<SessionSummaryResponse>
 {
     public SessionSummaryResponseValidator(IOptions<AiOptions> options)
     {
+        var maxLength = options.Value.MaxSummaryChars;
         RuleFor(x => x.Summary)
             .NotEmpty()
             .WithMessage("summary is required.")
-            .MaximumLength(SessionSummaryResponse.SummaryMaxLength)
-            .WithMessage($"summary must be at most {SessionSummaryResponse.SummaryMaxLength} characters long.");
+            .MaximumLength(maxLength)
+            .WithMessage($"summary must be at most {maxLength} characters long.");
     }
 }

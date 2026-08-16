@@ -45,6 +45,8 @@ public static class InterviewServices
             builder.Services.AddScoped<ISessionSummarizer, HardcodedSessionSummarizer>();
         }
 
+        builder.Services.AddScoped<SessionSummaryService>();
+
         builder.Services.AddValidatorsFromAssemblyContaining<Program>();
         builder.Services.ConfigureHttpJsonOptions(options =>
         {

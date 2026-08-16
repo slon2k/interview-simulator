@@ -22,7 +22,7 @@ public static class CompleteInterview
     private static async Task<IResult> Handler(
         Guid interviewId,
         IInterviewStore store,
-        ISessionSummarizer sessionSummarizer,
+        SessionSummaryService sessionSummaryService,
         ClaimsPrincipal user,
         TimeProvider timeProvider,
         ILogger<Program> logger,
@@ -53,16 +53,17 @@ public static class CompleteInterview
 
         await store.UpdateSessionAsync(interview, cancellationToken);
 
-        var turns = await store.ListTurnsAsync(userId, interviewId, cancellationToken);
-
-        await SessionSummaryGeneration.GenerateBestEffortAsync(
-            interview,
-            turns,
-            sessionSummarizer,
-            store,
-            timeProvider,
-            logger,
-            cancellationToken);
+        try
+        {
+            interview = await sessionSummaryService.CreateSummaryAsync(interview.Id, userId, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(
+                ex,
+                "Session summary generation failed for interview {InterviewId}. The completed session remains available without a summary.",
+                interview.Id);
+        }
 
         return Results.NoContent();
     }
