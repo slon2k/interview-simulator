@@ -82,6 +82,11 @@ public sealed class InterviewAuthorizationMatrixTests(AuthWebApplicationFactory 
             null
         },
         {
+            HttpMethod.Get,
+            "/api/interviews/11111111-1111-1111-1111-111111111111/details",
+            null
+        },
+        {
             HttpMethod.Post,
             "/api/interviews/11111111-1111-1111-1111-111111111111/start",
             null
