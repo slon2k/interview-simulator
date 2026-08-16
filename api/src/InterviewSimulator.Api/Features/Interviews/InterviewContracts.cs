@@ -37,4 +37,4 @@ public record InterviewResponse(
     DateTimeOffset? StartedAt,
     DateTimeOffset? CompletedAt,
     int? TotalScore,
-    QuestionContract? CurrentQuestion );
+    QuestionContract? CurrentQuestion);

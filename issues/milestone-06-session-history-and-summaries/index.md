@@ -18,7 +18,7 @@ M04 deliberately kept `GET /api/interviews/{id}` shallow — it did not return f
 ## Key Decisions
 
 - **Read path, not new writes**: M06 surfaces data M04/M05 already persisted. It must not re-run evaluation to display scores/feedback — it reads the stored per-dimension scores.
-- **Detail endpoint**: dedicated `GET /api/interviews/{id}/detail`; the existing `GET /api/interviews/{id}` remains the shallow resume/status endpoint and gains `aggregateScore int?` (null for non-completed).
+- **Detail endpoint**: dedicated `GET /api/interviews/{id}/details`; the existing `GET /api/interviews/{id}` remains the shallow resume/status endpoint and gains `aggregateScore int?` (null for non-completed).
 - **Detail read is a query, not a point read**: loading a full session (session + ordered turns) uses a dedicated query class, not the point-read `IRepository<T>`. Queries are scoped to the user's partition.
 - **`InterviewFeedback` refactor (first task in 06b)**: the existing `InterviewFeedback(int Score, string? Summary)` domain type is split into two separate session properties:
   - `SessionResult(int OverallScore)` — deterministic aggregate, stored after every answer
@@ -39,7 +39,7 @@ M04 deliberately kept `GET /api/interviews/{id}` shallow — it did not return f
 
 ## Read Shape
 
-Detail read (`GET /api/interviews/{id}/detail`) returns the full reviewable session:
+Detail read (`GET /api/interviews/{id}/details`) returns the full reviewable session:
 
 ```text
 session:
@@ -47,20 +47,17 @@ session:
   status, completedAt
   aggregateScore          ← null when 0 answers, integer average otherwise
   summary?                ← { text, createdAt } when present
-  summaryAi?              ← { promptVersion, provider } when present
 
 turns (ordered by turnNumber):
   question    { text, topic }
   answer      { text }
   evaluation  { overallScore, feedback, dimensions[] }
-  questionAi  { promptVersion }
-  evaluationAi { promptVersion }
 ```
 
 ## Exit Criteria
 
 - All 4 features shipped and merged
-- `GET /api/interviews/{id}/detail` returns full turn history for any session
+- `GET /api/interviews/{id}/details` returns full turn history for any session
 - `GET /api/interviews/{id}` and list endpoint include `aggregateScore` for completed sessions
 - Completed sessions carry a persisted AI summary
 - History page lists a user's completed sessions

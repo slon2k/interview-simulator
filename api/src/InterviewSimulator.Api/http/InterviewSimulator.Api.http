@@ -127,3 +127,10 @@ Cookie: {{authCookie}}
 GET {{InterviewSimulator.Api_HostAddress}}/api/interviews/{{interviewId}}
 Accept: application/json
 Cookie: {{authCookie}}
+
+### 8. Get the completed interview with evaluation details (check feedback/score once evaluation is wired)
+GET {{InterviewSimulator.Api_HostAddress}}/api/interviews/{{interviewId}}/details
+Accept: application/json
+Cookie: {{authCookie}}
+
+###

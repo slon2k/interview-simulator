@@ -29,7 +29,7 @@ M04 stored full turn history but `GET /api/interviews/{id}` only returned enough
 ### Detail read
 
 - Add a dedicated `GET /api/interviews/{id}/detail` endpoint (existing shallow endpoint is unchanged)
-- Load session + ordered turns via a dedicated query class (not the point-read `IRepository<T>`)
+- Load the session and its ordered turns through the interview store, scoped to the authenticated user's partition
 - Scope all reads to the authenticated user's partition
 - Return `summary` and `summaryAi` fields when present (populated by 06b)
 - Add response DTOs for the detailed view
@@ -58,11 +58,11 @@ M04 stored full turn history but `GET /api/interviews/{id}` only returned enough
 - [ ] `GET /api/interviews/{id}/detail` returns full ordered turn history for any session
 - [ ] Each turn includes question, answer, per-dimension scores, and feedback
 - [ ] Per-dimension scores are read from stored M05 output (no AI re-call)
-- [ ] The response includes `summary` and `summaryAi` when present
+- [ ] The response includes `summary` when present
 - [ ] Turns are returned in correct order by turn number
 - [ ] Reads are scoped to the authenticated user; users cannot read others' sessions
 - [ ] Anonymous requests return `401`; non-invited authenticated requests return `403`
-- [ ] The detail read uses a query class, not the point-read repository
+- [ ] The detail read uses the existing interview store/query path, not repeated point reads for each turn
 - [x] Approach documented: dedicated `GET /api/interviews/{id}/detail`; shallow endpoint gains `aggregateScore int?`
 - [ ] Unit tests cover query mapping and ordering
 - [ ] Integration tests cover happy path and authorization
@@ -79,10 +79,9 @@ M04 stored full turn history but `GET /api/interviews/{id}` only returned enough
 ### [ ] Detail read implementation
 
 - [ ] Define detailed session/turn response DTOs
-- [ ] Add session detail query (session + ordered turns, ordered by turn number)
-- [ ] Wire query registration in `Startup/InterviewServices.cs`
+- [ ] Load the session and ordered turns through the existing interview store/query path
 - [ ] Implement `GET /api/interviews/{id}/detail`
-- [ ] Include `summary` (text + createdAt) and `summaryAi` in detail response when present
+- [ ] Include `summary` (text + createdAt) in detail response when present
 
 ### [ ] Tests
 
@@ -109,7 +108,7 @@ Depends on:
 
 Blocks:
 
-- 06b - Session summary generation (uses the session detail query; domain types introduced here)
+- 06b - Session summary generation (uses the session detail read path; domain types introduced here)
 - 06c - History and session detail UI
 
 ## Risks and Open Questions
@@ -124,4 +123,4 @@ Decided: `GET /api/interviews/{id}/detail` is a dedicated endpoint. The existing
 
 ## Notes
 
-This is the read counterpart to M04's write path. It reuses the query-class approach discussed for Cosmos reads — filters and projections live in a dedicated class, partition-scoped to the user, rather than being bolted onto the generic repository.
+This is the read counterpart to M04's write path. It uses the existing interview store/query path with user-partition scoping and turn ordering, rather than issuing repeated point reads for individual turns.
