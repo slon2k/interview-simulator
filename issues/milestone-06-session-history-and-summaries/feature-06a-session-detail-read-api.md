@@ -28,10 +28,10 @@ M04 stored full turn history but `GET /api/interviews/{id}` only returned enough
 
 ### Detail read
 
-- Add a dedicated `GET /api/interviews/{id}/detail` endpoint (existing shallow endpoint is unchanged)
+- Add a dedicated `GET /api/interviews/{id}/details` endpoint (existing shallow endpoint is unchanged)
 - Load the session and its ordered turns through the interview store, scoped to the authenticated user's partition
 - Scope all reads to the authenticated user's partition
-- Return `summary` and `summaryAi` fields when present (populated by 06b)
+- Return the `summary` field when present (populated by 06b)
 - Add response DTOs for the detailed view
 - Add unit tests for query mapping and ordering
 - Add integration tests for happy path and authorization
@@ -55,7 +55,7 @@ M04 stored full turn history but `GET /api/interviews/{id}` only returned enough
 
 ### Detail read
 
-- [ ] `GET /api/interviews/{id}/detail` returns full ordered turn history for any session
+- [ ] `GET /api/interviews/{id}/details` returns full ordered turn history for any session
 - [ ] Each turn includes question, answer, per-dimension scores, and feedback
 - [ ] Per-dimension scores are read from stored M05 output (no AI re-call)
 - [ ] The response includes `summary` when present
@@ -63,7 +63,7 @@ M04 stored full turn history but `GET /api/interviews/{id}` only returned enough
 - [ ] Reads are scoped to the authenticated user; users cannot read others' sessions
 - [ ] Anonymous requests return `401`; non-invited authenticated requests return `403`
 - [ ] The detail read uses the existing interview store/query path, not repeated point reads for each turn
-- [x] Approach documented: dedicated `GET /api/interviews/{id}/detail`; shallow endpoint gains `aggregateScore int?`
+- [x] Approach documented: dedicated `GET /api/interviews/{id}/details`; shallow endpoint gains `aggregateScore int?`
 - [ ] Unit tests cover query mapping and ordering
 - [ ] Integration tests cover happy path and authorization
 - [ ] Existing tests continue to pass
@@ -80,7 +80,7 @@ M04 stored full turn history but `GET /api/interviews/{id}` only returned enough
 
 - [ ] Define detailed session/turn response DTOs
 - [ ] Load the session and ordered turns through the existing interview store/query path
-- [ ] Implement `GET /api/interviews/{id}/detail`
+- [ ] Implement `GET /api/interviews/{id}/details`
 - [ ] Include `summary` (text + createdAt) in detail response when present
 
 ### [ ] Tests
@@ -119,7 +119,7 @@ Blocks:
 
 ### Open Questions
 
-Decided: `GET /api/interviews/{id}/detail` is a dedicated endpoint. The existing `GET /api/interviews/{id}` gains `aggregateScore int?` only. Two endpoints, two purposes.
+Decided: `GET /api/interviews/{id}/details` is a dedicated endpoint. The existing `GET /api/interviews/{id}` gains `aggregateScore int?` only. Two endpoints, two purposes.
 
 ## Notes
 
