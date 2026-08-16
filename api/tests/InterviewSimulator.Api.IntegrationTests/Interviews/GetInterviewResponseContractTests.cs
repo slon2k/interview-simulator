@@ -82,6 +82,22 @@ public sealed class GetInterviewResponseContractTests(AuthWebApplicationFactory 
         Assert.Equal(85, root.GetProperty("totalScore").GetInt32());
     }
 
+    [Fact]
+    public async Task GetInterview_WhenCompletedWithoutResult_ReturnsNoTotalScore()
+    {
+        var store = new GetInterviewContractStore();
+        var sessionId = store.SeedCompletedSessionWithoutResult("github|100");
+        using var client = CreateClientWithStore(store);
+
+        using var request = CreateAuthenticatedRequest(HttpMethod.Get, $"/api/interviews/{sessionId}", "github|100", "invited-user");
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        using var json = await ReadJsonAsync(response);
+        Assert.Equal(JsonValueKind.Null, json.RootElement.GetProperty("totalScore").ValueKind);
+    }
+
     private HttpClient CreateClientWithStore(GetInterviewContractStore store)
     {
         return factory.WithWebHostBuilder(builder =>
@@ -202,6 +218,24 @@ public sealed class GetInterviewResponseContractTests(AuthWebApplicationFactory 
             session.RecordAnswer(new SessionResult(new Score(80)), startedAt.AddMinutes(1));
             session.RecordAnswer(new SessionResult(new Score(85)), completedAt);
 
+            _sessions[session.Id] = session;
+            return session.Id;
+        }
+
+        public Guid SeedCompletedSessionWithoutResult(string userId)
+        {
+            var createdAt = DateTimeOffset.UtcNow.AddMinutes(-30);
+            var session = InterviewSession.Create(
+                userId: userId,
+                targetRole: "Backend Engineer",
+                focusArea: "dotnet",
+                seniority: SeniorityLevel.Middle,
+                interviewType: InterviewType.Technical,
+                createdAt: createdAt,
+                questionCount: 2);
+
+            session.Start(createdAt.AddMinutes(1));
+            session.Complete(createdAt.AddMinutes(2));
             _sessions[session.Id] = session;
             return session.Id;
         }
