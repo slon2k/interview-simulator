@@ -102,23 +102,24 @@ public static class GetInterviewDetails
 
     public record ResponseSummary(string Text, DateTimeOffset CreatedAt)
     {
-        public static ResponseSummary? FromDomain(InterviewSummary? summary) => summary is not null ? new(
-            Text: summary.Text,
-            CreatedAt: summary.CreatedAt) : null;
+        public static ResponseSummary? FromDomain(InterviewSummary? summary) =>
+            summary is not null
+                ? new(Text: summary.Text, CreatedAt: summary.CreatedAt)
+                : null;
     };
 
     public record ResponseAnswer(string Text, DateTimeOffset CreatedAt)
     {
-        public static ResponseAnswer? FromDomain(InterviewAnswer? answer) => answer is not null ? new(
-            Text: answer.Text,
-            CreatedAt: answer.AnsweredAt) : null;
+        public static ResponseAnswer? FromDomain(InterviewAnswer? answer) =>
+            answer is not null
+                ? new(Text: answer.Text, CreatedAt: answer.AnsweredAt)
+                : null;
     };
 
     public record ResponseQuestion(string Text, string Topic)
     {
-        public static ResponseQuestion FromDomain(InterviewQuestion question) => new(
-            Text: question.Text,
-            Topic: question.Topic);
+        public static ResponseQuestion FromDomain(InterviewQuestion question) => 
+            new(Text: question.Text, Topic: question.Topic);
     };
 
     public record ResponseEvaluation(
@@ -126,12 +127,13 @@ public static class GetInterviewDetails
         string OverallFeedback,
         IReadOnlyList<ResponseEvaluationDimension> Dimensions)
     {
-        public static ResponseEvaluation? FromDomain(AnswerEvaluation? evaluation) => evaluation is not null
-            ? new(
-                OverallScore: evaluation.OverallScore,
-                OverallFeedback: evaluation.Feedback,
-                Dimensions: [.. evaluation.Dimensions.Select(ResponseEvaluationDimension.FromDomain)])
-            : null;
+        public static ResponseEvaluation? FromDomain(AnswerEvaluation? evaluation) =>
+            evaluation is not null
+                ? new(
+                    OverallScore: evaluation.OverallScore,
+                    OverallFeedback: evaluation.Feedback,
+                    Dimensions: [.. evaluation.Dimensions.Select(ResponseEvaluationDimension.FromDomain)])
+                : null;
     };
 
     public record ResponseEvaluationDimension(
