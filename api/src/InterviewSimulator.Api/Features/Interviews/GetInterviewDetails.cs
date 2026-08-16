@@ -65,7 +65,7 @@ public static class GetInterviewDetails
             CompletedAt: interview.CompletedAt,
             TotalScore: totalScore,
             Summary: ResponseSummary.FromDomain(interview.InterviewSummary),
-            Turns: [.. turns.Select(ResponseTurn.FromDomain)]));
+            Turns: [.. turns.Select(turn => ResponseTurn.FromDomain(turn, interview.Status))]));
     }
 
     public record Response(
@@ -92,12 +92,12 @@ public static class GetInterviewDetails
         ResponseEvaluation? Evaluation,
         DateTimeOffset CreatedAt)
     {
-        public static ResponseTurn FromDomain(InterviewTurn turn) => new(
+        public static ResponseTurn FromDomain(InterviewTurn turn, InterviewStatus status) => new(
             TurnNumber: turn.TurnNumber,
             CreatedAt: turn.CreatedAt,
             Question: ResponseQuestion.FromDomain(turn.Question),
             Answer: ResponseAnswer.FromDomain(turn.Answer),
-            Evaluation: ResponseEvaluation.FromDomain(turn.Evaluation));
+            Evaluation: status == InterviewStatus.Completed ? ResponseEvaluation.FromDomain(turn.Evaluation) : null);
     };
 
     public record ResponseSummary(string Text, DateTimeOffset CreatedAt)
