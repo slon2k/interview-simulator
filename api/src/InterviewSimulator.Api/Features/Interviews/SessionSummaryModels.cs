@@ -21,6 +21,12 @@ public sealed record SessionSummaryTurn(
     string QuestionTopic,
     string AnswerText,
     int OverallScore,
+    string Feedback,
+    IReadOnlyList<SessionSummaryDimension> Dimensions);
+
+public sealed record SessionSummaryDimension(
+    string Key,
+    int Score,
     string Feedback);
 
 public sealed record SessionSummaryResult(
@@ -30,7 +36,7 @@ public sealed record SessionSummaryResult(
 public sealed record SessionSummaryResponse(
     [property: JsonPropertyName("summary")] string? Summary)
 {
-    public const int SummaryMaxLength = 400;
+    public const int SummaryMaxLength = 800;
 }
 
 public sealed class SessionSummaryResponseValidator : AbstractValidator<SessionSummaryResponse>

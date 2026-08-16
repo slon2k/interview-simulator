@@ -142,6 +142,16 @@ public static class PromptBuilder
                 builder.AppendLine(string.Format(CultureInfo.InvariantCulture, "  Answer: {0}", answer));
                 builder.AppendLine(string.Format(CultureInfo.InvariantCulture, "  Turn score: {0}", turn.OverallScore));
                 builder.AppendLine(string.Format(CultureInfo.InvariantCulture, "  Feedback: {0}", Truncate(turn.Feedback, options.MaxFeedbackChars)));
+
+                foreach (var dimension in turn.Dimensions)
+                {
+                    builder.AppendLine(string.Format(
+                        CultureInfo.InvariantCulture,
+                        "  Dimension {0} score: {1}; feedback: {2}",
+                        dimension.Key,
+                        dimension.Score,
+                        Truncate(dimension.Feedback, options.MaxFeedbackChars)));
+                }
             }
         }
 

@@ -75,6 +75,7 @@ public sealed class SummaryPromptBuilderTests
             QuestionTopic: topic,
             AnswerText: answer,
             OverallScore: score,
-            Feedback: feedback);
+            Feedback: feedback,
+            Dimensions: [new SessionSummaryDimension("quality", score, feedback)]);
     }
 }

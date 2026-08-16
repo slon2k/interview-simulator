@@ -35,8 +35,10 @@ public static class SubmitAnswer
         IInterviewStore store,
         IQuestionGenerator questionGenerator,
         IAnswerEvaluator answerEvaluator,
+        ISessionSummarizer sessionSummarizer,
         ClaimsPrincipal user,
         TimeProvider timeProvider,
+        ILogger<Program> logger,
         CancellationToken cancellationToken)
     {
         if (IdentityClaims.GetUserId(user) is not string userId)
@@ -147,6 +149,18 @@ public static class SubmitAnswer
             answeredTurn: currentTurn,
             nextTurn: nextTurn,
             cancellationToken: cancellationToken);
+
+        if (session.Status == InterviewStatus.Completed)
+        {
+            await SessionSummaryGeneration.GenerateBestEffortAsync(
+                session,
+                turnsForGeneration,
+                sessionSummarizer,
+                store,
+                timeProvider,
+                logger,
+                cancellationToken);
+        }
 
         return Results.Ok(MapToResponse(session, nextTurn));
     }

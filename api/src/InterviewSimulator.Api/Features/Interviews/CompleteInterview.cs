@@ -22,8 +22,10 @@ public static class CompleteInterview
     private static async Task<IResult> Handler(
         Guid interviewId,
         IInterviewStore store,
+        ISessionSummarizer sessionSummarizer,
         ClaimsPrincipal user,
         TimeProvider timeProvider,
+        ILogger<Program> logger,
         CancellationToken cancellationToken
     )
     {
@@ -50,6 +52,17 @@ public static class CompleteInterview
         interview.Complete(timeProvider.GetUtcNow());
 
         await store.UpdateSessionAsync(interview, cancellationToken);
+
+        var turns = await store.ListTurnsAsync(userId, interviewId, cancellationToken);
+
+        await SessionSummaryGeneration.GenerateBestEffortAsync(
+            interview,
+            turns,
+            sessionSummarizer,
+            store,
+            timeProvider,
+            logger,
+            cancellationToken);
 
         return Results.NoContent();
     }
