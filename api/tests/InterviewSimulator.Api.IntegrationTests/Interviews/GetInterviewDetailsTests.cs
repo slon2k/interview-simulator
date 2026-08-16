@@ -31,11 +31,18 @@ public sealed class GetInterviewDetailsTests(AuthWebApplicationFactory factory) 
         Assert.Equal("Completed", root.GetProperty("status").GetString());
         Assert.Equal(85, root.GetProperty("totalScore").GetInt32());
         Assert.Equal("Strong interview.", root.GetProperty("summary").GetProperty("text").GetString());
+        Assert.Equal("2026-08-16T09:00:00+00:00", root.GetProperty("summary").GetProperty("createdAt").GetString());
         Assert.Equal(2, turns.GetArrayLength());
         Assert.Equal(1, turns[0].GetProperty("turnNumber").GetInt32());
         Assert.Equal(2, turns[1].GetProperty("turnNumber").GetInt32());
         Assert.Equal("Question 1", turns[0].GetProperty("question").GetProperty("text").GetString());
         Assert.Equal("Answer 1", turns[0].GetProperty("answer").GetProperty("text").GetString());
+        Assert.Equal(
+            "2026-08-16T08:56:00+00:00",
+            turns[0].GetProperty("createdAt").GetString());
+        Assert.Equal(
+            "2026-08-16T08:56:10+00:00",
+            turns[0].GetProperty("answer").GetProperty("createdAt").GetString());
         Assert.Equal(80, turns[0].GetProperty("evaluation").GetProperty("overallScore").GetInt32());
         Assert.Equal("Good answer.", turns[0].GetProperty("evaluation").GetProperty("overallFeedback").GetString());
         Assert.Equal(1, turns[0].GetProperty("evaluation").GetProperty("dimensions").GetArrayLength());
@@ -167,7 +174,7 @@ public sealed class GetInterviewDetailsTests(AuthWebApplicationFactory factory) 
 
         public Guid SeedActiveSession(string userId)
         {
-            var createdAt = DateTimeOffset.UtcNow.AddMinutes(-10);
+            var createdAt = new DateTimeOffset(2026, 8, 16, 8, 55, 0, TimeSpan.Zero);
             var session = InterviewSession.Create(userId, "Backend Engineer", "dotnet", SeniorityLevel.Middle, InterviewType.Technical, createdAt, 2);
             session.Start(createdAt.AddMinutes(1));
             session.RecordAnswer(new SessionResult(new Score(80)), createdAt.AddMinutes(2));
@@ -179,14 +186,14 @@ public sealed class GetInterviewDetailsTests(AuthWebApplicationFactory factory) 
 
         public Guid SeedCompletedSession(string userId, bool includeSummary)
         {
-            var createdAt = DateTimeOffset.UtcNow.AddMinutes(-10);
+            var createdAt = new DateTimeOffset(2026, 8, 16, 8, 55, 0, TimeSpan.Zero);
             var session = InterviewSession.Create(userId, "Backend Engineer", "dotnet", SeniorityLevel.Middle, InterviewType.Technical, createdAt, 2);
             session.Start(createdAt.AddMinutes(1));
             session.RecordAnswer(new SessionResult(new Score(80)), createdAt.AddMinutes(2));
             session.RecordAnswer(new SessionResult(new Score(85)), createdAt.AddMinutes(3));
             if (includeSummary)
             {
-                session.RecordSummary(new InterviewSummary("Strong interview.", createdAt.AddMinutes(4)), new AiCallMetadata("summary-v1", "test", "test-model", 10, 20), createdAt.AddMinutes(4));
+                session.RecordSummary(new InterviewSummary("Strong interview.", new DateTimeOffset(2026, 8, 16, 9, 0, 0, TimeSpan.Zero)), new AiCallMetadata("summary-v1", "test", "test-model", 10, 20), createdAt.AddMinutes(4));
             }
             sessions[session.Id] = session;
             AddTurn(session, 2, answered: true, evaluated: true, createdAt.AddMinutes(2));
