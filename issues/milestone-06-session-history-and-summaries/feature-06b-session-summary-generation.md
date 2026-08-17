@@ -22,7 +22,7 @@ After finishing an interview, a user benefits from a short overall assessment: s
 - Prompt version stored in `summaryAi.promptVersion`, not inside `InterviewSummary`
 - Reuse the M05 AI boundary: prompt versioning, response validation, graceful failure handling
 - Ensure summary failure does not block or reverse completion (session stays completed and reviewable with its score)
-- Support regeneration via `POST /api/interviews/{id}/summary` (requires `Completed` status; replaces existing summary)
+- Support one-time recovery generation via `POST /api/interviews/{id}/summary` (requires `Completed` status; rejected with 409 if a summary already exists)
 - Register `ISessionSummarizer` stub in `AuthWebApplicationFactory`
 - Add unit tests for prompt construction and failure handling
 - Add integration tests behind a faked AI boundary
@@ -43,7 +43,8 @@ After finishing an interview, a user benefits from a short overall assessment: s
 - [ ] The summary is built from stored per-turn evaluations (no per-answer re-evaluation)
 - [ ] Summary prompt version is stored in `summaryAi.promptVersion` on `CosmosSessionDocument`
 - [ ] Summary generation reuses the M05 validation/error-handling boundary
-- [ ] A completed session without a summary can have one (re)generated via `POST /api/interviews/{id}/summary`
+- [ ] A completed session without a summary can have one generated via `POST /api/interviews/{id}/summary`; a session that already has one is rejected with 409
+- [ ] The summary prompt covers every turn of the interview; prompt size is bounded by the question-count cap enforced at creation, not by a summary-specific window
 - [ ] Viewing a session never triggers summary generation
 - [ ] CI does not require live Azure OpenAI credentials
 - [ ] Unit tests cover prompt construction and failure handling
@@ -59,7 +60,7 @@ After finishing an interview, a user benefits from a short overall assessment: s
 - [ ] Build summary prompt from stored evaluations
 - [ ] Trigger summary after `SaveAnswerAsync` completes (best-effort `UpdateSessionAsync`)
 - [ ] Handle summary failure without blocking completion or affecting score
-- [ ] Add `POST /api/interviews/{id}/summary` for regeneration (requires `Completed`; replaces existing summary)
+- [ ] Add `POST /api/interviews/{id}/summary` for one-time recovery generation (requires `Completed`; 409 if a summary already exists)
 
 ### [ ] Tests
 
@@ -72,7 +73,8 @@ After finishing an interview, a user benefits from a short overall assessment: s
 - [ ] The summary reflects stored per-dimension scores/feedback
 - [ ] No per-answer re-evaluation occurs during summarization
 - [ ] A simulated summary failure leaves the session completed and reviewable
-- [ ] Regeneration produces/updates the summary
+- [ ] A completed session missing a summary gets one via the endpoint; a second call returns 409
+- [ ] A 20-question interview is summarized from all 20 turns; creating an interview with more than 20 questions is rejected
 - [ ] Stub path runs without Azure OpenAI credentials
 - [ ] Full test suite passes
 
@@ -97,6 +99,10 @@ Blocks:
 ### Open Questions
 
 Decided: synchronous best-effort. Score is committed first via `SaveAnswerAsync`; summary attempt follows as a separate `UpdateSessionAsync`. Summary failure is logged and ignored — the HTTP response returns the completed session with its score regardless.
+
+Decided: summaries are generated once, not regenerated on demand. Summarization is a comparatively expensive multi-turn call, and an endpoint that replaces an existing summary lets a client run it in a loop at will. `POST /api/interviews/{id}/summary` therefore exists only as a recovery path for sessions whose best-effort generation failed, and returns 409 when a summary is already present.
+
+Decided: the summary prompt includes every turn of the interview — a summary that silently omits answers is wrong, and reusing `MaxQuestionGenerationPreviousTurns` (default 3) dropped the earliest turns of any interview longer than three questions. Prompt size is instead bounded at the source: `InterviewSession.MaxQuestionCount` (20) caps interview length at creation, matching the setup UI's maximum. Bounding the input rather than truncating the summary keeps token cost predictable without making the output misleading. The cap is enforced on create only, not on `Restore`, so any session persisted before it remains readable.
 
 ## Notes
 

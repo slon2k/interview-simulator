@@ -114,6 +114,17 @@ public sealed class InterviewValidationTests(AuthWebApplicationFactory factory) 
             {
                 targetRole = "Backend Engineer",
                 focusArea = "dotnet",
+                interviewType = "Technical",
+                seniorityLevel = "Middle",
+                questionCount = 21
+            },
+            "Question count cannot exceed 20."
+        },
+        {
+            new
+            {
+                targetRole = "Backend Engineer",
+                focusArea = "dotnet",
                 interviewType = "10",
                 seniorityLevel = "Middle",
                 questionCount = 5

@@ -95,7 +95,10 @@ public static class CreateInterview
             RuleFor(x => x.FocusArea).NotEmpty().WithMessage("Focus area is required.");
             RuleFor(x => x.InterviewType).IsInEnum().WithMessage("Interview type is invalid.");
             RuleFor(x => x.SeniorityLevel).IsInEnum().WithMessage("Seniority level is invalid.");
-            RuleFor(x => x.QuestionCount).GreaterThan(0).WithMessage("Question count must be greater than zero.");
+            RuleFor(x => x.QuestionCount)
+                .GreaterThan(0).WithMessage("Question count must be greater than zero.")
+                .LessThanOrEqualTo(InterviewSession.MaxQuestionCount)
+                .WithMessage($"Question count cannot exceed {InterviewSession.MaxQuestionCount}.");
         }
     }
 

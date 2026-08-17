@@ -35,9 +35,34 @@ public sealed class SummaryPromptBuilderTests
     }
 
     [Fact]
-    public void BuildPrompt_UsesConfiguredTurnLimitForSummaries()
+    public void BuildPrompt_WithDefaultOptions_IncludesEveryTurnOfAFullLengthInterview()
     {
-        var options = CreateOptions(maxPreviousTurns: 1);
+        var options = new AiOptions();
+        var turns = Enumerable
+            .Range(1, 20)
+            .Select(number => CreateTurn(number, $"q{number}", $"topic-{number}", $"a{number}", 70, "good"))
+            .ToArray();
+
+        var prompt = PromptBuilder.BuildSessionSummaryPrompt(
+            targetRole: "Backend Engineer",
+            seniority: SeniorityLevel.Middle,
+            interviewType: InterviewType.Technical,
+            focusArea: "dotnet",
+            turns: turns,
+            options: options);
+
+        foreach (var turn in turns)
+        {
+            Assert.Contains($"topic-{turn.TurnNumber}", prompt, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void BuildPrompt_DoesNotDependOnQuestionGenerationTurnLimit()
+    {
+        var options = CreateOptions();
+        options.MaxQuestionGenerationPreviousTurns = 1;
+
         var turns = new[]
         {
             CreateTurn(1, "q1", "topic-1", "a1", 80, "good"),
@@ -47,20 +72,19 @@ public sealed class SummaryPromptBuilderTests
         var prompt = PromptBuilder.BuildSessionSummaryPrompt(
             targetRole: "Backend Engineer",
             seniority: SeniorityLevel.Middle,
-            interviewType: InterviewType.Behavioral,
-            focusArea: "leadership",
+            interviewType: InterviewType.Technical,
+            focusArea: "dotnet",
             turns: turns,
             options: options);
 
-        Assert.DoesNotContain("topic-1", prompt, StringComparison.Ordinal);
+        Assert.Contains("topic-1", prompt, StringComparison.Ordinal);
         Assert.Contains("topic-2", prompt, StringComparison.Ordinal);
     }
 
-    private static AiOptions CreateOptions(int maxPreviousTurns = 3)
+    private static AiOptions CreateOptions()
     {
         return new AiOptions
         {
-            MaxQuestionGenerationPreviousTurns = maxPreviousTurns,
             MaxQuestionChars = 800,
             MaxAnswerChars = 1200,
             MaxFeedbackChars = 400,

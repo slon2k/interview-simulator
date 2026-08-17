@@ -114,7 +114,6 @@ public static class PromptBuilder
 
         var boundedTurns = turns
             .OrderBy(t => t.TurnNumber)
-            .TakeLast(options.MaxQuestionGenerationPreviousTurns)
             .ToArray();
 
         builder.AppendLine("Turn evaluations:");
