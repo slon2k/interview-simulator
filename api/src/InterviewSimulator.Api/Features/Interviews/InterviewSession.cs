@@ -29,6 +29,9 @@ public sealed class InterviewSession
 
     public int QuestionCount { get; private init; }
 
+    // Bounds the summary prompt, which covers every turn.
+    public const int MaxQuestionCount = 20;
+
     public int AnsweredCount { get; private set; }
 
     public SessionResult? SessionResult { get; private set; }
@@ -70,6 +73,11 @@ public sealed class InterviewSession
         if (questionCount <= 0)
         {
             throw new ArgumentOutOfRangeException(nameof(questionCount), "Question count must be greater than zero.");
+        }
+
+        if (questionCount > MaxQuestionCount)
+        {
+            throw new ArgumentOutOfRangeException(nameof(questionCount), $"Question count cannot exceed {MaxQuestionCount}.");
         }
 
         var sessionId = Guid.NewGuid();

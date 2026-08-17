@@ -3,11 +3,13 @@
 Phase: 2  
 Milestone: 06 - Session history and summaries  
 Type: Feature  
-Status: Planned
+Status: Partial
 
 ## Summary
 
 Build the frontend pages that let users browse their completed interviews and review a single interview in full — questions, answers, per-dimension scores, feedback, and the AI summary.
+
+Note: the basic interview list/detail routes are present, but the full review experience is not yet wired to the new detail payload and summary UI.
 
 ## Problem and User Value
 

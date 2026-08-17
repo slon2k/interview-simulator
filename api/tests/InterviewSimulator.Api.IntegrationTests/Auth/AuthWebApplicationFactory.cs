@@ -47,6 +47,7 @@ public sealed class AuthWebApplicationFactory : WebApplicationFactory<Program>
             services.AddScoped<IUserProfileStore>(_ => new TestUserProfileStore());
             services.AddScoped<IUserAccessReader>(_ => new TestUserAccessReader());
             services.AddScoped<IAnswerEvaluator, HardcodedAnswerEvaluator>();
+            services.AddScoped<ISessionSummarizer, HardcodedSessionSummarizer>();
 
             services.AddAuthentication()
                 .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(

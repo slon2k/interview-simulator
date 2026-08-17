@@ -8,6 +8,7 @@ public static class PromptVersions
     public const string EvaluationTechnical = "evaluation-technical-v1";
     public const string EvaluationBehavioral = "evaluation-behavioral-v1";
     public const string EvaluationSystemDesign = "evaluation-system-design-v1";
+    public const string SessionSummary = "session-summary-v1";
 }
 
 public static class AiProviders

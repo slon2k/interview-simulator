@@ -103,6 +103,8 @@ public sealed class InterviewSession_Create
     [InlineData(0)]
     [InlineData(-1)]
     [InlineData(-100)]
+    [InlineData(InterviewSession.MaxQuestionCount + 1)]
+    [InlineData(1000)]
     public void Create_WithInvalidQuestionCount_ThrowsArgumentOutOfRangeException(int questionCount)
     {
         var ex = Assert.Throws<ArgumentOutOfRangeException>(() =>
@@ -116,6 +118,21 @@ public sealed class InterviewSession_Create
                 questionCount: questionCount));
 
         Assert.Equal("questionCount", ex.ParamName);
+    }
+
+    [Fact]
+    public void Create_WithMaximumQuestionCount_Succeeds()
+    {
+        var session = InterviewSession.Create(
+            userId: "user123",
+            targetRole: "role",
+            focusArea: "area",
+            seniority: SeniorityLevel.Junior,
+            interviewType: InterviewType.Technical,
+            createdAt: DateTimeOffset.UtcNow,
+            questionCount: InterviewSession.MaxQuestionCount);
+
+        Assert.Equal(InterviewSession.MaxQuestionCount, session.QuestionCount);
     }
 }
 

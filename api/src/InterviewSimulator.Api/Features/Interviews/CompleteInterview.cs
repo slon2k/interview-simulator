@@ -22,8 +22,10 @@ public static class CompleteInterview
     private static async Task<IResult> Handler(
         Guid interviewId,
         IInterviewStore store,
+        SessionSummaryService sessionSummaryService,
         ClaimsPrincipal user,
         TimeProvider timeProvider,
+        ILogger<Program> logger,
         CancellationToken cancellationToken
     )
     {
@@ -50,6 +52,18 @@ public static class CompleteInterview
         interview.Complete(timeProvider.GetUtcNow());
 
         await store.UpdateSessionAsync(interview, cancellationToken);
+
+        try
+        {
+            interview = await sessionSummaryService.CreateSummaryAsync(interview.Id, userId, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(
+                ex,
+                "Session summary generation failed for interview {InterviewId}. The completed session remains available without a summary.",
+                interview.Id);
+        }
 
         return Results.NoContent();
     }

@@ -3,7 +3,7 @@
 Phase: 2  
 Milestone: 06 - Session history and summaries  
 Type: Feature  
-Status: Planned
+Status: Completed
 
 ## Summary
 
@@ -47,57 +47,57 @@ M04 stored full turn history but `GET /api/interviews/{id}` only returned enough
 
 ### Domain and storage
 
-- [ ] `InterviewFeedback` is removed; `InterviewSession` has `SessionResult?`, `InterviewSummary?`, and `AiCallMetadata? SummaryMetadata` as separate properties
-- [ ] `CosmosSessionDocument` persists `result`, `summary`, and `summaryAi` as separate nullable fields
-- [ ] `SubmitAnswer` computes `SessionResult` from in-memory turns after every answer and saves it on the session
-- [ ] `SessionResult` is null when a session has 0 answered turns
-- [ ] `aggregateScore int?` is included in `InterviewResponse`: null for `Created`/`Active`; null for `Completed` with 0 evaluated turns; otherwise `SessionResult.OverallScore`
+- [x] `InterviewFeedback` is removed; `InterviewSession` has `SessionResult?`, `InterviewSummary?`, and `AiCallMetadata? SummaryMetadata` as separate properties
+- [x] `CosmosSessionDocument` persists `result`, `summary`, and `summaryAi` as separate nullable fields
+- [x] `SubmitAnswer` computes `SessionResult` from in-memory turns after every answer and saves it on the session
+- [x] `SessionResult` is null when a session has 0 answered turns
+- [x] `aggregateScore int?` is included in `InterviewResponse`: null for `Created`/`Active`; null for `Completed` with 0 evaluated turns; otherwise `SessionResult.OverallScore`
 
 ### Detail read
 
-- [ ] `GET /api/interviews/{id}/details` returns full ordered turn history for any session
-- [ ] Each turn includes question, answer, per-dimension scores, and feedback
-- [ ] Per-dimension scores are read from stored M05 output (no AI re-call)
-- [ ] The response includes `summary` when present
-- [ ] Turns are returned in correct order by turn number
-- [ ] Reads are scoped to the authenticated user; users cannot read others' sessions
-- [ ] Anonymous requests return `401`; non-invited authenticated requests return `403`
-- [ ] The detail read uses the existing interview store/query path, not repeated point reads for each turn
+- [x] `GET /api/interviews/{id}/details` returns full ordered turn history for any session
+- [x] Each turn includes question, answer, per-dimension scores, and feedback
+- [x] Per-dimension scores are read from stored M05 output (no AI re-call)
+- [x] The response includes `summary` when present
+- [x] Turns are returned in correct order by turn number
+- [x] Reads are scoped to the authenticated user; users cannot read others' sessions
+- [x] Anonymous requests return `401`; non-invited authenticated requests return `403`
+- [x] The detail read uses the existing interview store/query path, not repeated point reads for each turn
 - [x] Approach documented: dedicated `GET /api/interviews/{id}/details`; shallow endpoint gains `aggregateScore int?`
-- [ ] Unit tests cover query mapping and ordering
-- [ ] Integration tests cover happy path and authorization
-- [ ] Existing tests continue to pass
+- [x] Unit tests cover query mapping and ordering
+- [x] Integration tests cover happy path and authorization
+- [x] Existing tests continue to pass
 
 ## Tasks
 
-### [ ] Domain and storage refactor (do first)
+### [x] Domain and storage refactor (do first)
 
-- [ ] Refactor `InterviewFeedback` → `SessionResult` + `InterviewSummary` + `SummaryMetadata` across domain, state, Cosmos, and contract layers
-- [ ] Add `SessionResult` computation to `SubmitAnswer` (use in-memory turns, no extra DB read)
-- [ ] Add `aggregateScore int?` to `InterviewResponse` and its mapping
+- [x] Refactor `InterviewFeedback` → `SessionResult` + `InterviewSummary` + `SummaryMetadata` across domain, state, Cosmos, and contract layers
+- [x] Add `SessionResult` computation to `SubmitAnswer` (use in-memory turns, no extra DB read)
+- [x] Add `aggregateScore int?` to `InterviewResponse` and its mapping
 
-### [ ] Detail read implementation
+### [x] Detail read implementation
 
-- [ ] Define detailed session/turn response DTOs
-- [ ] Load the session and ordered turns through the existing interview store/query path
-- [ ] Implement `GET /api/interviews/{id}/details`
-- [ ] Include `summary` (text + createdAt) in detail response when present
+- [x] Define detailed session/turn response DTOs
+- [x] Load the session and ordered turns through the existing interview store/query path
+- [x] Implement `GET /api/interviews/{id}/details`
+- [x] Include `summary` (text + createdAt) in detail response when present
 
-### [ ] Tests
+### [x] Tests
 
-- [ ] Unit tests for `SessionResult` computation and `aggregateScore` mapping
-- [ ] Unit tests for detail response mapping and ordering
-- [ ] Integration tests for detail read happy path and authorization
+- [x] Unit tests for `SessionResult` computation and `aggregateScore` mapping
+- [x] Unit tests for detail response mapping and ordering
+- [x] Integration tests for detail read happy path and authorization
 
 ## Verification
 
-- [ ] Requesting a completed session returns all turns with scores and feedback
-- [ ] Turns are correctly ordered
-- [ ] No AI call is made when reading detail
-- [ ] Summary field is present when a summary exists
-- [ ] User cannot read another user's session
-- [ ] Anonymous → `401`, non-invited → `403`
-- [ ] Full test suite passes
+- [x] Requesting a completed session returns all turns with scores and feedback
+- [x] Turns are correctly ordered
+- [x] No AI call is made when reading detail
+- [x] Summary field is present when a summary exists
+- [x] User cannot read another user's session
+- [x] Anonymous → `401`, non-invited → `403`
+- [x] Full test suite passes
 
 ## Dependencies and Blockers
 
