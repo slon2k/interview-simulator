@@ -3,11 +3,13 @@
 Phase: 2  
 Milestone: 06 - Session history and summaries  
 Type: Feature  
-Status: Planned
+Status: Partial
 
 ## Summary
 
 Verify the full review experience end-to-end — complete an interview, generate a summary, browse history, open detail — and update documentation to reflect the review/summary additions.
+
+Note: the API-side verification is in place, but the end-to-end UI/docs follow-up still needs to be completed.
 
 ## Problem and User Value
 

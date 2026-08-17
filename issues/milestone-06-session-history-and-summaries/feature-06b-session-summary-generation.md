@@ -3,7 +3,7 @@
 Phase: 2  
 Milestone: 06 - Session history and summaries  
 Type: Feature  
-Status: Planned
+Status: Completed
 
 ## Summary
 
@@ -36,47 +36,47 @@ After finishing an interview, a user benefits from a short overall assessment: s
 
 ## Acceptance Criteria
 
-- [ ] An `ISessionSummarizer` abstraction exists with real and stub implementations
-- [ ] `ISessionSummarizer` stub registered in `AuthWebApplicationFactory`
-- [ ] Completing a session generates and persists a summary (best-effort after `SaveAnswerAsync`)
-- [ ] Summary generation is a separate `UpdateSessionAsync` call; failure does not roll back completion or score
-- [ ] The summary is built from stored per-turn evaluations (no per-answer re-evaluation)
-- [ ] Summary prompt version is stored in `summaryAi.promptVersion` on `CosmosSessionDocument`
-- [ ] Summary generation reuses the M05 validation/error-handling boundary
-- [ ] A completed session without a summary can have one generated via `POST /api/interviews/{id}/summary`; a session that already has one is rejected with 409
-- [ ] The summary prompt covers every turn of the interview; prompt size is bounded by the question-count cap enforced at creation, not by a summary-specific window
-- [ ] Viewing a session never triggers summary generation
-- [ ] CI does not require live Azure OpenAI credentials
-- [ ] Unit tests cover prompt construction and failure handling
-- [ ] Integration tests cover generation behind a faked AI boundary
-- [ ] Existing tests continue to pass
+- [x] An `ISessionSummarizer` abstraction exists with real and stub implementations
+- [x] `ISessionSummarizer` stub registered in `AuthWebApplicationFactory`
+- [x] Completing a session generates and persists a summary (best-effort after `SaveAnswerAsync`)
+- [x] Summary generation is a separate `UpdateSessionAsync` call; failure does not roll back completion or score
+- [x] The summary is built from stored per-turn evaluations (no per-answer re-evaluation)
+- [x] Summary prompt version is stored in `summaryAi.promptVersion` on `CosmosSessionDocument`
+- [x] Summary generation reuses the M05 validation/error-handling boundary
+- [x] A completed session without a summary can have one generated via `POST /api/interviews/{id}/summary`; a session that already has one is rejected with 409
+- [x] The summary prompt covers every turn of the interview; prompt size is bounded by the question-count cap enforced at creation, not by a summary-specific window
+- [x] Viewing a session never triggers summary generation
+- [x] CI does not require live Azure OpenAI credentials
+- [x] Unit tests cover prompt construction and failure handling
+- [x] Integration tests cover generation behind a faked AI boundary
+- [x] Existing tests continue to pass
 
 ## Tasks
 
-### [ ] Summarizer implementation
+### [x] Summarizer implementation
 
-- [ ] Add `ISessionSummarizer` interface
-- [ ] Add Azure OpenAI-backed summarizer + stub; register stub in `AuthWebApplicationFactory`
-- [ ] Build summary prompt from stored evaluations
-- [ ] Trigger summary after `SaveAnswerAsync` completes (best-effort `UpdateSessionAsync`)
-- [ ] Handle summary failure without blocking completion or affecting score
-- [ ] Add `POST /api/interviews/{id}/summary` for one-time recovery generation (requires `Completed`; 409 if a summary already exists)
+- [x] Add `ISessionSummarizer` interface
+- [x] Add Azure OpenAI-backed summarizer + stub; register stub in `AuthWebApplicationFactory`
+- [x] Build summary prompt from stored evaluations
+- [x] Trigger summary after `SaveAnswerAsync` completes (best-effort `UpdateSessionAsync`)
+- [x] Handle summary failure without blocking completion or affecting score
+- [x] Add `POST /api/interviews/{id}/summary` for one-time recovery generation (requires `Completed`; 409 if a summary already exists)
 
-### [ ] Tests
+### [x] Tests
 
-- [ ] Unit tests for prompt build and failure paths
-- [ ] Integration tests behind a fake AI boundary
+- [x] Unit tests for prompt build and failure paths
+- [x] Integration tests behind a fake AI boundary
 
 ## Verification
 
-- [ ] Completing a session persists a summary
-- [ ] The summary reflects stored per-dimension scores/feedback
-- [ ] No per-answer re-evaluation occurs during summarization
-- [ ] A simulated summary failure leaves the session completed and reviewable
-- [ ] A completed session missing a summary gets one via the endpoint; a second call returns 409
-- [ ] A 20-question interview is summarized from all 20 turns; creating an interview with more than 20 questions is rejected
-- [ ] Stub path runs without Azure OpenAI credentials
-- [ ] Full test suite passes
+- [x] Completing a session persists a summary
+- [x] The summary reflects stored per-dimension scores/feedback
+- [x] No per-answer re-evaluation occurs during summarization
+- [x] A simulated summary failure leaves the session completed and reviewable
+- [x] A completed session missing a summary gets one via the endpoint; a second call returns 409
+- [x] A 20-question interview is summarized from all 20 turns; creating an interview with more than 20 questions is rejected
+- [x] Stub path runs without Azure OpenAI credentials
+- [x] Full test suite passes
 
 ## Dependencies and Blockers
 
