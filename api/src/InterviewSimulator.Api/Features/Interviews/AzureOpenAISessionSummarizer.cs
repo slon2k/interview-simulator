@@ -29,7 +29,7 @@ public sealed class AzureOpenAISessionSummarizer(
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(request.Turns);
 
-        var deploymentName = ResolveDeploymentName();
+        var deploymentName = AzureOpenAIProvider.ResolveDeploymentName(_openAiOptions);
         var prompt = PromptBuilder.BuildSessionSummaryPrompt(
             targetRole: request.TargetRole,
             seniority: request.Seniority,
@@ -75,7 +75,7 @@ public sealed class AzureOpenAISessionSummarizer(
                             PromptTokens: usage?.InputTokenCount,
                             CompletionTokens: usage?.OutputTokenCount));
                 }
-                catch (RequestFailedException ex) when (IsTransient(ex.Status))
+                catch (RequestFailedException ex) when (AzureOpenAIProvider.IsTransient(ex.Status))
                 {
                     throw new AiProviderTransientException(operationContext, $"Transient failure from {_provider}.", ex);
                 }
@@ -90,24 +90,4 @@ public sealed class AzureOpenAISessionSummarizer(
             Summary: response.Value.Summary ?? throw new AiInvalidResponseException(operationContext, "AI response summary was null."),
             AiMetadata: response.Metadata);
     }
-
-    private string ResolveDeploymentName()
-    {
-        if (!string.IsNullOrWhiteSpace(_openAiOptions.DefaultDeploymentName))
-        {
-            return _openAiOptions.DefaultDeploymentName;
-        }
-
-        var fallback = _openAiOptions.DeploymentNames.FirstOrDefault(name => !string.IsNullOrWhiteSpace(name));
-
-        if (!string.IsNullOrWhiteSpace(fallback))
-        {
-            return fallback;
-        }
-
-        throw new InvalidOperationException("Azure OpenAI deployment is not configured.");
-    }
-
-    private static bool IsTransient(int statusCode) =>
-        statusCode is 408 or 429 or 500 or 502 or 503 or 504;
 }

@@ -60,7 +60,7 @@ public sealed class AzureOpenAIQuestionGenerator(
             request.PreviousTurns,
             _aiOptions);
 
-        var deploymentName = ResolveDeploymentName();
+        var deploymentName = AzureOpenAIProvider.ResolveDeploymentName(_openAiOptions);
         var chatClient = aiClient.GetChatClient(deploymentName);
         var completionOptions = new ChatCompletionOptions
         {
@@ -98,7 +98,7 @@ public sealed class AzureOpenAIQuestionGenerator(
                             PromptTokens: usage?.InputTokenCount,
                             CompletionTokens: usage?.OutputTokenCount));
                 }
-                catch (RequestFailedException ex) when (IsTransient(ex.Status))
+                catch (RequestFailedException ex) when (AzureOpenAIProvider.IsTransient(ex.Status))
                 {
                     throw new AiProviderTransientException(operationContext, $"Transient failure from {_provider}.", ex);
                 }
@@ -113,32 +113,5 @@ public sealed class AzureOpenAIQuestionGenerator(
             Text: response.Value.Text ?? throw new AiInvalidResponseException(operationContext, "AI response text was null."),
             Topic: response.Value.Topic ?? throw new AiInvalidResponseException(operationContext, "AI response topic was null."),
             AiMetadata: response.Metadata);
-    }
-
-    private string ResolveDeploymentName()
-    {
-        if (!string.IsNullOrWhiteSpace(_openAiOptions.DefaultDeploymentName))
-        {
-            return _openAiOptions.DefaultDeploymentName;
-        }
-
-        var fallback = _openAiOptions.DeploymentNames.FirstOrDefault(name => !string.IsNullOrWhiteSpace(name));
-
-        if (!string.IsNullOrWhiteSpace(fallback))
-        {
-            return fallback;
-        }
-
-        throw new InvalidOperationException("Azure OpenAI deployment is not configured.");
-    }
-
-    private static bool IsTransient(int statusCode)
-    {
-        return statusCode == 408
-            || statusCode == 429
-            || statusCode == 500
-            || statusCode == 502
-            || statusCode == 503
-            || statusCode == 504;
     }
 }
