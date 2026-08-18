@@ -1,4 +1,4 @@
-# 06c - History and session detail UI
+# 06c - History filter and completed-interview detail UI
 
 Phase: 2  
 Milestone: 06 - Session history and summaries  
@@ -7,75 +7,105 @@ Status: Planned
 
 ## Summary
 
-Build the frontend pages that let users browse their completed interviews and review a single interview in full — questions, answers, per-dimension scores, feedback, and the AI summary.
+Let users find and review completed interviews using the frontend that already exists, rather than new pages or routes. The interview list (`/interviews`) gets a status filter instead of a separate history page. The interview detail page (`/interviews/{id}`) already branches by status (`Created` / `Active` / `Completed`); this feature replaces the `Completed` branch's placeholder with a real review view backed by the 06a `/details` endpoint and the 06b summary.
 
 ## Problem and User Value
 
-M06a/06b expose review data and summaries via the API. This feature makes them usable: a history list to find a past interview and a detail page to read through it. This completes the review half of the text interview MVP.
+06a and 06b expose the full turn history and AI summary via the API. Today nothing in the frontend consumes them: `InterviewDetailPage`'s `CompletedInterview` component is still a placeholder ("Feedback will be available here once generated"), and there's no way to filter the list down to completed interviews to review. This feature closes that gap using the existing list and detail pages, not new ones.
+
+## Decisions
+
+- **No new route.** `/interviews` gains a status filter; there is no separate `/history` page. This resolves the open question left in the original version of this feature.
+- **No new detail page.** `InterviewDetailPage` already branches on `interview.status` into `CreatedInterview` / `ActiveInterview` / `CompletedInterview`. Only `CompletedInterview` changes. `CreatedInterview` and `ActiveInterview` are untouched — they continue to use the existing shallow `getInterview` query and do not need turn history or evaluations.
+- **No visual redesign.** The list stays a table, not a card grid. Scope is limited to adding a filter and, if needed, showing status-appropriate columns (e.g. a score for completed rows). A broader visual pass is explicitly not part of this iteration.
+- **A second, conditional query on the detail page.** `CompletedInterview` fetches `/interviews/{id}/details` via a new `getInterviewDetails` API function, gated with `enabled: status === 'Completed'`, separate from the page's existing top-level `getInterview` query. `Created`/`Active` never trigger this fetch.
+- **Segmented control for the status filter.** The list filter uses a segmented control (compact, discoverable, fits the table layout) with options: All, Created, Active, Completed. Default is "All".
+- **Expandable turn cards for feedback review.** Each completed interview's turn list renders as a card per turn (collapsed: question + overall score; expanded: answer + per-dimension evaluation with score, label, and feedback). This allows users to scan scores first, then drill into detail as needed.
+- **Query string strategy for future pagination.** Query key includes an optional params object (`['interviews', { status, page, pageSize }]`) from the start, so that when pagination lands on the backend, no client-side refactoring is needed. Currently `page` and `pageSize` are accepted but ignored (always fetch all results).
 
 ## Scope
 
-- History page listing the user's completed interviews with key metadata (topic, role, type, date, overall score)
-- Optional filtering/sorting consistent with the existing `/interviews` list conventions
-- Session detail page rendering:
-  - session summary
-  - each turn's question, answer, per-dimension scores, feedback
-- Navigation from history → detail
-- Loading and error states consistent with existing pages
-- Handle the not-yet-summarized case gracefully (session viewable without a summary)
-- Ensure pages are gated to authenticated invited users, consistent with existing routing
+### List page (`InterviewListPage`)
+
+- Add a segmented control for status filtering (options: All, Created, Active, Completed) that drives `getInterviews({ status: [...] })`.
+- Query key becomes `['interviews', { status: filterValue }]` to support optional pagination params later (e.g. `{ status, page, pageSize }`).
+- Default filter is "All", so existing behavior for users mid-interview does not regress.
+- Confirm the existing completed-row action (`statusAction` → "View") already links to `/interviews/{id}`; no separate history link to wire.
+
+### Detail page (`InterviewDetailPage` / `CompletedInterview`)
+
+- Add `getInterviewDetails(interviewId)` to `interviewApi.ts`, typed from the regenerated OpenAPI contract (depends on 06a/06b's shape being final in the contract).
+- Rewrite `CompletedInterview` to:
+  - Fetch `/details` via a conditional `useQuery` (`enabled` on `Completed` status).
+  - Render its own loading/error states for this fetch, consistent with the rest of the page.
+  - Render the AI summary text, with a graceful fallback: "Summary pending..." when no summary exists yet (06b's summary generation is best-effort and can be pending/failed).
+  - Render the ordered turn list as **expandable cards**: each card shows collapsed (question + overall score); expanded to show answer + per-dimension evaluation (score, label, feedback per dimension). This allows users to scan overall scores first, then expand for detailed feedback.
+- `CreatedInterview` and `ActiveInterview` receive no changes.
 
 ## Out of Scope
 
-- Detail/summary API (06a, 06b)
-- Dashboard analytics UI (M07)
-- Voice (M08)
-- Editing past sessions
+- Dashboard analytics UI (M07).
+- Voice (M08).
+- Editing past sessions.
+- Visual/layout redesign of the list (cards, etc.) - explicitly deferred.
+- Any change to the live interview flow (`Created`/`Active` branches, the answer-submission form, the shallow `getInterview` query).
+- A dedicated `/history` route (superseded by the filter decision above).
 
 ## Acceptance Criteria
 
-- [ ] A history page lists the user's completed interviews
-- [ ] History entries show key metadata and link to detail
-- [ ] A session detail page renders the summary and full turn history
-- [ ] Per-dimension scores and feedback are shown per turn
-- [ ] A session without a summary still renders (graceful empty/pending state)
-- [ ] Loading and error states are handled consistently with existing pages
-- [ ] Pages are restricted to authenticated invited users
-- [ ] History and detail read only from the user's own data
-- [ ] Existing tests continue to pass
+- [ ] `/interviews` supports filtering by status; filtering to "Completed" shows only finished interviews
+- [ ] The default filter view is decided and does not hide in-progress interviews unexpectedly
+- [ ] A completed interview's "View" action opens `/interviews/{id}` and renders the completed-review UI
+- [ ] `CompletedInterview` fetches and renders the `/details` payload (summary + full turn history)
+- [ ] Each turn shows its question, answer, and per-dimension evaluation with the overall score
+- [ ] A completed interview without a summary yet renders gracefully ("Summary pending..." shown, no error, turns still visible)
+- [ ] `Created` and `Active` interview views are unchanged in behavior and network calls
+- [ ] The detail-fetch query only runs for `Completed` status (verify via test or network inspection)
+- [ ] Loading and error states for the details fetch are handled consistently with existing page conventions
+- [ ] Pages remain restricted to authenticated invited users; detail/list data is scoped to the requesting user
+- [ ] Existing tests continue to pass; new tests cover the filter and the rewritten `CompletedInterview`
 
 ## Tasks
 
-### [ ] History page
+### [ ] List page filter
 
-- [ ] Add history route/page
-- [ ] Fetch and render completed interviews
-- [ ] Link entries to detail
-- [ ] Loading/error states
+- [ ] Add status filter control to `InterviewListPage`
+- [ ] Wire filter state into the `getInterviews` query key and call
+- [ ] Decide and implement default filter value
+- [ ] Confirm completed-row action links correctly (no change expected)
 
-### [ ] Session detail page
+### [ ] API layer
 
-- [ ] Add detail route/page
-- [ ] Render summary
-- [ ] Render ordered turns with scores and feedback
-- [ ] Handle missing-summary state
-- [ ] Loading/error states
+- [ ] Regenerate OpenAPI contract types (if not already current with 06a/06b)
+- [ ] Add `getInterviewDetails` to `interviewApi.ts`
+
+### [ ] Detail page - completed branch
+
+- [ ] Add conditional `useQuery` for `/details` in `CompletedInterview`, gated on `Completed` status
+- [ ] Render summary with "Summary pending..." fallback when summary is absent or pending
+- [ ] Render turn list as expandable cards: collapsed shows question + overall score; expanded shows answer + per-dimension evaluation
+- [ ] Loading/error states for the details fetch (consistent with page conventions)
+
+### [ ] Tests
+
+- [ ] List page: filter changes the rendered set and the query params
+- [ ] `CompletedInterview`: renders summary + turns from a mocked `/details` response
+- [ ] `CompletedInterview`: renders a graceful state when summary is absent
+- [ ] Confirm `Created`/`Active` branches do not call `getInterviewDetails`
 
 ## Verification
 
-- [ ] History page shows the user's completed interviews
-- [ ] Clicking an entry opens its detail page
-- [ ] Detail page shows summary + all turns with scores and feedback
-- [ ] A session without a summary still renders
-- [ ] Loading and error states behave correctly
-- [ ] Unauthenticated/non-invited users cannot reach the pages
-- [ ] Full test suite passes
+- [ ] Filtering the list to "Completed" shows only finished interviews; other filters behave correctly
+- [ ] Opening a completed interview shows its summary and full turn-by-turn evaluation
+- [ ] Opening a created or active interview behaves exactly as before (no regression, no extra network call)
+- [ ] A completed interview with a pending/failed summary still renders its turns without error
+- [ ] Full test suite passes (`tsc`, `vitest`, lint)
 
 ## Dependencies and Blockers
 
 Depends on:
 
-- 06a - Session detail read API
+- 06a - Session detail read API (`/interviews/{id}/details`)
 - 06b - Session summary generation
 
 Blocks:
@@ -86,12 +116,13 @@ Blocks:
 
 ### Risks
 
-- Rendering many turns with rich feedback could get visually heavy; may need collapsing/pagination for long sessions.
+- Rendering many turns with rich per-dimension feedback could get visually heavy for long interviews. The expandable-card pattern mitigates this by allowing users to collapse turns, but turn-level or interview-level pagination may be needed for very long interviews; that is a follow-up, not required for this pass.
 
-### Open Questions
+### Open Questions (resolved)
 
-- Reuse the existing `/interviews` list for completed sessions with a status filter, or a dedicated `/history` route? Default assumption: a dedicated history view for completed sessions, reusing shared list components. Confirm with routing conventions in M04.
+- ~~Reuse `/interviews` with a filter, or a dedicated `/history` route?~~ Resolved: reuse `/interviews` with a status filter. No new route.
+- ~~Separate detail page for review vs. live flow?~~ Resolved: no new page. `InterviewDetailPage`'s existing status branch is extended; only the `Completed` branch changes.
 
 ## Notes
 
-The detail page is read-only. It consumes 06a's detail payload and 06b's summary; it performs no scoring or AI calls of its own.
+This feature is deliberately scoped to backend-data-consumption, not redesign: the table stays a table, the page stays one page with three status branches, and the only new network call is the conditional `/details` fetch that already has a home in the existing `CompletedInterview` component. All AI-provenance metadata (prompt versions, model, provider) stays out of this UI per the earlier decision not to expose AI metadata to end users.
