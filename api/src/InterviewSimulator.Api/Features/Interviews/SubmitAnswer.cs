@@ -35,8 +35,10 @@ public static class SubmitAnswer
         IInterviewStore store,
         IQuestionGenerator questionGenerator,
         IAnswerEvaluator answerEvaluator,
+        SessionSummaryService summaryService,
         ClaimsPrincipal user,
         TimeProvider timeProvider,
+        ILogger<Program> logger,
         CancellationToken cancellationToken)
     {
         if (IdentityClaims.GetUserId(user) is not string userId)
@@ -147,6 +149,21 @@ public static class SubmitAnswer
             answeredTurn: currentTurn,
             nextTurn: nextTurn,
             cancellationToken: cancellationToken);
+
+        if (session.Status == InterviewStatus.Completed)
+        {
+            try
+            {
+                session = await summaryService.CreateSummaryAsync(session.Id, userId, cancellationToken);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                logger.LogWarning(
+                    ex,
+                    "Session summary generation failed for interview {InterviewId}. The completed session remains available without a summary.",
+                    session.Id);
+            }
+        }
 
         return Results.Ok(MapToResponse(session, nextTurn));
     }

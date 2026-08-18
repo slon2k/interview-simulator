@@ -10,8 +10,10 @@ public sealed class AiOptions
     public int MaxQuestionGenerationPreviousTurns { get; set; } = 3;
     public int MaxEvaluationPreviousTurns { get; set; } = 2;
     public int MaxQuestionChars { get; set; } = 400;
-    public int MaxAnswerChars { get; set; } = 1200;
-    public int MaxFeedbackChars { get; set; } = 500;
+    public int MaxAnswerChars { get; set; } = 2400;
+    public int MaxFeedbackChars { get; set; } = 1200;
+
+    public int MaxSummaryChars { get; set; } = 2400;
     public int TransientRetryCount { get; set; } = 1;
     public int InvalidOutputRetryCount { get; set; } = 1;
 }

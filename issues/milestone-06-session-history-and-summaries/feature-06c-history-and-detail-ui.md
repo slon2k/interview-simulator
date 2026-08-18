@@ -3,11 +3,13 @@
 Phase: 2  
 Milestone: 06 - Session history and summaries  
 Type: Feature  
-Status: Planned
+Status: Partial
 
 ## Summary
 
 Let users find and review completed interviews using the frontend that already exists, rather than new pages or routes. The interview list (`/interviews`) gets a status filter instead of a separate history page. The interview detail page (`/interviews/{id}`) already branches by status (`Created` / `Active` / `Completed`); this feature replaces the `Completed` branch's placeholder with a real review view backed by the 06a `/details` endpoint and the 06b summary.
+
+Note: the basic interview list/detail routes are present, but the full review experience is not yet wired to the new detail payload and summary UI.
 
 ## Problem and User Value
 

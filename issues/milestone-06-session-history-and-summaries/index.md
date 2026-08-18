@@ -1,10 +1,10 @@
-# Milestone 06 - Session history and summaries (placeholder)
+# Milestone 06 - Session history and summaries
 
 Epic type: Milestone
 
 ## Overview
 
-Let users review completed interviews in full and read an AI-generated final summary per completed session. This is primarily a read/aggregation milestone: the data it displays (per-turn questions, answers, per-dimension scores, feedback) was already produced and persisted in M04 and M05.
+Let users review completed interviews in full and read an AI-generated final summary per completed session. The API and persistence work for the review flow is implemented; the remaining gap is the full UI/docs follow-through for 06c/06d.
 
 M04 deliberately kept `GET /api/interviews/{id}` shallow — it did not return full turn/answer history. M06 adds the detail read path, generates a one-time summary when a session completes, and builds the history and detail UI.
 

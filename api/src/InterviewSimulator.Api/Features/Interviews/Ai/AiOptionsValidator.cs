@@ -50,6 +50,11 @@ public sealed class AiOptionsValidator : IValidateOptions<AiOptions>
             failures.Add("Ai:MaxFeedbackChars must be greater than 0.");
         }
 
+        if (options.MaxSummaryChars <= 0)
+        {
+            failures.Add("Ai:MaxSummaryChars must be greater than 0.");
+        }
+
         if (options.TransientRetryCount < 0)
         {
             failures.Add("Ai:TransientRetryCount must be greater than or equal to 0.");

@@ -33,7 +33,7 @@ public sealed class AzureOpenAIAnswerEvaluator(
         ValidateRequest(request);
 
         var rubric = EvaluationRubrics.GetForInterviewType(request.InterviewType);
-        var deploymentName = ResolveDeploymentName();
+        var deploymentName = AzureOpenAIProvider.ResolveDeploymentName(_openAiOptions);
 
         var prompt = PromptBuilder.BuildAnswerEvaluationPrompt(
             request.TargetRole,
@@ -86,7 +86,7 @@ public sealed class AzureOpenAIAnswerEvaluator(
                             PromptTokens: usage?.InputTokenCount,
                             CompletionTokens: usage?.OutputTokenCount));
                 }
-                catch (RequestFailedException ex) when (IsTransient(ex.Status))
+                catch (RequestFailedException ex) when (AzureOpenAIProvider.IsTransient(ex.Status))
                 {
                     throw new AiProviderTransientException(operationContext, $"Transient failure from {_provider}.", ex);
                 }
@@ -156,24 +156,4 @@ public sealed class AzureOpenAIAnswerEvaluator(
                 "Question count must be greater than zero.");
         }
     }
-
-    private string ResolveDeploymentName()
-    {
-        if (!string.IsNullOrWhiteSpace(_openAiOptions.DefaultDeploymentName))
-        {
-            return _openAiOptions.DefaultDeploymentName;
-        }
-
-        var fallback = _openAiOptions.DeploymentNames.FirstOrDefault(name => !string.IsNullOrWhiteSpace(name));
-
-        if (!string.IsNullOrWhiteSpace(fallback))
-        {
-            return fallback;
-        }
-
-        throw new InvalidOperationException("Azure OpenAI deployment is not configured.");
-    }
-
-    private static bool IsTransient(int statusCode) =>
-        statusCode is 408 or 429 or 500 or 502 or 503 or 504;
 }

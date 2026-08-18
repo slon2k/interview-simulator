@@ -17,6 +17,7 @@ public static class InterviewEndpoints
         group.MapSubmitAnswer();
         group.MapCompleteInterview();
         group.MapGetInterviewDetails();
+        group.MapGenerateSummary();
 
         return endpoints;
     }

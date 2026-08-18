@@ -35,6 +35,18 @@ public static class InterviewServices
         {
             builder.Services.AddScoped<IAnswerEvaluator, HardcodedAnswerEvaluator>();
         }
+
+        if (string.Equals(provider, AiProviders.AzureOpenAI, StringComparison.OrdinalIgnoreCase))
+        {
+            builder.Services.AddScoped<ISessionSummarizer, AzureOpenAISessionSummarizer>();
+        }
+        else
+        {
+            builder.Services.AddScoped<ISessionSummarizer, HardcodedSessionSummarizer>();
+        }
+
+        builder.Services.AddScoped<SessionSummaryService>();
+
         builder.Services.AddValidatorsFromAssemblyContaining<Program>();
         builder.Services.ConfigureHttpJsonOptions(options =>
         {

@@ -10,57 +10,34 @@ using OpenAI.Chat;
 
 namespace InterviewSimulator.Api.Features.Interviews;
 
-public sealed class AzureOpenAIQuestionGenerator(
-    AiStructuredOutputRunner<QuestionGenerationResponse> runner,
+public sealed class AzureOpenAISessionSummarizer(
+    AiStructuredOutputRunner<SessionSummaryResponse> runner,
     AzureOpenAIClient aiClient,
     IOptions<AiOptions> aiOptions,
-    IOptions<AzureOpenAIOptions> openAiOptions) : IQuestionGenerator
+    IOptions<AzureOpenAIOptions> openAiOptions) : ISessionSummarizer
 {
     private readonly AiOptions _aiOptions = aiOptions.Value;
     private readonly AzureOpenAIOptions _openAiOptions = openAiOptions.Value;
 
     private const string _provider = AiProviders.AzureOpenAI;
+    private const string _operation = "SessionSummary";
 
-    private const string _operation = "QuestionGeneration";
-
-    public async Task<GeneratedQuestion> GenerateQuestionAsync(
-        GenerateQuestionRequest request,
+    public async Task<SessionSummaryResult> GenerateSummaryAsync(
+        SessionSummaryRequest request,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        ArgumentNullException.ThrowIfNull(request.PreviousTurns);
-
-        var targetRole = request.TargetRole;
-        ArgumentException.ThrowIfNullOrWhiteSpace(targetRole);
-        var focusArea = request.FocusArea;
-        ArgumentException.ThrowIfNullOrWhiteSpace(focusArea);
-
-        if (request.TurnNumber <= 0)
-        {
-            throw new ArgumentException("Turn number must be greater than zero.", nameof(request));
-        }
-
-        if (request.QuestionCount <= 0)
-        {
-            throw new ArgumentException("Question count must be greater than zero.", nameof(request));
-        }
-
-        if (request.TurnNumber > request.QuestionCount)
-        {
-            throw new ArgumentException("Turn number cannot exceed question count.", nameof(request));
-        }
-
-        var prompt = PromptBuilder.BuildQuestionPrompt(
-            targetRole,
-            request.Seniority,
-            request.InterviewType,
-            focusArea,
-            request.TurnNumber,
-            request.QuestionCount,
-            request.PreviousTurns,
-            _aiOptions);
+        ArgumentNullException.ThrowIfNull(request.Turns);
 
         var deploymentName = AzureOpenAIProvider.ResolveDeploymentName(_openAiOptions);
+        var prompt = PromptBuilder.BuildSessionSummaryPrompt(
+            targetRole: request.TargetRole,
+            seniority: request.Seniority,
+            interviewType: request.InterviewType,
+            focusArea: request.FocusArea,
+            turns: request.Turns,
+            options: _aiOptions);
+
         var chatClient = aiClient.GetChatClient(deploymentName);
         var completionOptions = new ChatCompletionOptions
         {
@@ -68,7 +45,7 @@ public sealed class AzureOpenAIQuestionGenerator(
         };
         var operationContext = new AiOperationContext(
             OperationName: _operation,
-            PromptVersion: PromptVersions.QuestionGeneration,
+            PromptVersion: PromptVersions.SessionSummary,
             Provider: _provider,
             Model: deploymentName);
 
@@ -92,7 +69,7 @@ public sealed class AzureOpenAIQuestionGenerator(
                     return new AiRawResponse(
                         Content: content,
                         Metadata: new AiCallMetadata(
-                            PromptVersion: PromptVersions.QuestionGeneration,
+                            PromptVersion: PromptVersions.SessionSummary,
                             Provider: _provider,
                             Model: deploymentName,
                             PromptTokens: usage?.InputTokenCount,
@@ -109,9 +86,8 @@ public sealed class AzureOpenAIQuestionGenerator(
             },
             cancellationToken: cancellationToken);
 
-        return new GeneratedQuestion(
-            Text: response.Value.Text ?? throw new AiInvalidResponseException(operationContext, "AI response text was null."),
-            Topic: response.Value.Topic ?? throw new AiInvalidResponseException(operationContext, "AI response topic was null."),
+        return new SessionSummaryResult(
+            Summary: response.Value.Summary ?? throw new AiInvalidResponseException(operationContext, "AI response summary was null."),
             AiMetadata: response.Metadata);
     }
 }
