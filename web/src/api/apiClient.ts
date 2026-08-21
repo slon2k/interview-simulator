@@ -6,4 +6,6 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  // repeat array params as `key=a&key=b` (default axios `key[]=a&key[]=b` isn't bound by ASP.NET Core)
+  paramsSerializer: { indexes: null },
 })

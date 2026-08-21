@@ -1,19 +1,49 @@
-import { Alert, Badge, Button, Card, Group, Loader, Stack, Table, Text, Title } from '@mantine/core'
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Group,
+  Loader,
+  SegmentedControl,
+  Stack,
+  Table,
+  Text,
+  Title,
+} from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
 import { ApiError } from '../../api/apiError'
-import { getInterviews, type InterviewSummary } from '../../api/interviewApi'
+import {
+  getInterviews,
+  type InterviewStatusContract,
+  type InterviewSummary,
+} from '../../api/interviewApi'
 import { formatProgress, statusAction, statusColor } from './interviewListHelpers'
 
+const STATUS_FILTER_OPTIONS: { label: string; value: StatusFilterValue }[] = [
+  { label: 'All', value: 'All' },
+  { label: 'Created', value: 'Created' },
+  { label: 'Active', value: 'Active' },
+  { label: 'Completed', value: 'Completed' },
+]
+
+type StatusFilterValue = 'All' | InterviewStatusContract
+
 export function InterviewListPage() {
+  const [statusFilter, setStatusFilter] = useState<StatusFilterValue>('All')
+
   const interviewsQuery = useQuery({
-    queryKey: ['interviews'],
-    queryFn: () => getInterviews(),
+    queryKey: ['interviews', { status: statusFilter }],
+    queryFn: () =>
+      getInterviews(statusFilter === 'All' ? undefined : { status: [statusFilter] }),
   })
 
   return (
     <Stack gap="md">
       <PageHeader />
+      <StatusFilterControl value={statusFilter} onChange={setStatusFilter} />
       <InterviewListBody query={interviewsQuery} />
     </Stack>
   )
@@ -27,6 +57,23 @@ function PageHeader() {
         New interview
       </Button>
     </Group>
+  )
+}
+
+function StatusFilterControl({
+  value,
+  onChange,
+}: {
+  value: StatusFilterValue
+  onChange: (value: StatusFilterValue) => void
+}) {
+  return (
+    <SegmentedControl
+      value={value}
+      onChange={onChange}
+      data={STATUS_FILTER_OPTIONS}
+      aria-label="Filter interviews by status"
+    />
   )
 }
 

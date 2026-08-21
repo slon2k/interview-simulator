@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { renderWithProviders } from '../../test/renderWithProviders'
 import type { UseQueryResult } from '@tanstack/react-query'
 import { ApiError } from '../../api/apiError'
+import * as interviewApi from '../../api/interviewApi'
 import type { InterviewSummary } from '../../api/interviewApi'
 import { InterviewListPage } from './InterviewListPage'
 import { formatProgress, statusColor } from './interviewListHelpers'
@@ -12,6 +13,11 @@ import { formatProgress, statusColor } from './interviewListHelpers'
 vi.mock('@tanstack/react-query', async (importOriginal) => {
   const mod = await importOriginal<typeof import('@tanstack/react-query')>()
   return { ...mod, useQuery: vi.fn() }
+})
+
+vi.mock('../../api/interviewApi', async (importOriginal) => {
+  const mod = await importOriginal<typeof import('../../api/interviewApi')>()
+  return { ...mod, getInterviews: vi.fn() }
 })
 
 function mockQuery(overrides: Partial<UseQueryResult<InterviewSummary[]>>) {
@@ -72,6 +78,7 @@ describe('statusColor', () => {
 describe('InterviewListPage', () => {
   beforeEach(() => {
     vi.mocked(useQuery).mockReset()
+    vi.mocked(interviewApi.getInterviews).mockReset()
   })
 
   it('shows a loading indicator while fetching', () => {
@@ -121,5 +128,33 @@ describe('InterviewListPage', () => {
     mockQuery({ data: [{ ...fakeInterview, status: 'Completed' }] })
     renderPage()
     expect(screen.getByRole('link', { name: 'View' })).toBeInTheDocument()
+  })
+
+  it('defaults to the All status filter and fetches without a status param', () => {
+    mockQuery({ data: [fakeInterview] })
+    renderPage()
+
+    expect(useQuery).toHaveBeenLastCalledWith(
+      expect.objectContaining({ queryKey: ['interviews', { status: 'All' }] })
+    )
+
+    const queryFn = vi.mocked(useQuery).mock.lastCall![0].queryFn as () => unknown
+    queryFn()
+    expect(interviewApi.getInterviews).toHaveBeenCalledWith(undefined)
+  })
+
+  it('refetches with the selected status when the filter changes', async () => {
+    mockQuery({ data: [fakeInterview] })
+    renderPage()
+
+    await userEvent.click(screen.getByRole('radio', { name: 'Completed' }))
+
+    expect(useQuery).toHaveBeenLastCalledWith(
+      expect.objectContaining({ queryKey: ['interviews', { status: 'Completed' }] })
+    )
+
+    const queryFn = vi.mocked(useQuery).mock.lastCall![0].queryFn as () => unknown
+    queryFn()
+    expect(interviewApi.getInterviews).toHaveBeenCalledWith({ status: ['Completed'] })
   })
 })
