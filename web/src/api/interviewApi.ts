@@ -11,6 +11,13 @@ export type CreateInterviewRequest = components['schemas']['CreateInterviewReque
 export type CreateInterviewResponse = components['schemas']['CreateInterviewResponse']
 export type StartInterviewResponse = components['schemas']['StartInterviewResponse']
 export type SubmitAnswerRequest = components['schemas']['SubmitAnswerRequest']
+export type GetInterviewDetailsResponse = components['schemas']['GetInterviewDetailsResponse']
+export type GetInterviewDetailsResponseTurn = components['schemas']['GetInterviewDetailsResponseTurn']
+export type GetInterviewDetailsResponseSummary = components['schemas']['GetInterviewDetailsResponseSummary']
+export type GetInterviewDetailsResponseQuestion = components['schemas']['GetInterviewDetailsResponseQuestion']
+export type GetInterviewDetailsResponseAnswer = components['schemas']['GetInterviewDetailsResponseAnswer']
+export type GetInterviewDetailsResponseEvaluation = components['schemas']['GetInterviewDetailsResponseEvaluation']
+export type GetInterviewDetailsResponseEvaluationDimension = components['schemas']['GetInterviewDetailsResponseEvaluationDimension']
 
 type GetInterviewsQuery = operations['GetInterviews']['parameters']['query']
 export type InterviewStatusFilter = NonNullable<NonNullable<GetInterviewsQuery>['status']>[number]
@@ -99,6 +106,20 @@ export async function completeInterview(id: string, signal?: AbortSignal): Promi
     await apiClient.post(`/interviews/${id}/complete`, undefined, {
       ...(signal !== undefined && { signal }),
     })
+  } catch (error) {
+    throw toApiError(error)
+  }
+}
+
+export async function getInterviewDetails(
+  id: string,
+  signal?: AbortSignal
+): Promise<GetInterviewDetailsResponse> {
+  try {
+    const response = await apiClient.get<GetInterviewDetailsResponse>(`/interviews/${id}/details`, {
+      ...(signal !== undefined && { signal }),
+    })
+    return response.data
   } catch (error) {
     throw toApiError(error)
   }

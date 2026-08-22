@@ -7,7 +7,7 @@ import type { UseQueryResult } from '@tanstack/react-query'
 import { MantineProvider } from '@mantine/core'
 import { MemoryRouter } from 'react-router-dom'
 import { ApiError } from '../../api/apiError'
-import type { InterviewResponse } from '../../api/interviewApi'
+import type { GetInterviewDetailsResponse, InterviewResponse } from '../../api/interviewApi'
 import { InterviewDetailPage } from './InterviewDetailPage'
 import * as interviewApi from '../../api/interviewApi'
 
@@ -48,6 +48,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
 
 vi.mock('../../api/interviewApi', () => ({
   getInterview: vi.fn(),
+  getInterviewDetails: vi.fn(),
   startInterview: vi.fn(),
   submitAnswer: vi.fn(),
   completeInterview: vi.fn(),
@@ -92,7 +93,7 @@ const baseInterview: InterviewResponse = {
   createdAt: '2026-01-01T00:00:00Z',
   startedAt: null,
   completedAt: null,
-  feedback: null,
+  totalScore: null,
   currentQuestion: null,
 }
 
@@ -110,6 +111,50 @@ const completedInterview: InterviewResponse = {
   answeredCount: 5,
   startedAt: '2026-01-01T00:01:00Z',
   completedAt: '2026-01-01T00:30:00Z',
+}
+
+const completedDetails: GetInterviewDetailsResponse = {
+  ...completedInterview,
+  summary: { text: 'A strong interview.', createdAt: '2026-01-01T00:31:00Z' },
+  turns: [
+    {
+      turnNumber: 1,
+      question: { text: 'Explain dependency injection.', topic: 'Architecture' },
+      answer: { text: 'It separates construction from use.', createdAt: '2026-01-01T00:10:00Z' },
+      evaluation: {
+        overallScore: 84,
+        overallFeedback: 'Clear explanation with a useful example.',
+        dimensions: [
+          {
+            key: 'clarity',
+            label: 'Clarity',
+            score: 88,
+            feedback: 'The answer was concise and easy to follow.',
+          },
+        ],
+      },
+      createdAt: '2026-01-01T00:05:00Z',
+    },
+  ],
+}
+
+function mockCompletedQueries(details: Partial<UseQueryResult<GetInterviewDetailsResponse>> = {}) {
+  vi.mocked(useQuery).mockReset()
+  vi.mocked(useQuery).mockReturnValueOnce({
+    isLoading: false,
+    isError: false,
+    data: completedInterview,
+    error: null,
+    refetch: vi.fn(),
+  } as unknown as UseQueryResult<InterviewResponse>)
+  vi.mocked(useQuery).mockReturnValueOnce({
+    isLoading: false,
+    isError: false,
+    data: { ...completedDetails, ...details.data },
+    error: null,
+    refetch: vi.fn(),
+    ...details,
+  } as unknown as UseQueryResult<GetInterviewDetailsResponse>)
 }
 
 describe('InterviewDetailPage', () => {
@@ -251,21 +296,59 @@ describe('InterviewDetailPage', () => {
 
   describe('completed state', () => {
     it('shows the completion message', () => {
-      mockQuery({ data: completedInterview })
+      mockCompletedQueries()
       renderPage()
       expect(screen.getByText(/interview completed/i)).toBeInTheDocument()
     })
 
     it('shows answered vs total count', () => {
-      mockQuery({ data: completedInterview })
+      mockCompletedQueries()
       renderPage()
       expect(screen.getByText(/answered 5 of 5/i)).toBeInTheDocument()
     })
 
     it('does not show the answer form', () => {
-      mockQuery({ data: completedInterview })
+      mockCompletedQueries()
       renderPage()
       expect(screen.queryByRole('textbox', { name: /your answer/i })).not.toBeInTheDocument()
+    })
+
+    it('renders the summary and expandable turn evaluation', async () => {
+      mockCompletedQueries()
+      renderPage()
+
+      expect(screen.getByText('A strong interview.')).toBeInTheDocument()
+      expect(screen.getByText(/question 1: explain dependency injection/i)).toBeInTheDocument()
+      expect(screen.getByText('84/100')).toBeInTheDocument()
+      const turnControl = screen.getByRole('button', { name: /question 1/i })
+      expect(turnControl).toHaveAttribute('aria-expanded', 'false')
+
+      await userEvent.click(turnControl)
+
+      expect(screen.getByText('It separates construction from use.')).toBeInTheDocument()
+      expect(screen.getByText('Clarity')).toBeInTheDocument()
+      expect(screen.getByText('The answer was concise and easy to follow.')).toBeInTheDocument()
+      expect(turnControl).toHaveAttribute('aria-expanded', 'true')
+    })
+
+    it('shows a pending summary while keeping turns visible', () => {
+      mockCompletedQueries({ data: { ...completedDetails, summary: null } })
+      renderPage()
+
+      expect(screen.getByText('Summary pending...')).toBeInTheDocument()
+      expect(screen.getByText(/question 1: explain dependency injection/i)).toBeInTheDocument()
+    })
+
+    it('enables the details query only for completed interviews', () => {
+      mockCompletedQueries()
+      renderPage()
+
+      expect(vi.mocked(useQuery).mock.calls[1]?.[0]).toEqual(
+        expect.objectContaining({
+          queryKey: ['interview-details', 'test-interview-id'],
+          enabled: true,
+        })
+      )
     })
   })
 })
