@@ -36,8 +36,7 @@ export function InterviewListPage() {
 
   const interviewsQuery = useQuery({
     queryKey: ['interviews', { status: statusFilter }],
-    queryFn: () =>
-      getInterviews(statusFilter === 'All' ? undefined : { status: [statusFilter] }),
+    queryFn: () => getInterviews(statusFilter === 'All' ? undefined : { status: [statusFilter] }),
   })
 
   return (

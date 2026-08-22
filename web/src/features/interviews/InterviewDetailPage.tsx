@@ -1,5 +1,6 @@
 import {
   Alert,
+  Accordion,
   Badge,
   Button,
   Card,
@@ -21,7 +22,9 @@ import {
   startInterview,
   submitAnswer,
   completeInterview,
+  getInterviewDetails,
   type InterviewResponse,
+  type GetInterviewDetailsResponse,
 } from '../../api/interviewApi'
 
 type InterviewQuery = ReturnType<typeof useQuery<InterviewResponse>>
@@ -130,7 +133,7 @@ function CreatedInterview({
     onSuccess: (data) =>
       queryClient.setQueryData<InterviewResponse>(['interview', interviewId], {
         ...data,
-        feedback: null,
+        totalScore: null,
       }),
   })
 
@@ -282,20 +285,138 @@ function ActiveInterview({
 }
 
 function CompletedInterview({ interview }: { interview: InterviewResponse }) {
+  const detailsQuery = useQuery({
+    queryKey: ['interview-details', interview.id],
+    queryFn: ({ signal }: { signal: AbortSignal }) => getInterviewDetails(interview.id, signal),
+    enabled: interview.status === 'Completed',
+  })
+
+  if (detailsQuery.isLoading) {
+    return (
+      <Stack gap="md">
+        <InterviewMeta interview={interview} />
+        <Group>
+          <Loader size="sm" />
+          <Text c="dimmed">Loading interview feedback...</Text>
+        </Group>
+      </Stack>
+    )
+  }
+
+  if (detailsQuery.isError) {
+    const message =
+      detailsQuery.error instanceof ApiError
+        ? detailsQuery.error.message
+        : 'Unable to load interview feedback.'
+
+    return (
+      <Stack gap="md">
+        <InterviewMeta interview={interview} />
+        <Alert color="red" title="Could not load interview feedback">
+          {message}
+        </Alert>
+        <Group>
+          <Button variant="light" onClick={() => void detailsQuery.refetch()}>
+            Retry
+          </Button>
+        </Group>
+      </Stack>
+    )
+  }
+
+  const details = detailsQuery.data
+
   return (
     <Stack gap="md">
       <InterviewMeta interview={interview} />
       <Card withBorder radius="md">
         <Stack gap="xs">
-          <Text fw={600}>Interview completed</Text>
+          <Group justify="space-between" align="center" wrap="wrap" gap="xs">
+            <Text fw={600}>Interview completed</Text>
+            <Badge color={scoreColor(details?.totalScore)} variant="light" size="lg">
+              {details?.totalScore !== null && details?.totalScore !== undefined
+                ? `Total score: ${details.totalScore}/100`
+                : 'Total score: Pending'}
+            </Badge>
+          </Group>
           <Text c="dimmed">
             You answered {interview.answeredCount} of {interview.questionCount} questions.
           </Text>
-          <Text size="sm" c="dimmed">
-            Feedback will be available here once it has been generated.
-          </Text>
+          <Text size="sm">{details?.summary?.text ?? 'Summary pending...'}</Text>
         </Stack>
       </Card>
+      {details && <CompletedTurnList details={details} />}
+    </Stack>
+  )
+}
+
+function scoreColor(score: number | null | undefined): string {
+  if (score === null || score === undefined) {
+    return 'gray'
+  }
+
+  if (score < 50) {
+    return 'red'
+  }
+
+  if (score < 75) {
+    return 'yellow'
+  }
+
+  return 'green'
+}
+
+function CompletedTurnList({ details }: { details: GetInterviewDetailsResponse }) {
+  return (
+    <Stack gap="sm">
+      <Title order={3}>Turn-by-turn feedback</Title>
+      <Accordion variant="separated">
+        {details.turns.map((turn) => (
+          <Accordion.Item key={turn.turnNumber} value={String(turn.turnNumber)}>
+            <Accordion.Control>
+              <Group justify="space-between" wrap="nowrap" pr="sm">
+                <Text fw={500} style={{ minWidth: 0, flex: 1 }}>
+                  Question {turn.turnNumber}: {turn.question.text}
+                </Text>
+                <Badge color="blue" variant="light" style={{ flexShrink: 0, minWidth: 76 }}>
+                  {turn.evaluation ? `${turn.evaluation.overallScore}/100` : 'Not scored'}
+                </Badge>
+              </Group>
+            </Accordion.Control>
+            <Accordion.Panel>
+              <Stack gap="sm">
+                <div>
+                  <Text size="sm" fw={600}>
+                    Answer
+                  </Text>
+                  <Text>{turn.answer?.text ?? 'No answer provided.'}</Text>
+                </div>
+                {turn.evaluation && (
+                  <Stack gap="xs">
+                    <Text size="sm" fw={600}>
+                      Evaluation
+                    </Text>
+                    <Text size="sm">{turn.evaluation.overallFeedback}</Text>
+                    {turn.evaluation.dimensions.map((dimension) => (
+                      <Card key={dimension.key} withBorder radius="sm" p="sm">
+                        <Group justify="space-between">
+                          <Text fw={500}>{dimension.label}</Text>
+                          <Badge variant="light" style={{ flexShrink: 0, minWidth: 58 }}>
+                            {dimension.score}/100
+                          </Badge>
+                        </Group>
+                        <Text size="sm" c="dimmed">
+                          {dimension.feedback}
+                        </Text>
+                      </Card>
+                    ))}
+                  </Stack>
+                )}
+              </Stack>
+            </Accordion.Panel>
+          </Accordion.Item>
+        ))}
+      </Accordion>
     </Stack>
   )
 }
