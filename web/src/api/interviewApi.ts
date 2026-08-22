@@ -12,12 +12,18 @@ export type CreateInterviewResponse = components['schemas']['CreateInterviewResp
 export type StartInterviewResponse = components['schemas']['StartInterviewResponse']
 export type SubmitAnswerRequest = components['schemas']['SubmitAnswerRequest']
 export type GetInterviewDetailsResponse = components['schemas']['GetInterviewDetailsResponse']
-export type GetInterviewDetailsResponseTurn = components['schemas']['GetInterviewDetailsResponseTurn']
-export type GetInterviewDetailsResponseSummary = components['schemas']['GetInterviewDetailsResponseSummary']
-export type GetInterviewDetailsResponseQuestion = components['schemas']['GetInterviewDetailsResponseQuestion']
-export type GetInterviewDetailsResponseAnswer = components['schemas']['GetInterviewDetailsResponseAnswer']
-export type GetInterviewDetailsResponseEvaluation = components['schemas']['GetInterviewDetailsResponseEvaluation']
-export type GetInterviewDetailsResponseEvaluationDimension = components['schemas']['GetInterviewDetailsResponseEvaluationDimension']
+export type GetInterviewDetailsResponseTurn =
+  components['schemas']['GetInterviewDetailsResponseTurn']
+export type GetInterviewDetailsResponseSummary =
+  components['schemas']['GetInterviewDetailsResponseSummary']
+export type GetInterviewDetailsResponseQuestion =
+  components['schemas']['GetInterviewDetailsResponseQuestion']
+export type GetInterviewDetailsResponseAnswer =
+  components['schemas']['GetInterviewDetailsResponseAnswer']
+export type GetInterviewDetailsResponseEvaluation =
+  components['schemas']['GetInterviewDetailsResponseEvaluation']
+export type GetInterviewDetailsResponseEvaluationDimension =
+  components['schemas']['GetInterviewDetailsResponseEvaluationDimension']
 
 type GetInterviewsQuery = operations['GetInterviews']['parameters']['query']
 export type InterviewStatusFilter = NonNullable<NonNullable<GetInterviewsQuery>['status']>[number]
@@ -120,6 +126,16 @@ export async function getInterviewDetails(
       ...(signal !== undefined && { signal }),
     })
     return response.data
+  } catch (error) {
+    throw toApiError(error)
+  }
+}
+
+export async function generateInterviewSummary(id: string, signal?: AbortSignal): Promise<void> {
+  try {
+    await apiClient.post(`/interviews/${id}/summary`, undefined, {
+      ...(signal !== undefined && { signal }),
+    })
   } catch (error) {
     throw toApiError(error)
   }

@@ -156,10 +156,12 @@ public static class PromptBuilder
 
         builder.AppendLine();
         builder.AppendLine("Instructions:");
+        builder.AppendLine("- Do not include any numeric scores or ratings in the summary text. The application will display the overall score separately.");
         builder.AppendLine("- Write a concise overall assessment of the candidate's interview performance.");
         builder.AppendLine("- Highlight strengths, weaknesses, and a headline takeaway.");
         builder.AppendLine("- Use the stored evaluation scores and feedback as the only source of truth.");
         builder.AppendLine("- Keep the summary concise and actionable.");
+        builder.AppendLine("- Write 2-4 short paragraphs.");
         builder.AppendLine(string.Format(
             CultureInfo.InvariantCulture,
             "- The summary value must be no more than {0} characters, including spaces.",

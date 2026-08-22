@@ -49,6 +49,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
 vi.mock('../../api/interviewApi', () => ({
   getInterview: vi.fn(),
   getInterviewDetails: vi.fn(),
+  generateInterviewSummary: vi.fn(),
   startInterview: vi.fn(),
   submitAnswer: vi.fn(),
   completeInterview: vi.fn(),
@@ -140,6 +141,14 @@ const completedDetails: GetInterviewDetailsResponse = {
 
 function mockCompletedQueries(details: Partial<UseQueryResult<GetInterviewDetailsResponse>> = {}) {
   vi.mocked(useQuery).mockReset()
+  const detailsResult = {
+    isLoading: false,
+    isError: false,
+    data: { ...completedDetails, ...details.data },
+    error: null,
+    refetch: vi.fn(),
+    ...details,
+  } as unknown as UseQueryResult<GetInterviewDetailsResponse>
   vi.mocked(useQuery).mockReturnValueOnce({
     isLoading: false,
     isError: false,
@@ -147,20 +156,14 @@ function mockCompletedQueries(details: Partial<UseQueryResult<GetInterviewDetail
     error: null,
     refetch: vi.fn(),
   } as unknown as UseQueryResult<InterviewResponse>)
-  vi.mocked(useQuery).mockReturnValueOnce({
-    isLoading: false,
-    isError: false,
-    data: { ...completedDetails, ...details.data },
-    error: null,
-    refetch: vi.fn(),
-    ...details,
-  } as unknown as UseQueryResult<GetInterviewDetailsResponse>)
+  vi.mocked(useQuery).mockReturnValue(detailsResult)
 }
 
 describe('InterviewDetailPage', () => {
   beforeEach(() => {
     vi.mocked(useQuery).mockReset()
     vi.mocked(interviewApi.getInterviewDetails).mockReset()
+    vi.mocked(interviewApi.generateInterviewSummary).mockReset()
     vi.mocked(interviewApi.startInterview).mockReset()
     vi.mocked(interviewApi.submitAnswer).mockReset()
     vi.mocked(interviewApi.completeInterview).mockReset()
@@ -338,6 +341,16 @@ describe('InterviewDetailPage', () => {
 
       expect(screen.getByText('Summary pending...')).toBeInTheDocument()
       expect(screen.getByText(/question 1: explain dependency injection/i)).toBeInTheDocument()
+    })
+
+    it('allows a pending summary to be generated', async () => {
+      vi.mocked(interviewApi.generateInterviewSummary).mockResolvedValue(undefined)
+      mockCompletedQueries({ data: { ...completedDetails, summary: null } })
+      renderPage()
+
+      await userEvent.click(screen.getByRole('button', { name: /generate summary/i }))
+
+      expect(interviewApi.generateInterviewSummary).toHaveBeenCalledWith('test-interview-id')
     })
 
     it('enables the details query only for completed interviews', () => {
