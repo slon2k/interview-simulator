@@ -21,6 +21,22 @@ export function statusColor(status: InterviewStatusContract): string {
   }
 }
 
+export function scoreColor(score: number | null): string {
+  if (score === null) {
+    return 'gray'
+  }
+
+  if (score < 50) {
+    return 'red'
+  }
+
+  if (score < 75) {
+    return 'yellow'
+  }
+
+  return 'green'
+}
+
 export function statusAction(status: InterviewStatusContract): string {
   switch (status) {
     case 'Active':

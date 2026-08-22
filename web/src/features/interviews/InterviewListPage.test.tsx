@@ -8,7 +8,7 @@ import { ApiError } from '../../api/apiError'
 import * as interviewApi from '../../api/interviewApi'
 import type { InterviewSummary } from '../../api/interviewApi'
 import { InterviewListPage } from './InterviewListPage'
-import { formatProgress, statusColor } from './interviewListHelpers'
+import { formatProgress, scoreColor, statusColor } from './interviewListHelpers'
 
 vi.mock('@tanstack/react-query', async (importOriginal) => {
   const mod = await importOriginal<typeof import('@tanstack/react-query')>()
@@ -75,6 +75,24 @@ describe('statusColor', () => {
   })
 })
 
+describe('scoreColor', () => {
+  it('returns red for a low score', () => {
+    expect(scoreColor(10)).toBe('red')
+  })
+
+  it('returns yellow for a middle score', () => {
+    expect(scoreColor(60)).toBe('yellow')
+  })
+
+  it('returns green for a strong score', () => {
+    expect(scoreColor(85)).toBe('green')
+  })
+
+  it('returns gray when a score is pending', () => {
+    expect(scoreColor(null)).toBe('gray')
+  })
+})
+
 describe('InterviewListPage', () => {
   beforeEach(() => {
     vi.mocked(useQuery).mockReset()
@@ -128,6 +146,21 @@ describe('InterviewListPage', () => {
     mockQuery({ data: [{ ...fakeInterview, status: 'Completed' }] })
     renderPage()
     expect(screen.getByRole('link', { name: 'View' })).toBeInTheDocument()
+  })
+
+  it('shows the score instead of progress for a completed interview', () => {
+    mockQuery({ data: [{ ...fakeInterview, status: 'Completed', totalScore: 85 }] })
+    renderPage()
+
+    expect(screen.getByText('85/100')).toBeInTheDocument()
+    expect(screen.queryByText('3/5')).not.toBeInTheDocument()
+  })
+
+  it('shows a pending score for a completed interview without a score', () => {
+    mockQuery({ data: [{ ...fakeInterview, status: 'Completed', totalScore: null }] })
+    renderPage()
+
+    expect(screen.getByText('Pending')).toBeInTheDocument()
   })
 
   it('defaults to the All status filter and fetches without a status param', () => {
