@@ -373,17 +373,18 @@ All `/api/interviews` endpoints require the `InvitedUser` authorization policy.
 ### Complete Session
 
 1. The user finishes the interview or reaches the configured limit.
-2. The frontend calls `POST /api/sessions/{sessionId}/complete`.
-3. The backend generates the final summary.
-4. The backend persists the completed session and summary.
+2. The frontend calls `POST /api/interviews/{interviewId}/complete`.
+3. The backend marks the session completed and attempts one summary generation.
+4. The backend persists the completed session, aggregate score, and summary when generation succeeds.
+5. Summary generation failure is non-fatal; the completed session remains reviewable without a summary.
 
-### Get Session History
+### Get Interview History
 
-`GET /api/sessions` returns a user-scoped list of interview sessions for the history page.
+`GET /api/interviews` returns a user-scoped list of interview sessions. The optional repeated `status` query parameter filters the list, for example `?status=completed`.
 
-### Get Session Detail
+### Get Interview Detail
 
-`GET /api/sessions/{sessionId}` returns the session, turns, feedback, and summary for the detail page.
+`GET /api/interviews/{interviewId}` remains the shallow status/resume response. `GET /api/interviews/{interviewId}/details` returns the completed session's ordered turns, stored answers and evaluations, aggregate score, and optional persisted summary. These reads do not invoke AI services.
 
 ### Get Dashboard Summary
 
@@ -409,7 +410,7 @@ One container keeps the data model simple, reduces overhead, and makes user-scop
 
 ### Session Document
 
-Session documents may store denormalized summary metrics such as `overallScore`, average dimension scores, answered count, and completion status. This allows dashboard and history pages to query session documents without scanning every turn document.
+Session documents store denormalized review metrics such as `sessionResult.overallScore`, answered count, completion status, and optional summary metadata. This allows history queries to return completed-session scores without scanning every turn document. Full turn history remains in turn documents and is loaded only by the dedicated details query.
 
 **ID Generation**: `session|{sessionId}` where `sessionId` is a GUID. Use `CosmosSessionDocument.ToCosmosId(Guid)` for consistent derivation.
 
@@ -432,15 +433,12 @@ Session documents may store denormalized summary metrics such as `overallScore`,
   "createdAt": "2026-07-15T10:00:00Z",
   "completedAt": "2026-07-15T10:25:00Z",
 
+  "sessionResult": {
+    "overallScore": 78
+  },
   "summary": {
-    "overallScore": 78,
-    "dimensionScores": {
-      "clarity": 4.2,
-      "depth": 3.6,
-      "correctness": 4.4
-    },
-    "highlights": [],
-    "improvements": []
+    "text": "Strong technical interview with clear explanations.",
+    "createdAt": "2026-07-15T10:26:00Z"
   }
 }
 ```

@@ -148,6 +148,45 @@ public sealed class CompleteInterviewSummaryPersistenceTests(AuthWebApplicationF
         Assert.Null(persisted.InterviewSummary);
     }
 
+    [Fact]
+    public async Task SummaryFailure_RemainsReviewableAndReadPathsDoNotCallSummarizer()
+    {
+        var store = new SummaryPersistenceStore { SummarizerShouldFail = true };
+        var interviewId = store.SeedActiveSessionWithOneTurn("github|100");
+        using var client = CreateClientWithStore(store);
+
+        using var completeRequest = CreateAuthenticatedRequest(
+            HttpMethod.Post,
+            $"/api/interviews/{interviewId}/complete",
+            "github|100",
+            "invited-user");
+        var completeResponse = await client.SendAsync(completeRequest);
+        Assert.Equal(HttpStatusCode.NoContent, completeResponse.StatusCode);
+        var callsAfterCompletion = store.SummarizerCalls;
+
+        using var historyRequest = CreateAuthenticatedRequest(
+            HttpMethod.Get,
+            "/api/interviews?status=completed",
+            "github|100",
+            "invited-user");
+        var historyResponse = await client.SendAsync(historyRequest);
+        Assert.Equal(HttpStatusCode.OK, historyResponse.StatusCode);
+        using var historyJson = await ReadJsonAsync(historyResponse);
+        Assert.Equal(1, historyJson.RootElement.GetArrayLength());
+
+        using var detailsRequest = CreateAuthenticatedRequest(
+            HttpMethod.Get,
+            $"/api/interviews/{interviewId}/details",
+            "github|100",
+            "invited-user");
+        var detailsResponse = await client.SendAsync(detailsRequest);
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        using var detailsJson = await ReadJsonAsync(detailsResponse);
+        Assert.Equal(JsonValueKind.Null, detailsJson.RootElement.GetProperty("summary").ValueKind);
+        Assert.Single(detailsJson.RootElement.GetProperty("turns").EnumerateArray());
+        Assert.Equal(callsAfterCompletion, store.SummarizerCalls);
+    }
+
     private HttpClient CreateClientWithStore(SummaryPersistenceStore store)
     {
         return factory.WithWebHostBuilder(builder =>
@@ -173,6 +212,13 @@ public sealed class CompleteInterviewSummaryPersistenceTests(AuthWebApplicationF
         return request;
     }
 
+    private static async Task<JsonDocument> ReadJsonAsync(HttpResponseMessage response)
+    {
+        var json = await response.Content.ReadFromJsonAsync<JsonDocument>();
+        ArgumentNullException.ThrowIfNull(json);
+        return json;
+    }
+
     private sealed class SummaryPersistenceStore : IInterviewStore
     {
         private readonly Dictionary<Guid, InterviewSessionState> _sessions = new();
@@ -186,11 +232,13 @@ public sealed class CompleteInterviewSummaryPersistenceTests(AuthWebApplicationF
 
         public bool SummarizerShouldFail { get; set; }
 
+        public int SummarizerCalls { get; private set; }
+
         private FakeSummarizer? _summarizer;
 
         public ISessionSummarizer GetSummarizer()
         {
-            _summarizer ??= new FakeSummarizer(SummarizerShouldFail);
+            _summarizer ??= new FakeSummarizer(this, SummarizerShouldFail);
             return _summarizer;
         }
 
@@ -337,10 +385,12 @@ public sealed class CompleteInterviewSummaryPersistenceTests(AuthWebApplicationF
 
         private sealed class FakeSummarizer : ISessionSummarizer
         {
+            private readonly SummaryPersistenceStore _owner;
             private readonly bool _shouldFail;
 
-            public FakeSummarizer(bool shouldFail)
+            public FakeSummarizer(SummaryPersistenceStore owner, bool shouldFail)
             {
+                _owner = owner;
                 _shouldFail = shouldFail;
             }
 
@@ -348,6 +398,7 @@ public sealed class CompleteInterviewSummaryPersistenceTests(AuthWebApplicationF
                 SessionSummaryRequest request,
                 CancellationToken cancellationToken = default)
             {
+                _owner.SummarizerCalls++;
                 if (_shouldFail)
                 {
                     throw new InvalidOperationException("Summarizer configured to fail");
