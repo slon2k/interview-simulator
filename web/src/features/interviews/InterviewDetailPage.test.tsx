@@ -160,6 +160,7 @@ function mockCompletedQueries(details: Partial<UseQueryResult<GetInterviewDetail
 describe('InterviewDetailPage', () => {
   beforeEach(() => {
     vi.mocked(useQuery).mockReset()
+    vi.mocked(interviewApi.getInterviewDetails).mockReset()
     vi.mocked(interviewApi.startInterview).mockReset()
     vi.mocked(interviewApi.submitAnswer).mockReset()
     vi.mocked(interviewApi.completeInterview).mockReset()
@@ -349,6 +350,40 @@ describe('InterviewDetailPage', () => {
           enabled: true,
         })
       )
+    })
+
+    it('shows a loading state while feedback is loading', () => {
+      mockCompletedQueries({ isLoading: true })
+      renderPage()
+
+      expect(screen.getByText(/loading interview feedback/i)).toBeInTheDocument()
+    })
+
+    it('shows a feedback error and retry button when details loading fails', async () => {
+      const refetch = vi.fn()
+      mockCompletedQueries({
+        isError: true,
+        error: new ApiError(500, 'Feedback unavailable'),
+        refetch,
+      })
+      renderPage()
+
+      expect(screen.getByText('Feedback unavailable')).toBeInTheDocument()
+      await userEvent.click(screen.getByRole('button', { name: /retry/i }))
+      expect(refetch).toHaveBeenCalledOnce()
+    })
+  })
+
+  describe('details query isolation', () => {
+    it.each([
+      ['Created', baseInterview],
+      ['Active', activeInterview],
+    ] as const)('does not create a details query for %s interviews', (_status, interview) => {
+      mockQuery({ data: interview })
+      renderPage()
+
+      expect(interviewApi.getInterviewDetails).not.toHaveBeenCalled()
+      expect(vi.mocked(useQuery)).toHaveBeenCalledOnce()
     })
   })
 })
