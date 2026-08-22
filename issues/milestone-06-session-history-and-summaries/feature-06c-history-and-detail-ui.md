@@ -3,17 +3,17 @@
 Phase: 2  
 Milestone: 06 - Session history and summaries  
 Type: Feature  
-Status: Partial
+Status: Complete
 
 ## Summary
 
 Let users find and review completed interviews using the frontend that already exists, rather than new pages or routes. The interview list (`/interviews`) gets a status filter instead of a separate history page. The interview detail page (`/interviews/{id}`) already branches by status (`Created` / `Active` / `Completed`); this feature replaces the `Completed` branch's placeholder with a real review view backed by the 06a `/details` endpoint and the 06b summary.
 
-Note: the basic interview list/detail routes are present, but the full review experience is not yet wired to the new detail payload and summary UI.
+The list filter and completed-interview review experience are implemented using the existing routes and the 06a/06b API payloads.
 
 ## Problem and User Value
 
-06a and 06b expose the full turn history and AI summary via the API. Today nothing in the frontend consumes them: `InterviewDetailPage`'s `CompletedInterview` component is still a placeholder ("Feedback will be available here once generated"), and there's no way to filter the list down to completed interviews to review. This feature closes that gap using the existing list and detail pages, not new ones.
+06a and 06b expose the full turn history and AI summary via the API. This feature makes that data available through the existing list and detail pages: users can filter interviews by status and review completed sessions with summary and turn-level evaluation feedback.
 
 ## Decisions
 
@@ -55,53 +55,53 @@ Note: the basic interview list/detail routes are present, but the full review ex
 
 ## Acceptance Criteria
 
-- [ ] `/interviews` supports filtering by status; filtering to "Completed" shows only finished interviews
-- [ ] The default filter view is decided and does not hide in-progress interviews unexpectedly
-- [ ] A completed interview's "View" action opens `/interviews/{id}` and renders the completed-review UI
-- [ ] `CompletedInterview` fetches and renders the `/details` payload (summary + full turn history)
-- [ ] Each turn shows its question, answer, and per-dimension evaluation with the overall score
-- [ ] A completed interview without a summary yet renders gracefully ("Summary pending..." shown, no error, turns still visible)
-- [ ] `Created` and `Active` interview views are unchanged in behavior and network calls
-- [ ] The detail-fetch query only runs for `Completed` status (verify via test or network inspection)
-- [ ] Loading and error states for the details fetch are handled consistently with existing page conventions
-- [ ] Pages remain restricted to authenticated invited users; detail/list data is scoped to the requesting user
-- [ ] Existing tests continue to pass; new tests cover the filter and the rewritten `CompletedInterview`
+- [x] `/interviews` supports filtering by status; filtering to "Completed" shows only finished interviews
+- [x] The default filter view is decided and does not hide in-progress interviews unexpectedly
+- [x] A completed interview's "View" action opens `/interviews/{id}` and renders the completed-review UI
+- [x] `CompletedInterview` fetches and renders the `/details` payload (summary + full turn history)
+- [x] Each turn shows its question, answer, and per-dimension evaluation with the overall score
+- [x] A completed interview without a summary yet renders gracefully ("Summary pending..." shown, no error, turns still visible)
+- [x] `Created` and `Active` interview views are unchanged in behavior and network calls
+- [x] The detail-fetch query only runs for `Completed` status (verified by frontend tests)
+- [x] Loading and error states for the details fetch are handled consistently with existing page conventions
+- [x] Pages remain restricted to authenticated invited users; detail/list data is scoped to the requesting user
+- [x] Existing tests continue to pass; new tests cover the filter and the rewritten `CompletedInterview`
 
 ## Tasks
 
-### [ ] List page filter
+### List page filter
 
-- [ ] Add status filter control to `InterviewListPage`
-- [ ] Wire filter state into the `getInterviews` query key and call
-- [ ] Decide and implement default filter value
-- [ ] Confirm completed-row action links correctly (no change expected)
+- [x] Add status filter control to `InterviewListPage`
+- [x] Wire filter state into the `getInterviews` query key and call
+- [x] Decide and implement default filter value
+- [x] Confirm completed-row action links correctly (no change expected)
 
-### [ ] API layer
+### API layer
 
-- [ ] Regenerate OpenAPI contract types (if not already current with 06a/06b)
-- [ ] Add `getInterviewDetails` to `interviewApi.ts`
+- [x] Regenerate OpenAPI contract types (if not already current with 06a/06b)
+- [x] Add `getInterviewDetails` to `interviewApi.ts`
 
-### [ ] Detail page - completed branch
+### Detail page - completed branch
 
-- [ ] Add conditional `useQuery` for `/details` in `CompletedInterview`, gated on `Completed` status
-- [ ] Render summary with "Summary pending..." fallback when summary is absent or pending
-- [ ] Render turn list as expandable cards: collapsed shows question + overall score; expanded shows answer + per-dimension evaluation
-- [ ] Loading/error states for the details fetch (consistent with page conventions)
+- [x] Add conditional `useQuery` for `/details` in `CompletedInterview`, gated on `Completed` status
+- [x] Render summary with "Summary pending..." fallback when summary is absent or pending
+- [x] Render turn list as expandable cards: collapsed shows question + overall score; expanded shows answer + per-dimension evaluation
+- [x] Loading/error states for the details fetch (consistent with page conventions)
 
-### [ ] Tests
+### Tests
 
-- [ ] List page: filter changes the rendered set and the query params
-- [ ] `CompletedInterview`: renders summary + turns from a mocked `/details` response
-- [ ] `CompletedInterview`: renders a graceful state when summary is absent
-- [ ] Confirm `Created`/`Active` branches do not call `getInterviewDetails`
+- [x] List page: filter changes the rendered set and the query params
+- [x] `CompletedInterview`: renders summary + turns from a mocked `/details` response
+- [x] `CompletedInterview`: renders a graceful state when summary is absent
+- [x] Confirm `Created`/`Active` branches do not call `getInterviewDetails`
 
 ## Verification
 
-- [ ] Filtering the list to "Completed" shows only finished interviews; other filters behave correctly
-- [ ] Opening a completed interview shows its summary and full turn-by-turn evaluation
-- [ ] Opening a created or active interview behaves exactly as before (no regression, no extra network call)
-- [ ] A completed interview with a pending/failed summary still renders its turns without error
-- [ ] Full test suite passes (`tsc`, `vitest`, lint)
+- [x] Filtering the list to "Completed" shows only finished interviews; other filters behave correctly
+- [x] Opening a completed interview shows its summary and full turn-by-turn evaluation
+- [x] Opening a created or active interview behaves exactly as before (no regression, no extra network call)
+- [x] A completed interview with a pending/failed summary still renders its turns without error
+- [x] Full test suite passes (`tsc`, `vitest`, lint)
 
 ## Dependencies and Blockers
 
