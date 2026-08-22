@@ -3,13 +3,13 @@
 Phase: 2  
 Milestone: 06 - Session history and summaries  
 Type: Feature  
-Status: Partial
+Status: In Progress
 
 ## Summary
 
 Verify the full review experience end-to-end — complete an interview, generate a summary, browse history, open detail — and update documentation to reflect the review/summary additions.
 
-Note: the API-side verification is in place, but the end-to-end UI/docs follow-up still needs to be completed.
+Automated API verification and documentation updates are in progress. Real Azure OpenAI summary quality remains a manual development-environment check.
 
 ## Problem and User Value
 
@@ -31,37 +31,37 @@ Note: the API-side verification is in place, but the end-to-end UI/docs follow-u
 
 ## Acceptance Criteria
 
-- [ ] End-to-end integration test covers complete → summary → history → detail, behind a faked AI boundary
+- [x] End-to-end integration test covers complete → summary → history → detail, behind a faked AI boundary
 - [ ] Real summary generation verified manually in dev
-- [ ] History/detail reads confirmed to make no AI calls
-- [ ] Summary-failure degradation verified (session still reviewable)
-- [ ] Stub-configured flow runs in CI without Azure OpenAI credentials
-- [ ] `docs/architecture.md` updated
-- [ ] `docs/milestones.md` M06 acceptance criteria checked off
-- [ ] All existing tests pass
+- [x] History/detail reads confirmed to make no AI calls
+- [x] Summary-failure degradation verified (session still reviewable)
+- [x] Stub-configured flow runs in CI without Azure OpenAI credentials
+- [x] `docs/architecture.md` updated
+- [x] `docs/milestones.md` M06 acceptance criteria checked off
+- [x] All existing tests pass
 
 ## Tasks
 
 ### [ ] Verification
 
-- [ ] Add end-to-end integration test (faked AI boundary)
+- [x] Add end-to-end integration test (faked AI boundary)
 - [ ] Manual dev verification of real summary generation
-- [ ] Confirm read paths make no AI calls
-- [ ] Confirm summary-failure degradation
+- [x] Confirm read paths make no AI calls
+- [x] Confirm summary-failure degradation
 
 ### [ ] Documentation
 
-- [ ] Update `docs/architecture.md`
-- [ ] Update `docs/milestones.md` M06 status
+- [x] Update `docs/architecture.md`
+- [x] Update `docs/milestones.md` M06 status
 
 ## Verification
 
-- [ ] A completed interview yields a persisted summary
-- [ ] History lists the completed interview
-- [ ] Detail shows full history + summary
-- [ ] Reads make no AI calls
-- [ ] Injected summary failure leaves the session reviewable
-- [ ] Full test suite passes
+- [x] A completed interview yields a persisted summary
+- [x] History lists the completed interview
+- [x] Detail shows full history + summary
+- [x] Reads make no AI calls
+- [x] Injected summary failure leaves the session reviewable
+- [x] Full test suite passes
 
 ## Dependencies and Blockers
 

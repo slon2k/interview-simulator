@@ -115,14 +115,15 @@ Acceptance Criteria:
 
 ## 06 - Session history and summaries
 
-Allow users to review past sessions and generate final summaries.
+Allow users to review past interviews and generate final summaries.
 
 Acceptance Criteria:
 
-- [ ] History page exists
-- [ ] Session detail page exists
-- [ ] Completed sessions have summaries
-- [ ] Questions, answers, scores, and feedback can be reviewed
+- [x] Interview list supports filtering by status, including completed interviews
+- [x] Interview detail page exists for created, active, and completed interviews
+- [x] Completed interviews have persisted summaries when summary generation succeeds
+- [x] Questions, answers, scores, and feedback can be reviewed for completed interviews
+- [x] Summary generation failure does not prevent completion or review
 
 ---
 
