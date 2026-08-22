@@ -150,6 +150,55 @@ public sealed class InterviewAiFlowEndToEndTests(AuthWebApplicationFactory facto
         Assert.NotNull(session.CompletedAt);
     }
 
+    [Fact]
+    public async Task CompletedInterview_CanBeFoundInHistoryAndReadWithSummaryAndDetails()
+    {
+        var store = new InMemoryInterviewStore();
+        using var client = CreateClient(store, new MetadataRecordingQuestionGenerator(), new HardcodedAnswerEvaluator());
+
+        using var createRequest = CreateAuthenticatedRequest(HttpMethod.Post, "/api/interviews", "github|100", "invited-user");
+        createRequest.Content = JsonContent.Create(new
+        {
+            targetRole = "Backend Engineer",
+            focusArea = "dotnet",
+            interviewType = "Technical",
+            seniorityLevel = "Middle",
+            questionCount = 1
+        });
+
+        using var createResponse = await client.SendAsync(createRequest);
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+        using var createdJson = await ReadJsonAsync(createResponse);
+        var interviewId = createdJson.RootElement.GetProperty("id").GetGuid();
+
+        using var startRequest = CreateAuthenticatedRequest(HttpMethod.Post, $"/api/interviews/{interviewId}/start", "github|100", "invited-user");
+        var startResponse = await client.SendAsync(startRequest);
+        Assert.Equal(HttpStatusCode.OK, startResponse.StatusCode);
+
+        using var answerRequest = CreateAuthenticatedRequest(HttpMethod.Post, $"/api/interviews/{interviewId}/answers", "github|100", "invited-user");
+        answerRequest.Content = JsonContent.Create(new { turnNumber = 1, answer = "A complete answer" });
+        var answerResponse = await client.SendAsync(answerRequest);
+        Assert.Equal(HttpStatusCode.OK, answerResponse.StatusCode);
+
+        using var historyRequest = CreateAuthenticatedRequest(HttpMethod.Get, "/api/interviews?status=completed", "github|100", "invited-user");
+        var historyResponse = await client.SendAsync(historyRequest);
+        Assert.Equal(HttpStatusCode.OK, historyResponse.StatusCode);
+        using var historyJson = await ReadJsonAsync(historyResponse);
+        var history = historyJson.RootElement.EnumerateArray().Single(item => item.GetProperty("id").GetGuid() == interviewId);
+        Assert.Equal("Completed", history.GetProperty("status").GetString());
+
+        using var detailsRequest = CreateAuthenticatedRequest(HttpMethod.Get, $"/api/interviews/{interviewId}/details", "github|100", "invited-user");
+        var detailsResponse = await client.SendAsync(detailsRequest);
+        Assert.Equal(HttpStatusCode.OK, detailsResponse.StatusCode);
+        using var detailsJson = await ReadJsonAsync(detailsResponse);
+        var details = detailsJson.RootElement;
+        Assert.Equal("Completed", details.GetProperty("status").GetString());
+        Assert.Equal(1, details.GetProperty("turns").GetArrayLength());
+        Assert.Equal("A complete answer", details.GetProperty("turns")[0].GetProperty("answer").GetProperty("text").GetString());
+        Assert.NotEqual(JsonValueKind.Null, details.GetProperty("summary").ValueKind);
+        Assert.False(string.IsNullOrWhiteSpace(details.GetProperty("summary").GetProperty("text").GetString()));
+    }
+
     private HttpClient CreateClient(IInterviewStore interviewStore, IQuestionGenerator questionGenerator, IAnswerEvaluator answerEvaluator)
     {
         return factory.WithWebHostBuilder(builder =>
