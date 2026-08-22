@@ -23,6 +23,7 @@ import {
   submitAnswer,
   completeInterview,
   getInterviewDetails,
+  generateInterviewSummary,
   type InterviewResponse,
   type GetInterviewDetailsResponse,
 } from '../../api/interviewApi'
@@ -285,10 +286,16 @@ function ActiveInterview({
 }
 
 function CompletedInterview({ interview }: { interview: InterviewResponse }) {
+  const queryClient = useQueryClient()
   const detailsQuery = useQuery({
     queryKey: ['interview-details', interview.id],
     queryFn: ({ signal }: { signal: AbortSignal }) => getInterviewDetails(interview.id, signal),
     enabled: interview.status === 'Completed',
+  })
+  const summaryMutation = useMutation({
+    mutationFn: () => generateInterviewSummary(interview.id),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['interview-details', interview.id] }),
   })
 
   if (detailsQuery.isLoading) {
@@ -342,7 +349,32 @@ function CompletedInterview({ interview }: { interview: InterviewResponse }) {
           <Text c="dimmed">
             You answered {interview.answeredCount} of {interview.questionCount} questions.
           </Text>
-          <Text size="sm">{details?.summary?.text ?? 'Summary pending...'}</Text>
+          {details?.summary ? (
+            <Text size="sm">{details.summary.text}</Text>
+          ) : (
+            <Stack gap="xs">
+              <Text size="sm" c="dimmed">
+                Summary pending...
+              </Text>
+              {summaryMutation.isError && (
+                <Alert color="red" title="Could not generate summary">
+                  {summaryMutation.error instanceof ApiError
+                    ? summaryMutation.error.message
+                    : 'Summary generation failed.'}
+                </Alert>
+              )}
+              <Group>
+                <Button
+                  variant="light"
+                  size="compact-sm"
+                  loading={summaryMutation.isPending}
+                  onClick={() => summaryMutation.mutate()}
+                >
+                  Generate summary
+                </Button>
+              </Group>
+            </Stack>
+          )}
         </Stack>
       </Card>
       {details && <CompletedTurnList details={details} />}

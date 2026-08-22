@@ -20,7 +20,7 @@ import {
   type InterviewStatusContract,
   type InterviewSummary,
 } from '../../api/interviewApi'
-import { formatProgress, statusAction, statusColor } from './interviewListHelpers'
+import { formatProgress, scoreColor, statusAction, statusColor } from './interviewListHelpers'
 
 const STATUS_FILTER_OPTIONS: { label: string; value: StatusFilterValue }[] = [
   { label: 'All', value: 'All' },
@@ -135,7 +135,7 @@ function InterviewsTable({ interviews }: { interviews: InterviewSummary[] }) {
           <Table.Th>Topic</Table.Th>
           <Table.Th>Seniority</Table.Th>
           <Table.Th>Type</Table.Th>
-          <Table.Th>Progress</Table.Th>
+          <Table.Th>Progress / Score</Table.Th>
           <Table.Th>Status</Table.Th>
           <Table.Th>Action</Table.Th>
         </Table.Tr>
@@ -157,7 +157,15 @@ function InterviewRow({ interview }: { interview: InterviewSummary }) {
       <Table.Td>{interview.focusArea}</Table.Td>
       <Table.Td>{interview.seniorityLevel}</Table.Td>
       <Table.Td>{interview.interviewType}</Table.Td>
-      <Table.Td>{formatProgress(interview)}</Table.Td>
+      <Table.Td>
+        {interview.status === 'Completed' ? (
+          <Badge color={scoreColor(interview.totalScore)} variant="light">
+            {interview.totalScore === null ? 'Pending' : `${interview.totalScore}/100`}
+          </Badge>
+        ) : (
+          formatProgress(interview)
+        )}
+      </Table.Td>
       <Table.Td>
         <Badge color={statusColor(interview.status)} variant="light">
           {interview.status}
