@@ -7,7 +7,7 @@ Status: Planned
 
 ## Summary
 
-Replace the existing `/dashboard` placeholder page with a dashboard that renders the basic progress metrics from the 07a summary endpoint: average score, score trend, scores by focus area and interview type, weakest rubric dimensions, and recent sessions.
+Replace the existing `/dashboard` placeholder page with a dashboard that renders the basic progress metrics from the 07a summary endpoint: average score, score trend, scores by focus area, interview type, and rubric dimension, plus recent sessions.
 
 ## Problem and User Value
 
@@ -21,7 +21,7 @@ Replace the existing `/dashboard` placeholder page with a dashboard that renders
   - average score over time (line chart for the last 5 completed sessions)
   - scores by focus area (bar chart)
   - scores by interview type (bar chart)
-  - weakest rubric dimensions
+  - scores by rubric dimension (bar chart)
   - recent sessions (with links to detail from M06)
 - Loading and error states consistent with existing pages
 - Empty state for users with no completed sessions yet
@@ -39,7 +39,7 @@ Replace the existing `/dashboard` placeholder page with a dashboard that renders
 - [ ] Headline stats (total completed, average score) are shown
 - [ ] Score trend over time is shown
 - [ ] Scores by focus area and interview type are shown separately
-- [ ] Weakest rubric dimensions are shown
+- [ ] Scores by rubric dimension are shown
 - [ ] Recent sessions are shown and link to their detail pages
 - [ ] Empty state renders for users with no completed sessions
 - [ ] Loading and error states are handled consistently
@@ -55,14 +55,14 @@ Replace the existing `/dashboard` placeholder page with a dashboard that renders
 - [ ] Render headline stats
 - [ ] Render trend chart
 - [ ] Render scores by focus area and interview type
-- [ ] Render weakest dimensions
+- [ ] Render scores by rubric dimension
 - [ ] Render recent sessions with detail links
 - [ ] Empty, loading, and error states
 
 ## Verification
 
 - [ ] Dashboard shows correct metrics for a user with completed sessions
-- [ ] Trend, focus-area/interview-type breakdowns, and weakest dimensions render
+- [ ] Trend, focus-area/interview-type breakdowns, and rubric dimension scores render
 - [ ] Recent sessions link to detail
 - [ ] Empty state renders for a new user
 - [ ] Loading and error states behave correctly

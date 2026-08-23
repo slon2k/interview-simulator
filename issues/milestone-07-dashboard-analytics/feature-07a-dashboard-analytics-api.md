@@ -7,11 +7,11 @@ Status: Planned
 
 ## Summary
 
-Add a dashboard summary endpoint that returns the basic progress metric set for the authenticated user, computed by aggregating stored session and turn data. No AI calls.
+Add `GET /api/dashboard`, a dashboard summary endpoint that returns the basic progress metric set for the authenticated user, computed by aggregating stored session and turn data. No AI calls.
 
 ## Problem and User Value
 
-Users benefit from seeing progress across interviews: how their average score trends, which topics/types are strongest, and which rubric dimensions are consistently weakest. All of this is derivable from data M04–M06 already persist.
+Users benefit from seeing progress across interviews: how their average score trends, which focus areas and interview types are strongest, and how scores compare across rubric dimensions. All of this is derivable from data M04-M06 already persist.
 
 ## Scope
 
@@ -21,7 +21,7 @@ Users benefit from seeing progress across interviews: how their average score tr
   - average score over time (last 5 completed scored sessions, oldest to newest)
   - scores by focus area
   - scores by interview type
-  - weakest rubric dimensions
+  - scores by rubric dimension
   - recent sessions
 - Compute metrics with dedicated Cosmos aggregation query classes, partition-scoped to the user
 - Reuse the read-query pattern (query classes in Infrastructure behind Features interfaces), not the point-read repository
@@ -47,7 +47,7 @@ Users benefit from seeing progress across interviews: how their average score tr
 - [ ] Average score is returned
 - [ ] Average score over time for the last 5 completed scored sessions is returned
 - [ ] Scores by focus area and interview type are returned separately
-- [ ] Weakest rubric dimensions are returned
+- [ ] Scores by rubric dimension are returned
 - [ ] Recent sessions are returned
 - [ ] All metrics are computed from stored data with no AI calls
 - [ ] Aggregation uses query classes, partition-scoped to the user
@@ -105,10 +105,53 @@ Blocks:
 ### Decisions
 
 - Use dedicated partition-scoped projection queries rather than loading full domain objects or aggregating in the frontend. Session metrics are aggregated in the application service from the completed-session projection.
-- Compute weakest dimensions from a narrow projection of the authenticated user's evaluated turn documents. Filter those rows in application code using the IDs of completed sessions with stored scores. This avoids large dynamic `IN` clauses and is acceptable for the MVP because interview volumes are expected to remain small.
-- Exclude evaluated turns from active or incomplete sessions before grouping weakest dimensions. Add integration coverage for this filtering behavior.
+- Compute rubric dimension averages from a narrow projection of the authenticated user's evaluated turn documents. Filter those rows in application code using the IDs of completed sessions with stored scores. This avoids large dynamic `IN` clauses and is acceptable for the MVP because interview volumes are expected to remain small.
+- Exclude evaluated turns from active or incomplete sessions before grouping rubric dimensions. Add integration coverage for this filtering behavior.
 - Trend window is resolved to the last 5 completed scored sessions, ordered oldest to newest.
 
 ## Notes
 
-This feature is the analytics read model. It relies entirely on M05 having stored per-dimension scores, which is why "weakest rubric dimensions" needs no reprocessing. The session projection should select only the fields needed for dashboard metrics, including `result.totalScore`; the turn projection should select only `sessionId` and evaluation dimension fields. If session volume grows significantly, revisit the application-side filtering in favor of a more selective server-side query or a dedicated analytics read model, and document the resulting RU implications.
+This feature is the analytics read model. It relies entirely on M05 having stored per-dimension scores, which is why "scores by rubric dimension" needs no reprocessing. The session projection should select only the fields needed for dashboard metrics, including `result.totalScore`; the turn projection should select only `sessionId` and evaluation dimension fields. If session volume grows significantly, revisit the application-side filtering in favor of a more selective server-side query or a dedicated analytics read model, and document the resulting RU implications.
+
+`GET /api/dashboard` returns:
+
+```ts
+{
+  totalCompletedSessions: number;
+  averageScore: number | null;
+  scoreTrend: {
+    interviewId: string;
+    completedAt: string;
+    totalScore: number;
+  }
+  [];
+  scoresByFocusArea: {
+    focusArea: string;
+    score: number;
+    sessionCount: number;
+  }
+  [];
+  scoresByInterviewType: {
+    interviewType: string;
+    score: number;
+    sessionCount: number;
+  }
+  [];
+  scoresByDimension: {
+    key: string;
+    label: string;
+    score: number;
+    sampleCount: number;
+  }
+  [];
+  recentSessions: {
+    id: string;
+    targetRole: string;
+    focusArea: string;
+    interviewType: string;
+    completedAt: string;
+    totalScore: number | null;
+  }
+  [];
+}
+```

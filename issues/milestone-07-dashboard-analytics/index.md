@@ -33,7 +33,7 @@ This is the final milestone of Phase 2 (Text Interview MVP). Completing it means
 - Average score over time (last 5 completed sessions)
 - Scores by focus area
 - Scores by interview type
-- Weakest rubric dimensions
+- Scores by rubric dimension
 - Recent sessions
 
 ## Dashboard Response Shape
@@ -45,7 +45,7 @@ The single dashboard endpoint returns this user-scoped read model:
 - `scoreTrend: { interviewId, completedAt, score }[]`
 - `scoresByFocusArea: { focusArea, score, sessionCount }[]`
 - `scoresByInterviewType: { interviewType, score, sessionCount }[]`
-- `weakestDimensions: { key, label, score, sampleCount }[]`
+- `scoresByDimension: { key, label, score, sampleCount }[]`
 - `recentSessions: { id, targetRole, focusArea, interviewType, completedAt, totalScore }[]`
 
 Aggregates exclude incomplete sessions and sessions without a stored total score. Empty datasets are represented by empty arrays; `averageScore` is `null` when there are no completed scored sessions.
@@ -54,7 +54,7 @@ Aggregates exclude incomplete sessions and sessions without a stored total score
 
 - All 3 features shipped and merged
 - A dashboard summary endpoint returns the basic metric set
-- The dashboard UI renders average score, trend, separate focus-area and interview-type charts, weakest dimensions, and recent sessions
+- The dashboard UI renders average score, trend, separate focus-area, interview-type, and rubric-dimension charts, plus recent sessions
 - All metrics are computed from stored data with no AI calls
 - Analytics are user-scoped
 - All existing tests pass; new unit and integration tests added
@@ -63,6 +63,6 @@ Aggregates exclude incomplete sessions and sessions without a stored total score
 
 ## Notes
 
-Because M05 stored per-dimension scores (not just overall), "weakest rubric dimensions" and "scores by focus area/interview type" are straightforward aggregations rather than requiring stored data to be reprocessed by the AI.
+Because M05 stored per-dimension scores (not just overall), "scores by rubric dimension" and "scores by focus area/interview type" are straightforward aggregations rather than requiring stored data to be reprocessed by the AI.
 
 Cosmos aggregation note: partition-scoped aggregate queries over a user's sessions are the target. Where an aggregate cannot be expressed cheaply in a single query, computing from a bounded set of the user's recent sessions is acceptable for MVP — document the choice and its RU implications.
