@@ -30,8 +30,8 @@ Verify the dashboard end-to-end, update documentation, and confirm the Phase 2 (
 
 ## Acceptance Criteria
 
-- [ ] End-to-end integration test covers seeded sessions → correct dashboard aggregates
-- [ ] Dashboard UI verified against seeded/real data
+- [ ] End-to-end integration test covers seeded sessions → correct dashboard aggregates, including the bounded trend and recent sessions
+- [ ] Dashboard UI verified against seeded/real data, including the empty state
 - [ ] Analytics confirmed to make no AI calls
 - [ ] Analytics confirmed user-scoped
 - [ ] `docs/architecture.md` updated with the analytics read model

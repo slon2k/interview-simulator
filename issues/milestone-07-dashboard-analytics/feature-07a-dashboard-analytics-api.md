@@ -7,7 +7,7 @@ Status: Planned
 
 ## Summary
 
-Add a dashboard summary endpoint that returns the basic progress metric set for the authenticated user, computed by aggregating stored session data. No AI calls.
+Add a dashboard summary endpoint that returns the basic progress metric set for the authenticated user, computed by aggregating stored session and turn data. No AI calls.
 
 ## Problem and User Value
 
@@ -18,13 +18,16 @@ Users benefit from seeing progress across interviews: how their average score tr
 - Add a single dashboard summary endpoint returning the basic metric set:
   - total completed sessions
   - average score
-  - average score over time (recent trend)
-  - scores by topic / interview type
+  - average score over time (last 5 completed scored sessions, oldest to newest)
+  - scores by focus area
+  - scores by interview type
   - weakest rubric dimensions
   - recent sessions
 - Compute metrics with dedicated Cosmos aggregation query classes, partition-scoped to the user
 - Reuse the read-query pattern (query classes in Infrastructure behind Features interfaces), not the point-read repository
 - Define response DTOs for the dashboard payload
+- Use whole-number scores on the existing 0-100 scale; averages are rounded for presentation
+- Return the 5 most recent completed sessions for quick review links
 - Ensure analytics cover only the authenticated user's sessions
 - Require invited-user authorization
 - Add unit tests for aggregation logic
@@ -42,8 +45,8 @@ Users benefit from seeing progress across interviews: how their average score tr
 - [ ] A dashboard summary endpoint exists
 - [ ] Total completed sessions is returned
 - [ ] Average score is returned
-- [ ] Average score over time (recent trend) is returned
-- [ ] Scores by topic / interview type are returned
+- [ ] Average score over time for the last 5 completed scored sessions is returned
+- [ ] Scores by focus area and interview type are returned separately
 - [ ] Weakest rubric dimensions are returned
 - [ ] Recent sessions are returned
 - [ ] All metrics are computed from stored data with no AI calls
@@ -58,7 +61,7 @@ Users benefit from seeing progress across interviews: how their average score tr
 
 ### [ ] Aggregation queries
 
-- [ ] Define dashboard response DTOs
+- [ ] Define dashboard response DTOs using the M07 response shape
 - [ ] Add aggregation query class(es) for the metric set
 - [ ] Register queries in `Startup/Persistence.cs`
 
@@ -102,7 +105,7 @@ Blocks:
 ### Open Questions
 
 - Compute all metrics server-side in one query pass, or fetch a bounded recent set and aggregate in the service? Default assumption: partition-scoped queries where cheap; bounded-set aggregation where not — documented with RU implications.
-- Trend window size (e.g. last N sessions) — confirm during implementation.
+- Trend window is resolved to the last 5 completed scored sessions, ordered oldest to newest.
 
 ## Notes
 

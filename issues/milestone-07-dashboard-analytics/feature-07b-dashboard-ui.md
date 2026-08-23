@@ -7,7 +7,7 @@ Status: Planned
 
 ## Summary
 
-Build the dashboard page that renders the basic progress metrics from the 07a summary endpoint: average score, score trend, scores by topic/type, weakest rubric dimensions, and recent sessions.
+Replace the existing `/dashboard` placeholder page with a dashboard that renders the basic progress metrics from the 07a summary endpoint: average score, score trend, scores by focus area and interview type, weakest rubric dimensions, and recent sessions.
 
 ## Problem and User Value
 
@@ -18,8 +18,9 @@ Build the dashboard page that renders the basic progress metrics from the 07a su
 - Dashboard page consuming the 07a summary endpoint
 - Render:
   - total completed sessions and average score (headline stats)
-  - average score over time (trend chart)
-  - scores by topic / interview type
+  - average score over time (line chart for the last 5 completed sessions)
+  - scores by focus area (bar chart)
+  - scores by interview type (bar chart)
   - weakest rubric dimensions
   - recent sessions (with links to detail from M06)
 - Loading and error states consistent with existing pages
@@ -37,7 +38,7 @@ Build the dashboard page that renders the basic progress metrics from the 07a su
 - [ ] A dashboard page renders the basic metric set from the 07a endpoint
 - [ ] Headline stats (total completed, average score) are shown
 - [ ] Score trend over time is shown
-- [ ] Scores by topic / interview type are shown
+- [ ] Scores by focus area and interview type are shown separately
 - [ ] Weakest rubric dimensions are shown
 - [ ] Recent sessions are shown and link to their detail pages
 - [ ] Empty state renders for users with no completed sessions
@@ -49,11 +50,11 @@ Build the dashboard page that renders the basic progress metrics from the 07a su
 
 ### [ ] Dashboard page
 
-- [ ] Add dashboard route/page
+- [ ] Replace the existing dashboard placeholder page
 - [ ] Fetch the summary endpoint
 - [ ] Render headline stats
 - [ ] Render trend chart
-- [ ] Render scores by topic/type
+- [ ] Render scores by focus area and interview type
 - [ ] Render weakest dimensions
 - [ ] Render recent sessions with detail links
 - [ ] Empty, loading, and error states
@@ -61,7 +62,7 @@ Build the dashboard page that renders the basic progress metrics from the 07a su
 ## Verification
 
 - [ ] Dashboard shows correct metrics for a user with completed sessions
-- [ ] Trend, topic/type breakdown, and weakest dimensions render
+- [ ] Trend, focus-area/interview-type breakdowns, and weakest dimensions render
 - [ ] Recent sessions link to detail
 - [ ] Empty state renders for a new user
 - [ ] Loading and error states behave correctly
@@ -83,11 +84,11 @@ Blocks:
 
 ### Risks
 
-- Chart rendering adds a frontend dependency; keep the charting choice consistent with the existing web stack.
+- Mantine Charts is already installed (`@mantine/charts` with Recharts); use it for the basic line and bar charts.
 
 ### Open Questions
 
-- Charting approach (library vs lightweight custom) — confirm against the current web dependencies.
+- Charting approach is resolved: use `@mantine/charts`.
 
 ## Notes
 
