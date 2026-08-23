@@ -102,11 +102,13 @@ Blocks:
 
 - Some aggregates may be awkward or costly to express as single Cosmos queries; a bounded recent-sessions computation may be needed for MVP.
 
-### Open Questions
+### Decisions
 
-- Compute all metrics server-side in one query pass, or fetch a bounded recent set and aggregate in the service? Default assumption: partition-scoped queries where cheap; bounded-set aggregation where not — documented with RU implications.
+- Use dedicated partition-scoped projection queries rather than loading full domain objects or aggregating in the frontend. Session metrics are aggregated in the application service from the completed-session projection.
+- Compute weakest dimensions from a narrow projection of the authenticated user's evaluated turn documents. Filter those rows in application code using the IDs of completed sessions with stored scores. This avoids large dynamic `IN` clauses and is acceptable for the MVP because interview volumes are expected to remain small.
+- Exclude evaluated turns from active or incomplete sessions before grouping weakest dimensions. Add integration coverage for this filtering behavior.
 - Trend window is resolved to the last 5 completed scored sessions, ordered oldest to newest.
 
 ## Notes
 
-This feature is the analytics read model. It relies entirely on M05 having stored per-dimension scores, which is why "weakest rubric dimensions" needs no reprocessing.
+This feature is the analytics read model. It relies entirely on M05 having stored per-dimension scores, which is why "weakest rubric dimensions" needs no reprocessing. The session projection should select only the fields needed for dashboard metrics, including `result.totalScore`; the turn projection should select only `sessionId` and evaluation dimension fields. If session volume grows significantly, revisit the application-side filtering in favor of a more selective server-side query or a dedicated analytics read model, and document the resulting RU implications.
