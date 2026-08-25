@@ -6,7 +6,7 @@ public sealed class DashboardOptions
 {
     public const string SectionName = "Dashboard";
 
-    public int RecentSessionsLimit { get; set; } = 5;
+    public int RecentSessionsLimit { get; init; } = 5;
 
     public int ScoreTrendLimit { get; init; } = 5;
 }
