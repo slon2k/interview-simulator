@@ -6,6 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddSpeechServices();
 builder.AddDiagnosticsServices();
 builder.AddInterviewServices();
+builder.AddDashboardServices();
 builder.AddOpenAIServices();
 builder.AddPersistenceServices();
 builder.AddIdentityServices();

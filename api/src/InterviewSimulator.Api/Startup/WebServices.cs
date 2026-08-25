@@ -1,4 +1,5 @@
 using InterviewSimulator.Api.Features.Auth;
+using InterviewSimulator.Api.Features.Dashboard;
 using InterviewSimulator.Api.Features.Identity;
 using InterviewSimulator.Api.Features.Interviews;
 
@@ -11,6 +12,7 @@ public static class WebServices
         app.MapAuthenticationEndpoints();
         app.MapIdentityEndpoints();
         app.MapInterviewEndpoints();
+        app.MapDashboardEndpoints();
 
         if (!app.Environment.IsDevelopment())
         {
