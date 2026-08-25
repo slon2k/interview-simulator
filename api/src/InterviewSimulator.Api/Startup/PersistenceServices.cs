@@ -2,10 +2,12 @@ using System.Text.Json;
 
 using Azure.Identity;
 
+using InterviewSimulator.Api.Features.Dashboard;
 using InterviewSimulator.Api.Features.Identity.Access;
 using InterviewSimulator.Api.Features.Identity.Profile;
 using InterviewSimulator.Api.Features.Interviews;
 using InterviewSimulator.Api.Infrastructure.Cosmos;
+using InterviewSimulator.Api.Infrastructure.Dashboard;
 using InterviewSimulator.Api.Infrastructure.Data;
 using InterviewSimulator.Api.Infrastructure.Identity;
 using InterviewSimulator.Api.Infrastructure.Interviews;
@@ -43,6 +45,8 @@ public static class PersistenceServices
                 sp => sp.GetRequiredService<DisabledIdentityUserStore>());
 
             services.AddScoped<IInterviewStore, DisabledInterviewStore>();
+
+            services.AddScoped<IDashboardQueries, DisabledDashboardQueries>();
 
             return builder;
         }
@@ -83,6 +87,12 @@ public static class PersistenceServices
                 .GetContainer(
                     cosmosOptions.DatabaseName,
                     cosmosOptions.UsersContainerName)));
+
+        services.AddScoped<IDashboardQueries>(sp => new CosmosDashboardQueries(
+            sp.GetRequiredService<CosmosClient>()
+                .GetContainer(
+                    cosmosOptions.DatabaseName,
+                    cosmosOptions.SessionsContainerName)));
 
         services.AddScoped<IUserProfileStore>(sp => sp.GetRequiredService<CosmosIdentityUserStore>());
         services.AddScoped<IUserAccessReader>(sp => sp.GetRequiredService<CosmosIdentityUserStore>());
