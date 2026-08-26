@@ -1,4 +1,5 @@
 using InterviewSimulator.Api.Features.Dashboard;
+using InterviewSimulator.Api.Features.Interviews;
 
 using Microsoft.Azure.Cosmos;
 
@@ -26,19 +27,19 @@ public sealed class CosmosDashboardQueries(Container container) : IDashboardQuer
             .WithParameter("@userId", userId)
             .WithParameter("@completedStatus", "Completed");
 
-        var iterator = container.GetItemQueryIterator<DashboardSessionProjection>(
+        var iterator = container.GetItemQueryIterator<CosmosDashboardSessionProjection>(
             queryDefinition,
             requestOptions: new QueryRequestOptions
             {
                 PartitionKey = new PartitionKey(userId)
             });
-        var results = new List<DashboardSessionProjection>();
+        var results = new List<CosmosDashboardSessionProjection>();
         while (iterator.HasMoreResults)
         {
             var response = await iterator.ReadNextAsync(cancellationToken);
             results.AddRange(response);
         }
-        return results;
+        return [.. results.Select(ToDashboardSessionProjection)];
     }
 
     public Task<IReadOnlyCollection<DashboardDimensionProjection>> GetEvaluatedTurnDimensionProjectionsAsync(string userId, CancellationToken cancellationToken)
@@ -79,4 +80,25 @@ public sealed class CosmosDashboardQueries(Container container) : IDashboardQuer
         }
         return results;
     }
+
+    private sealed record CosmosDashboardSessionProjection(
+        string SessionId,
+        string TargetRole,
+        string FocusArea,
+        string InterviewType,
+        string Status,
+        DateTime? CompletedAt,
+        int? AggregateScore
+    );
+
+    private static DashboardSessionProjection ToDashboardSessionProjection(CosmosDashboardSessionProjection cosmosProjection) =>
+        new(
+            Guid.Parse(cosmosProjection.SessionId),
+            cosmosProjection.TargetRole,
+            cosmosProjection.FocusArea,
+            Enum.Parse<InterviewType>(cosmosProjection.InterviewType),
+            Enum.Parse<InterviewStatus>(cosmosProjection.Status),
+            cosmosProjection.CompletedAt,
+            cosmosProjection.AggregateScore
+        );
 }
