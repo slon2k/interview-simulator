@@ -133,4 +133,9 @@ GET {{InterviewSimulator.Api_HostAddress}}/api/interviews/{{interviewId}}/detail
 Accept: application/json
 Cookie: {{authCookie}}
 
+### Get Dashboard
+GET {{InterviewSimulator.Api_HostAddress}}/api/dashboard
+Accept: application/json
+Cookie: {{authCookie}}
+
 ###
